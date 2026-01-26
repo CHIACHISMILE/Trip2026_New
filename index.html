@@ -77,18 +77,18 @@
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-y: contain;
-      padding: 10px 18px calc(20px + env(safe-area-inset-bottom));
+      padding: 6px 14px calc(12px + env(safe-area-inset-bottom));
       touch-action: pan-y;
     }
 
     .top-shell {
-      padding: max(22px, env(safe-area-inset-top) + 14px) 22px 18px;
+      padding: max(16px, env(safe-area-inset-top) + 10px) 18px 14px;
       background: rgba(255, 255, 255, 0.86);
       backdrop-filter: blur(32px);
       -webkit-backdrop-filter: blur(32px);
       border-bottom: 1px solid rgba(169, 196, 218, 0.3);
       box-shadow: var(--shadow-soft);
-      border-radius: 0 0 32px 32px;
+      border-radius: 0 0 26px 26px;
       position: relative;
       z-index: 20;
     }
@@ -155,7 +155,7 @@
     .pill-muted { background: #6b7c8f; color: white; }
 
     .trip-meta {
-      margin-top: 14px;
+      margin-top: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -177,7 +177,7 @@
     .tab-strip {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      padding: 10px 18px 6px;
+      padding: 8px 14px 6px;
       background: rgba(255,255,255,0.92);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
@@ -320,8 +320,8 @@
       margin-top: 8px;
       padding: 2px 6px;
       border-radius: 6px;
-      background: #fff;
-      border: 1px solid rgba(169,196,218,0.35);
+      background: var(--ice);
+      border: 1px solid rgba(169,196,218,0.45);
       font-size: 0.6rem;
       font-weight: 700;
       letter-spacing: 0.08em;
@@ -635,7 +635,7 @@
                   class="w-full py-4 mt-4 border-2 border-dashed border-[#d8e6f2] text-[#6b7c8f] rounded-2xl font-bold hover:bg-[#eef3f7] transition swipe-protected">
             + 新增行程
           </button>
-          <div class="h-10"></div>
+          <div class="h-6"></div>
         </div>
       </section>
 
@@ -886,12 +886,12 @@
           <button @click="showItinModal=false" class="text-slate-400 p-2">✕</button>
         </div>
         <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-          <div class="flex gap-3">
-            <div class="w-1/2">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
               <label class="text-[10px] font-bold text-slate-400 uppercase">開始時間</label>
               <input type="time" v-model="itinForm.startTime" class="w-full glass-input p-3 rounded-xl mt-1 outline-none font-bold">
             </div>
-            <div class="w-1/2">
+            <div>
               <label class="text-[10px] font-bold text-slate-400 uppercase">結束時間 (選)</label>
               <input type="time" v-model="itinForm.endTime" class="w-full glass-input p-3 rounded-xl mt-1 outline-none font-bold">
             </div>
