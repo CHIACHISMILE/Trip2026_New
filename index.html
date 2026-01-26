@@ -23,20 +23,18 @@
   <style>
     /* === iOS Native-Like Reset === */
     :root {
-      --header-height: 106px; /* 預估高度，會隨內容撐開 */
       --safe-top: env(safe-area-inset-top);
       --safe-bottom: env(safe-area-inset-bottom);
       --primary-blue: #0ea5e9;
-      --glass-bg: rgba(255, 255, 255, 0.85);
-      --glass-border: rgba(255, 255, 255, 0.5);
+      --glass-bg: rgba(255, 255, 255, 0.90); /* 增加不透明度以提升易讀性 */
     }
 
     html, body {
-      height: 100dvh; /* Dynamic Viewport Height for iOS */
+      height: 100dvh;
       width: 100%;
       margin: 0;
       padding: 0;
-      overflow: hidden; /* 禁止 body 捲動，交給內層 div */
+      overflow: hidden;
       font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: #f0f9ff;
       color: #1e293b;
@@ -62,36 +60,39 @@
 
     /* === Header & Tabs Group (Fixed Top) === */
     .top-nav-container {
-      position: absolute; /* 改為 Absolute 覆蓋在 ScrollView 上方，製造穿透感 */
+      position: absolute;
       top: 0; left: 0; right: 0;
       z-index: 50;
       background: var(--glass-bg);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(0,0,0,0.05);
-      padding-top: max(10px, var(--safe-top));
-      transition: transform 0.2s;
+      padding-top: max(12px, var(--safe-top));
       box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+      /* 確保高度不會意外塌陷 */
+      min-height: calc(110px + var(--safe-top));
     }
 
     .header-content {
-      padding: 0 16px 10px 16px;
+      padding: 0 20px 10px 20px;
     }
 
     .tab-bar {
       display: flex;
       position: relative;
+      padding-bottom: 2px;
     }
     
     .tab-btn {
       flex: 1;
       text-align: center;
-      padding: 10px 0;
-      font-size: 14px;
+      padding: 12px 0;
+      font-size: 15px;
       font-weight: 600;
       color: #94a3b8;
       transition: color 0.2s;
       position: relative;
+      cursor: pointer;
     }
     
     .tab-active {
@@ -104,9 +105,6 @@
       height: 3px;
       background: #0284c7;
       border-radius: 3px 3px 0 0;
-      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s;
-      /* Vue logic will handle width/position via inline style or class, 
-         here we use simpler class based logic matching original */
       left: 0; width: 100%;
     }
 
@@ -115,20 +113,20 @@
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
-      -webkit-overflow-scrolling: touch; /* Momentum scrolling */
+      -webkit-overflow-scrolling: touch;
       overscroll-behavior-y: contain;
-      /* 關鍵：上邊距預留給 Header，下邊距預留給 Home Indicator */
-      padding-top: calc(120px + var(--safe-top)); 
-      padding-bottom: calc(20px + var(--safe-bottom));
+      /* 關鍵修正：大幅增加頂部內距，避免日期被遮擋 (150px 是保守值) */
+      padding-top: calc(150px + var(--safe-top)); 
+      padding-bottom: calc(30px + var(--safe-bottom));
       padding-left: 16px;
       padding-right: 16px;
       position: relative;
     }
 
-    /* Pull to Refresh Indicator */
     .pull-indicator {
       position: absolute;
-      top: calc(90px + var(--safe-top)); /* 調整位置到 header 下方 */
+      /* 修正下拉刷新指示器的位置 */
+      top: calc(120px + var(--safe-top));
       left: 0; right: 0;
       height: 0;
       display: flex;
@@ -148,12 +146,12 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.6);
-      border-radius: 16px;
-      box-shadow: 0 2px 10px rgba(148, 163, 184, 0.05);
-      margin-bottom: 12px;
+      border-radius: 20px; /* 圓角加大 */
+      box-shadow: 0 4px 15px rgba(148, 163, 184, 0.05);
+      margin-bottom: 16px; /* 間距加大 */
       transition: transform 0.1s;
     }
-    .glass-card:active { transform: scale(0.98); }
+    .glass-card:active { transform: scale(0.99); }
 
     .glass-input {
       background: rgba(255, 255, 255, 0.5);
@@ -176,9 +174,8 @@
 
     /* Date Scroller */
     .date-scroll-area {
-      margin-bottom: 16px;
-      padding-bottom: 4px;
-      /* Remove scrollbar */
+      margin-bottom: 20px;
+      padding: 4px 0 8px 0; /* 增加一點緩衝 */
       scrollbar-width: none; 
       -ms-overflow-style: none;
     }
@@ -186,23 +183,21 @@
 
     /* Tags & Chips */
     .tag { display:inline-flex; align-items:center; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
-    .cat-traffic { border-left: 3px solid #3b82f6; }
-    .cat-stay    { border-left: 3px solid #eab308; }
-    .cat-spot    { border-left: 3px solid #a855f7; }
-    .cat-food    { border-left: 3px solid #f97316; }
-    .cat-note    { border-left: 3px solid #64748b; }
+    .cat-traffic { border-left: 4px solid #3b82f6; }
+    .cat-stay    { border-left: 4px solid #eab308; }
+    .cat-spot    { border-left: 4px solid #a855f7; }
+    .cat-food    { border-left: 4px solid #f97316; }
+    .cat-note    { border-left: 4px solid #64748b; }
 
     /* Transitions */
     .fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease; }
     .fade-enter-from, .fade-leave-to { opacity: 0; }
     
-    /* Utilities */
     .allow-select { user-select: text !important; -webkit-user-select: text !important; cursor: text; }
-    .swipe-protected { /* Logic handled in JS */ }
     
     .map-btn {
       background: #f1f5f9; color: #0284c7;
-      padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold;
+      padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold;
       text-decoration: none;
     }
 
@@ -210,7 +205,7 @@
     .modal-enter-active .modal-content { animation: modalUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
     @keyframes modalUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .modal-content {
-        margin-bottom: env(safe-area-inset-bottom); /* Avoid Home Bar overlap */
+        margin-bottom: env(safe-area-inset-bottom);
     }
 
     /* Image Upload Styles */
@@ -224,14 +219,23 @@
         color: #94a3b8; font-size: 12px; font-weight: bold;
         background: #f8fafc;
     }
+    
+    /* 修正圖片顯示樣式 */
     .itinerary-img {
-        width: 100%; max-height: 200px; object-fit: cover;
-        border-radius: 12px; margin-top: 12px;
+        width: 100%; 
+        height: auto;
+        max-height: 250px; 
+        object-fit: cover;
+        border-radius: 12px; 
+        margin-top: 12px;
         border: 1px solid rgba(0,0,0,0.05);
         cursor: zoom-in;
+        display: block;
+        background-color: #f1f5f9; /* 載入失敗時的背景色 */
+        min-height: 60px; /* 確保即使載入失敗也有高度可以被點擊 */
     }
 
-    /* --- FIXED IMAGE VIEWER STYLES --- */
+    /* Fixed Image Viewer */
     .img-viewer-overlay {
         position: fixed; inset: 0; z-index: 9999;
         background: rgba(0, 0, 0, 1); 
@@ -247,7 +251,6 @@
         max-width: 100%; 
         max-height: 100%; 
         object-fit: contain;
-        transform-origin: center center;
     }
     .img-viewer-close {
         position: absolute;
@@ -311,10 +314,10 @@
 
   <div class="top-nav-container swipe-protected">
     <div class="header-content">
-      <div class="flex justify-between items-end mb-2">
+      <div class="flex justify-between items-end mb-3">
         <div>
            <div class="text-[10px] font-bold text-sky-600 tracking-widest uppercase mb-0.5">Norway & Iceland</div>
-           <h1 class="text-2xl font-black tracking-tight text-slate-800 leading-none">2026 北歐行</h1>
+           <h1 class="text-2xl font-black tracking-tight text-slate-800 leading-none">2026 挪威冰島之旅</h1>
         </div>
         <div class="text-right">
             <div class="flex flex-col items-end gap-1">
@@ -361,7 +364,7 @@
         <div ref="dateContainer" class="date-scroll-area overflow-x-auto whitespace-nowrap flex px-1 swipe-protected">
           <button v-for="d in tripDates" :key="d.date" :id="'date-btn-' + d.date" @click="selectDate(d.date)"
                   :class="[
-                    'flex-shrink-0 px-4 py-2 rounded-full text-xs mr-2 transition-all duration-300 font-bold border',
+                    'flex-shrink-0 px-4 py-2.5 rounded-full text-xs mr-2 transition-all duration-300 font-bold border',
                     selDate===d.date ? 'bg-sky-600 text-white border-sky-600 shadow-lg shadow-sky-200 scale-105'
                                      : 'bg-white text-slate-400 border-transparent'
                   ]">
@@ -408,7 +411,10 @@
               </div>
 
               <div v-if="evt.imgUrl" class="mt-2">
-                  <img :src="evt.imgUrl" class="itinerary-img" loading="lazy" alt="行程圖片"
+                  <img :src="evt.imgUrl" 
+                       class="itinerary-img" 
+                       alt="行程圖片"
+                       referrerpolicy="no-referrer"
                        @click.stop="viewImage(evt.imgUrl)">
               </div>
 
@@ -425,7 +431,7 @@
           </div>
 
           <button @click="openAddItin"
-                  class="w-full py-3 mt-2 border-2 border-dashed border-sky-200 text-sky-400 rounded-xl font-bold hover:bg-sky-50 transition swipe-protected mb-8">
+                  class="w-full py-4 mt-2 border-2 border-dashed border-sky-200 text-sky-400 rounded-xl font-bold hover:bg-sky-50 transition swipe-protected mb-12">
             + 新增行程
           </button>
         </div>
@@ -615,7 +621,7 @@
          @touchstart="handleImgTouchStart" @touchmove="handleImgTouchMove" @touchend="handleImgTouchEnd" @dblclick="toggleZoom"> 
         <div v-if="imgGesture.scale === 1" :class="['pull-hint', {'show-hint': imgGesture.isPulling}]">↓ 下拉關閉</div>
         <div class="img-viewer-close" @click.stop="closeImgViewer">✕</div>
-        <img :src="viewingImg" ref="imgViewerEl" class="img-viewer-img" @click.stop>
+        <img :src="viewingImg" ref="imgViewerEl" class="img-viewer-img" @click.stop referrerpolicy="no-referrer">
     </div>
   </Transition>
 
@@ -648,7 +654,7 @@
             <div class="img-upload-btn mt-1">
                 <div v-if="!itinForm.imgUrl" class="img-preview"><span>+ 照片</span></div>
                 <div v-else class="relative">
-                    <img :src="itinForm.imgUrl" class="w-full h-32 object-cover rounded-xl border">
+                    <img :src="itinForm.imgUrl" class="w-full h-32 object-cover rounded-xl border" referrerpolicy="no-referrer">
                     <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full px-2 py-0.5 text-[10px] font-bold shadow">移除</button>
                 </div>
                 <input type="file" accept="image/*" @change="handleImageUpload" v-if="!itinForm.imgUrl || itinForm.newImageBase64">
@@ -712,7 +718,7 @@
 </div>
 
 <script>
-// ... (Script 內容完全保留，未做任何修改) ...
+// ... (保留原始的 JS 邏輯，不做修改，僅貼上以便運行) ...
 const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbz6PZtqLJzlS2a71R-RfZjpJCuqJVPoP7RuNxEe74mS_uvxBejMNGKboFSn2ArNnXAu/exec';if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
