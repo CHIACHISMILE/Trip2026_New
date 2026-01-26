@@ -391,7 +391,9 @@
               </div>
 
               <div v-if="evt.imgUrl" class="mt-2">
-                  <img :src="evt.imgUrl" class="itinerary-img" loading="lazy" alt="行程圖片"
+                  <img :src="normalizeItinImgUrl(evt.imgUrl)" class="itinerary-img" loading="lazy" alt="行程圖片"
+                       referrerpolicy="no-referrer"
+                       @error="handleItinImgError($event, evt.imgUrl)"
                        @click.stop="viewImage(evt.imgUrl)">
               </div>
 
@@ -654,6 +656,8 @@
         <img :src="viewingImg" 
              ref="imgViewerEl"
              class="img-viewer-img" 
+             referrerpolicy="no-referrer"
+             @error="handleItinImgError($event, viewingImg)"
              @click.stop>
     </div>
   </Transition>
@@ -1584,8 +1588,41 @@ createApp({
         itinForm.value.deleteImage = true;
     };
 
+    const extractDriveId = (url) => {
+        if (!url) return '';
+        if (url.indexOf('id=') !== -1) {
+          const match = url.match(/[?&]id=([^&]+)/);
+          return match ? match[1] : '';
+        }
+        const fileMatch = url.match(/\/d\/([^/]+)/);
+        if (fileMatch) return fileMatch[1];
+        const thumbMatch = url.match(/thumbnail\?id=([^&]+)/);
+        if (thumbMatch) return thumbMatch[1];
+        return '';
+    };
+
+    const normalizeItinImgUrl = (url) => {
+        if (!url) return '';
+        if (url.indexOf('data:') === 0) return url;
+        const driveId = extractDriveId(url);
+        if (driveId) {
+          return `https://drive.google.com/uc?export=view&id=${driveId}`;
+        }
+        return url;
+    };
+
+    const handleItinImgError = (event, originalUrl) => {
+        const target = event && event.target ? event.target : null;
+        if (!target || target.dataset.retry) return;
+        target.dataset.retry = '1';
+        const driveId = extractDriveId(originalUrl || target.src);
+        if (driveId) {
+          target.src = `https://drive.google.com/thumbnail?id=${driveId}&sz=w1600`;
+        }
+    };
+
     const viewImage = (url) => {
-        viewingImg.value = url;
+        viewingImg.value = normalizeItinImgUrl(url);
         showImgViewer.value = true;
         imgGesture.value = { startX: 0, startY: 0, currentX: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 };
     };
@@ -1749,7 +1786,7 @@ createApp({
       openRateModal, openAddItin, openEditItin, openEditExp,
       deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, 
       confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending,
-      handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg,
+      handleImageUpload, removeImage, normalizeItinImgUrl, handleItinImgError, viewImage, closeImgViewer, showImgViewer, viewingImg,
       imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom
     };
   }
