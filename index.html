@@ -77,18 +77,18 @@
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-y: contain;
-      padding: 6px 14px calc(12px + env(safe-area-inset-bottom));
+      padding: 4px 12px calc(6px + env(safe-area-inset-bottom));
       touch-action: pan-y;
     }
 
     .top-shell {
-      padding: max(16px, env(safe-area-inset-top) + 10px) 18px 14px;
+      padding: max(12px, env(safe-area-inset-top) + 8px) 16px 10px;
       background: rgba(255, 255, 255, 0.86);
       backdrop-filter: blur(32px);
       -webkit-backdrop-filter: blur(32px);
       border-bottom: 1px solid rgba(169, 196, 218, 0.3);
       box-shadow: var(--shadow-soft);
-      border-radius: 0 0 26px 26px;
+      border-radius: 0 0 22px 22px;
       position: relative;
       z-index: 20;
     }
@@ -155,7 +155,7 @@
     .pill-muted { background: #6b7c8f; color: white; }
 
     .trip-meta {
-      margin-top: 10px;
+      margin-top: 6px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -177,7 +177,7 @@
     .tab-strip {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      padding: 8px 14px 6px;
+      padding: 6px 12px 6px;
       background: rgba(255,255,255,0.92);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
@@ -301,6 +301,10 @@
       background: rgba(247, 249, 251, 0.9);
       border-right: 1px solid rgba(227,236,244,0.9);
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
 
     .timeline-time .start {
@@ -607,8 +611,9 @@
               </div>
 
               <div v-if="evt.imgUrl" class="mt-2">
-                <img :src="evt.imgUrl" class="itinerary-img" loading="lazy" alt="行程圖片"
+                <img :src="normalizeImgUrl(evt.imgUrl)" class="itinerary-img" loading="lazy" alt="行程圖片"
                      referrerpolicy="no-referrer" crossorigin="anonymous"
+                     @error="handleImgError($event, evt.imgUrl)"
                      @click.stop="viewImage(evt.imgUrl)">
               </div>
 
@@ -873,6 +878,7 @@
            ref="imgViewerEl"
            class="img-viewer-img"
            referrerpolicy="no-referrer" crossorigin="anonymous"
+           @error="handleImgError($event, viewingImg)"
            @click.stop>
     </div>
   </Transition>
@@ -886,14 +892,14 @@
           <button @click="showItinModal=false" class="text-slate-400 p-2">✕</button>
         </div>
         <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="text-[10px] font-bold text-slate-400 uppercase">開始時間</label>
-              <input type="time" v-model="itinForm.startTime" class="w-full glass-input p-3 rounded-xl mt-1 outline-none font-bold">
+              <input type="time" v-model="itinForm.startTime" class="w-full glass-input p-2.5 rounded-xl mt-1 outline-none font-bold">
             </div>
             <div>
               <label class="text-[10px] font-bold text-slate-400 uppercase">結束時間 (選)</label>
-              <input type="time" v-model="itinForm.endTime" class="w-full glass-input p-3 rounded-xl mt-1 outline-none font-bold">
+              <input type="time" v-model="itinForm.endTime" class="w-full glass-input p-2.5 rounded-xl mt-1 outline-none font-bold">
             </div>
           </div>
           <div>
@@ -917,7 +923,7 @@
                 <span>+ 選擇照片</span>
               </div>
               <div v-else class="relative">
-                <img :src="itinForm.imgUrl" class="w-full h-32 object-cover rounded-xl border border-slate-200" referrerpolicy="no-referrer" crossorigin="anonymous">
+                <img :src="normalizeImgUrl(itinForm.imgUrl)" class="w-full h-32 object-cover rounded-xl border border-slate-200" referrerpolicy="no-referrer" crossorigin="anonymous" @error="handleImgError($event, itinForm.imgUrl)">
                 <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md text-xs font-bold px-2">移除</button>
               </div>
               <input type="file" accept="image/*" @change="handleImageUpload" v-if="!itinForm.imgUrl || itinForm.newImageBase64">
@@ -1791,8 +1797,41 @@ createApp({
         itinForm.value.deleteImage = true;
     };
 
+    const extractDriveId = (url) => {
+        if (!url) return '';
+        if (url.includes('id=')) {
+          const match = url.match(/[?&]id=([^&]+)/);
+          return match ? match[1] : '';
+        }
+        const fileMatch = url.match(/\\/d\\/([^/]+)/);
+        if (fileMatch) return fileMatch[1];
+        const thumbMatch = url.match(/thumbnail\\?id=([^&]+)/);
+        if (thumbMatch) return thumbMatch[1];
+        return '';
+    };
+
+    const normalizeImgUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('data:')) return url;
+        const driveId = extractDriveId(url);
+        if (driveId) {
+          return `https://drive.google.com/thumbnail?id=${driveId}&sz=w1600`;
+        }
+        return url;
+    };
+
+    const handleImgError = (event, originalUrl) => {
+        const target = event?.target;
+        if (!target || target.dataset.retry) return;
+        target.dataset.retry = '1';
+        const driveId = extractDriveId(originalUrl || target.src);
+        if (driveId) {
+          target.src = `https://drive.google.com/uc?export=view&id=${driveId}`;
+        }
+    };
+
     const viewImage = (url) => {
-        viewingImg.value = url;
+        viewingImg.value = normalizeImgUrl(url);
         showImgViewer.value = true;
         imgGesture.value = { startX: 0, startY: 0, currentX: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 };
     };
@@ -1951,7 +1990,7 @@ createApp({
       openRateModal, openAddItin, openEditItin, openEditExp,
       deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates,
       confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending,
-      handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg,
+      handleImageUpload, removeImage, normalizeImgUrl, handleImgError, viewImage, closeImgViewer, showImgViewer, viewingImg,
       imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom
     };
   }
