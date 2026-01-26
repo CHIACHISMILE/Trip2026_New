@@ -1815,18 +1815,18 @@ createApp({
         if (url.startsWith('data:')) return url;
         const driveId = extractDriveId(url);
         if (driveId) {
-          return `https://drive.google.com/thumbnail?id=${driveId}&sz=w1600`;
+          return `https://drive.google.com/uc?export=view&id=${driveId}`;
         }
         return url;
     };
 
     const handleImgError = (event, originalUrl) => {
-        const target = event?.target;
+        const target = event && event.target ? event.target : null;
         if (!target || target.dataset.retry) return;
         target.dataset.retry = '1';
         const driveId = extractDriveId(originalUrl || target.src);
         if (driveId) {
-          target.src = `https://drive.google.com/uc?export=view&id=${driveId}`;
+          target.src = `https://drive.google.com/thumbnail?id=${driveId}&sz=w1600`;
         }
     };
 
