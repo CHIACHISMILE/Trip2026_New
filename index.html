@@ -6,813 +6,605 @@
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="2026挪威冰島之旅">
+  <meta name="apple-mobile-web-app-title" content="2026 Trip">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#dbeafe">
+  <meta name="theme-color" content="#f0f9ff">
+  
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="https://img.icons8.com/color/180/snowflake.png">
+  <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/180/snowflake.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    /* CSS Setup */
-    html, body {
-      height: 100dvh;
-      width: 100%;
-      overflow: hidden;
-      font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
-      background-color: #f0f9ff;
-      color: #1e3a8a;
-      overscroll-behavior: none;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: none; /* 禁止瀏覽器預設縮放行為，交給 JS 處理 */
+    :root {
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+      --app-bg: #f5f9ff;
+      --primary: #0ea5e9;
     }
 
-    body { -webkit-touch-callout: default; }
-
-    #fixed-bg {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
+    /* iOS Reset & Scroll Behavior */
+    html, body {
       height: 100%;
-      background: linear-gradient(160deg, #dbeafe 0%, #eff6ff 40%, #f0f9ff 100%);
-      z-index: -1;
-      pointer-events: none;
+      width: 100%;
+      overflow: hidden; /* 防止橡皮筋效果出現在 body */
+      font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--app-bg);
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     #app {
-      height: 100%;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      height: 100%;
       position: relative;
-      -webkit-touch-callout: none;
+      background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 20%, #ffffff 100%);
     }
 
-    .scrollable-content {
+    /* 內容滾動區 */
+    .scroll-view {
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-y: contain;
-      position: relative;
-      padding-top: 10px;
-      /* 確保內容填滿到底部安全區域 */
-      padding-bottom: calc(20px + env(safe-area-inset-bottom));
-      touch-action: pan-y;
+      padding-top: calc(var(--safe-top) + 60px); /* Header height space */
+      padding-bottom: calc(80px + var(--safe-bottom)); /* Tabbar height space */
+    }
+
+    /* 隱藏 Scrollbar 但保留功能 */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Glass Effect Components */
+    .glass-header {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .glass-tabbar {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.03);
     }
 
     .glass-card {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.8);
-      border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(148, 163, 184, 0.08);
-      transition: transform 0.15s ease-out;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
     }
-    .glass-card:active { transform: scale(0.99); }
 
     .glass-input {
-      background: rgba(255, 255, 255, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
-      color: #334155;
-      transition: all 0.3s;
+      background: rgba(239, 246, 255, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      transition: all 0.2s;
     }
     .glass-input:focus {
       background: #fff;
-      border-color: #38bdf8;
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
     }
 
-    .btn-glacier {
-      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-      color: white;
-      border: 1px solid rgba(255,255,255,0.2);
-      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
-    }
-
-    .btn-cancel {
-      background: #f1f5f9;
-      color: #64748b;
-      border: 1px solid #e2e8f0;
-    }
-
-    .tab-bar {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-      box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
-    }
-    .tab-btn { color: #94a3b8; transition: all 0.3s; }
-    .tab-active { color: #0284c7; position: relative; }
-    .tab-active::after {
-      content: '';
+    /* Timeline Styles */
+    .timeline-line {
       position: absolute;
-      bottom: 0; left: 35%;
-      width: 30%; height: 4px;
-      background: #0284c7;
-      border-radius: 4px 4px 0 0;
-      box-shadow: 0 -2px 8px rgba(2, 132, 199, 0.5);
+      left: 24px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #e2e8f0;
+      z-index: 0;
     }
 
+    /* Animations */
+    .ios-press { transition: transform 0.1s; cursor: pointer; }
+    .ios-press:active { transform: scale(0.96); opacity: 0.8; }
+    
     .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
     .fade-enter-from, .fade-leave-to { opacity: 0; }
 
+    .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
+
+    /* Pull Indicator */
     .pull-indicator {
-      height: 0;
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-      padding-bottom: 5px;
-      overflow: hidden;
-      color: #64748b;
-      font-weight: 600;
-      font-size: 0.8rem;
-      transition: height 0.12s ease-out;
-      padding-top: env(safe-area-inset-top);
-      box-sizing: content-box;
+      position: absolute;
+      top: calc(var(--safe-top) + 50px);
+      left: 0; right: 0;
+      display: flex; justify-content: center;
+      pointer-events: none;
+      z-index: 50;
     }
-
-    .scrollbar-hide::-webkit-scrollbar { display: none; }
-
-    .title-link {
-      text-decoration: none;
-      color: #0f172a;
-      font-weight: 700;
-      border-bottom: 1px dashed #cbd5e1;
+    .spinner {
+      width: 24px; height: 24px;
+      border: 3px solid rgba(14, 165, 233, 0.3);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
     }
+    .pulling .spinner { opacity: 1; }
+    .refreshing .spinner { opacity: 1; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .map-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px 8px;
-      background: white;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
-      font-size: 10px;
-      font-weight: bold;
-      color: #0284c7;
-      text-decoration: none;
-      flex-shrink: 0;
-    }
+    /* Utils */
+    .text-shadow { text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    .safe-pb { padding-bottom: var(--safe-bottom); }
+    .safe-pt { padding-top: var(--safe-top); }
 
-    .cat-traffic { border-left: 4px solid #3b82f6; background: white; }
-    .cat-stay    { border-left: 4px solid #eab308; background: white; }
-    .cat-spot    { border-left: 4px solid #a855f7; background: white; }
-    .cat-food    { border-left: 4px solid #f97316; background: white; }
-    .cat-note    { border-left: 4px solid #64748b; background: white; }
-
-    .allow-select {
-      user-select: text !important;
-      -webkit-user-select: text !important;
-      -webkit-touch-callout: default !important;
-      cursor: auto; 
-    }
-    .allow-select::selection { background: rgba(56, 189, 248, 0.25); }
-
-    .break-anywhere { overflow-wrap: anywhere; word-break: break-all; }
-
-    .skeleton {
-      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: 8px;
-    }
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-    .pending-sync { opacity: 0.85; border: 2px dashed #f59e0b !important; position: relative; }
-    .pending-badge { display: none; }
-
-    .tag { display:inline-flex; align-items:center; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-    .tag-food { background:#fff7ed; color:#c2410c; border:1px solid #ffedd5; }
-    .tag-stay { background:#fefce8; color:#a16207; border:1px solid #fef9c3; }
-    .tag-traffic { background:#eff6ff; color:#1d4ed8; border:1px solid #dbeafe; }
-    .tag-ticket { background:#eef2ff; color:#4338ca; border:1px solid #e0e7ff; }
-    .tag-shop { background:#fdf2f8; color:#be185d; border:1px solid #fce7f3; }
-    .tag-other { background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
-
-    .filter-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        background: #e0f2fe;
-        color: #0369a1;
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    .filter-chip:hover { background: #bae6fd; }
-
-    /* Modal Styling */
-    .modal-enter-active, .modal-leave-active { transition: opacity 0.3s ease; }
-    .modal-enter-from, .modal-leave-to { opacity: 0; }
-    .modal-enter-active .modal-content, .modal-leave-active .modal-content { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    .modal-enter-from .modal-content, .modal-leave-to .modal-content { transform: scale(0.9) translateY(20px); }
+    /* Allow Select Class */
+    .allow-select { user-select: text; -webkit-user-select: text; }
     
-    /* Image Upload Styles */
-    .img-upload-btn { position: relative; overflow: hidden; }
-    .img-upload-btn input[type=file] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-    .img-preview {
-        width: 100%; height: 120px;
-        object-fit: cover; border-radius: 12px;
-        border: 2px dashed #cbd5e1;
-        display: flex; justify-content: center; align-items: center;
-        color: #94a3b8; font-size: 12px; font-weight: bold;
-        background: #f8fafc;
+    /* Tags & Badges */
+    .tag { @apply px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border; }
+    
+    /* Bottom Sheet Modal */
+    .bottom-sheet-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 100;
+      backdrop-filter: blur(2px);
     }
-    .itinerary-img {
-        width: 100%; max-height: 200px; object-fit: cover;
-        border-radius: 12px; margin-top: 12px;
-        border: 1px solid rgba(0,0,0,0.05);
-        cursor: zoom-in;
-    }
-
-    /* --- FIXED IMAGE VIEWER STYLES --- */
-    .img-viewer-overlay {
-        position: fixed; inset: 0; z-index: 9999;
-        background: rgba(0, 0, 0, 1); 
-        display: flex; justify-content: center; align-items: center;
-        flex-direction: column;
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-        transition: background 0.2s;
-        touch-action: none;
-        overflow: hidden;
-    }
-    .img-viewer-img {
-        max-width: 100%; 
-        max-height: 100%; 
-        object-fit: contain;
-        transform-origin: center center;
-    }
-    .img-viewer-close {
-        position: absolute;
-        top: max(20px, env(safe-area-inset-top) + 20px); 
-        right: 20px;
-        width: 44px; height: 44px;
-        background: rgba(80, 80, 80, 0.8);
-        color: white;
-        border-radius: 50%;
-        display: flex; justify-content: center; align-items: center;
-        font-size: 24px; font-weight: 800;
-        z-index: 10000;
-        cursor: pointer;
-        border: 2px solid rgba(255,255,255,0.3);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    .bottom-sheet {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      padding-bottom: calc(20px + var(--safe-bottom));
+      z-index: 101;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+      max-height: 90vh;
+      display: flex; flex-direction: column;
     }
     
-    .pull-hint {
-        position: absolute;
-        top: max(80px, env(safe-area-inset-top) + 80px);
-        color: rgba(255,255,255,0.6);
-        font-size: 13px;
-        font-weight: bold;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.3s;
-        background: rgba(0,0,0,0.4);
-        padding: 4px 12px;
-        border-radius: 20px;
+    /* Image Viewer */
+    .img-viewer {
+      position: fixed; inset: 0; z-index: 999; background: #000;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
-    .show-hint .pull-hint { opacity: 1; }
   </style>
 </head>
-
 <body>
-<div id="fixed-bg"></div>
 
 <div id="app">
-  <div class="pull-indicator" :style="{ height: pullDistance + 'px' }">
-    <span v-if="pullDistance > 20">{{ refreshText }}</span>
-  </div>
+  
+  <header class="fixed top-0 left-0 right-0 z-40 glass-header transition-all duration-300 safe-pt">
+    <div class="px-5 h-[50px] flex items-center justify-between">
+      <div class="flex flex-col">
+        <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">{{ todayWeekday }}</span>
+        <span class="text-lg font-black text-slate-800 leading-none font-mono">{{ todayDate }}</span>
+      </div>
 
-  <div class="px-6 pb-4 rounded-b-[2.5rem] shadow-sm swipe-protected relative z-20"
-       style="background: rgba(255,255,255,0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border-bottom: 1px solid rgba(255,255,255,0.4);
-       padding-top: max(20px, env(safe-area-inset-top) + 12px);">
-    <div class="flex justify-between items-center">
-      <h1 class="text-xl font-black tracking-tighter text-slate-800 drop-shadow-sm">2026 挪威冰島之旅</h1>
-      <div class="text-right">
-        <button v-if="isSyncing"
-                class="bg-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1 mb-1 ml-auto animate-pulse">
-           <span class="w-2 h-2 bg-white rounded-full animate-ping"></span>
-           同步中...
-        </button>
-        <button v-else-if="syncQueue.length > 0" @click="confirmClearSync"
-                class="bg-amber-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse flex items-center gap-1 mb-1 ml-auto">
-          待上傳 ({{ syncQueue.length }})
-        </button>
-        
-        <div class="text-lg font-black text-sky-900 leading-none tracking-wide font-mono mt-1">{{ todayDate }}</div>
-        <div class="text-[10px] text-sky-600 font-bold opacity-80 mt-1 uppercase tracking-[0.2em]">{{ todayWeekday }}</div>
+      <div class="absolute left-1/2 transform -translate-x-1/2 opacity-0 transition-opacity duration-200" :class="{'opacity-100': scrollY > 40}">
+        <span class="font-bold text-sm text-slate-800">2026 挪威冰島</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+         <span v-if="!isOnline" class="w-2 h-2 rounded-full bg-slate-400"></span>
+         <span v-if="tripStatus" class="text-[10px] font-bold bg-sky-100 text-sky-600 px-2 py-1 rounded-full">{{ tripStatus }}</span>
+         
+         <button v-if="isSyncing" class="text-emerald-500 animate-pulse">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+         </button>
+         <button v-else-if="syncQueue.length > 0" @click="confirmClearSync" class="text-amber-500 relative ios-press">
+            <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+         </button>
       </div>
     </div>
-    <div class="flex justify-between items-center mt-4">
-      <div class="glass-input px-3 py-1.5 rounded-full text-[10px] font-bold text-slate-500 tracking-wide">AUG 30 - SEP 26</div>
-      <div class="flex gap-2">
-        <span v-if="!isOnline" class="bg-slate-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md flex items-center gap-1">離線</span>
-        <span v-if="tripStatus" class="bg-gradient-to-r from-sky-400 to-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">{{ tripStatus }}</span>
-      </div>
+  </header>
+
+  <div class="pull-indicator" :class="{ 'pulling': pullDistance > 0, 'refreshing': isPullRefreshing }">
+    <div class="spinner" :style="{ transform: `rotate(${pullDistance * 3}deg)` }"></div>
+  </div>
+
+  <div class="scroll-view" ref="scrollContainer" @scroll="handleScroll">
+    
+    <div class="px-5 pb-4 pt-2">
+      <h1 class="text-3xl font-black text-slate-800 tracking-tight text-shadow">
+        {{ tab === 'itinerary' ? 'Trip Itinerary' : (tab === 'expense' ? 'Expenses' : 'Analysis') }}
+      </h1>
+      <p class="text-slate-500 text-xs font-bold mt-1 tracking-wide opacity-80">AUG 30 - SEP 26, 2026</p>
     </div>
-  </div>
 
-  <div class="flex tab-bar z-10 text-sm font-bold swipe-protected flex-shrink-0">
-    <button @click="tab='itinerary'" :class="['flex-1 p-4 tab-btn', tab==='itinerary'?'tab-active':'']">行程</button>
-    <button @click="tab='expense'" :class="['flex-1 p-4 tab-btn', tab==='expense'?'tab-active':'']">記帳</button>
-    <button @click="changeTabToAnalysis" :class="['flex-1 p-4 tab-btn', tab==='analysis'?'tab-active':'']">分析</button>
-  </div>
-
-  <div class="scrollable-content p-4" ref="scrollContainer">
     <Transition name="fade" mode="out-in">
       
-      <div v-if="tab==='itinerary'" key="itinerary">
-        <div ref="dateContainer" class="overflow-x-auto whitespace-nowrap pb-4 px-1 scrollbar-hide scroll-smooth swipe-protected">
-          <button v-for="d in tripDates" :key="d.date" :id="'date-btn-' + d.date" @click="selectDate(d.date)"
-                  :class="[
-                    'px-4 py-2.5 rounded-2xl text-xs mr-2 border transition-all duration-300 font-bold shadow-sm',
-                    selDate===d.date ? 'bg-sky-600 text-white border-sky-600 shadow-sky-200 shadow-lg scale-105'
-                                     : 'glass-input text-slate-400 border-transparent hover:bg-white'
-                  ]">
-            {{ d.short }}
-          </button>
+      <div v-if="tab==='itinerary'" key="itinerary" class="pb-10">
+        
+        <div class="sticky top-[50px] z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 py-3 mb-4 swipe-protected">
+          <div ref="dateContainer" class="flex overflow-x-auto px-4 gap-2 no-scrollbar snap-x">
+            <button v-for="d in tripDates" :key="d.date" :id="'date-btn-' + d.date" @click="selectDate(d.date)"
+              class="flex-shrink-0 flex flex-col items-center justify-center w-[52px] h-[56px] rounded-xl border transition-all duration-300 snap-center ios-press"
+              :class="selDate===d.date ? 'bg-sky-500 border-sky-500 shadow-lg shadow-sky-200' : 'bg-white border-slate-100 text-slate-400'">
+              <span class="text-[10px] font-bold uppercase tracking-wider" :class="selDate===d.date?'text-sky-100':'opacity-60'">{{ d.short.split('/')[1] }}</span>
+              <span class="text-lg font-black leading-none mt-0.5" :class="selDate===d.date?'text-white':'text-slate-600'">{{ d.short.split('/')[0] }}</span>
+            </button>
+          </div>
+          <div class="text-center mt-2">
+             <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-full">{{ getDayInfo(selDate) }}</span>
+          </div>
         </div>
 
-        <div v-if="isLoading && itinerary.length===0" class="space-y-4">
-          <div v-for="i in 3" :key="i" class="glass-card h-24 skeleton"></div>
-        </div>
+        <div class="px-5 relative min-h-[300px]">
+          <div class="timeline-line"></div>
 
-        <div v-else>
-          <div class="text-center mb-6">
-            <div class="inline-block glass-input px-6 py-2 rounded-full text-sm font-bold text-slate-600 shadow-sm">
-              {{ getDayInfo(selDate) }}
-            </div>
+          <div v-if="isLoading && itinerary.length===0" class="pl-8 space-y-8 mt-4">
+             <div v-for="i in 3" class="h-24 bg-slate-100 rounded-2xl animate-pulse"></div>
           </div>
 
-          <div v-for="evt in getEvents(selDate)" :key="evt.row"
-               :class="['glass-card flex mb-4 items-stretch overflow-hidden group', isItemPending(evt.row) ? 'pending-sync' : '', getCategoryClass(evt.category)]">
-            <div class="w-16 flex flex-col justify-center items-center p-2 bg-slate-50/50 border-r border-slate-100 flex-shrink-0 swipe-protected">
-              <div class="font-black text-sm text-slate-700">{{ evt.startTime }}</div>
-              <div v-if="evt.endTime" class="text-[10px] text-slate-400 mt-1 font-medium">{{ evt.endTime }}</div>
-              <div class="mt-2 text-[10px] font-bold px-1.5 py-0.5 rounded text-slate-500 bg-white border border-slate-200 tracking-wider">
-                {{ evt.category }}
-              </div>
-            </div>
+          <div v-else class="space-y-6">
+             <div v-for="evt in getEvents(selDate)" :key="evt.row" 
+                  class="relative pl-8 group ios-press"
+                  :class="{'opacity-60': isItemPending(evt.row)}"
+                  @click="openEditItin(evt)">
+                
+                <div class="absolute left-0 top-1 w-12 text-right">
+                   <div class="w-3 h-3 rounded-full border-2 bg-white absolute right-[-5px] top-1.5 z-10"
+                        :class="{'border-sky-500': evt.category==='交通', 'border-amber-400': evt.category==='住宿', 'border-purple-400': evt.category==='景點', 'border-orange-400': evt.category==='飲食', 'border-slate-400': evt.category==='其他'}"></div>
+                </div>
 
-            <div class="flex-1 p-4 relative min-w-0">
-              <div class="flex justify-between items-start">
-                <span v-if="!evt.link" class="font-bold text-base text-slate-800 leading-tight truncate pr-2">
-                  {{ evt.title }}
-                </span>
-                <a v-else :href="evt.link" target="_blank" class="title-link text-base leading-tight truncate pr-2 swipe-protected">
-                  {{ evt.title }}
-                </a>
-              </div>
+                <div class="glass-card p-4 rounded-2xl border-l-0 relative overflow-hidden transition-all duration-300 hover:bg-white/90">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-[10px] font-black tracking-wider text-slate-400 uppercase">
+                          {{ evt.startTime }} <span v-if="evt.endTime">- {{ evt.endTime }}</span>
+                        </span>
+                        <span :class="['tag', 
+                            evt.category==='交通'?'bg-sky-50 text-sky-600 border-sky-100':
+                            evt.category==='住宿'?'bg-amber-50 text-amber-600 border-amber-100':
+                            evt.category==='景點'?'bg-purple-50 text-purple-600 border-purple-100':
+                            evt.category==='飲食'?'bg-orange-50 text-orange-600 border-orange-100':
+                            'bg-slate-50 text-slate-500 border-slate-100']">
+                            {{ evt.category }}
+                        </span>
+                    </div>
 
-              <div class="text-xs mt-2 text-slate-500 flex items-start gap-2" v-if="evt.location">
-                <span class="flex-1 pt-1 opacity-80 break-words">📍 {{ evt.location }}</span>
-                <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(evt.location)"
-                   target="_blank"
-                   class="map-btn swipe-protected">地圖</a>
-              </div>
+                    <h3 class="font-bold text-slate-800 text-lg leading-tight mb-1">{{ evt.title }}</h3>
+                    
+                    <div v-if="evt.location" class="flex items-center gap-1 mb-2">
+                        <span class="text-xs text-slate-500 truncate">📍 {{ evt.location }}</span>
+                    </div>
 
-              <div v-if="evt.imgUrl" class="mt-2">
-                  <img :src="evt.imgUrl" class="itinerary-img" loading="lazy" alt="行程圖片"
-                       @click.stop="viewImage(evt.imgUrl)">
-              </div>
+                    <img v-if="evt.imgUrl" :src="evt.imgUrl" loading="lazy" 
+                         class="w-full h-32 object-cover rounded-lg mb-2 border border-slate-100/50 shadow-sm swipe-protected"
+                         @click.stop="viewImage(evt.imgUrl)">
 
-              <div
-                class="text-sm mt-3 text-slate-600 whitespace-pre-wrap opacity-90 allow-select break-anywhere"
-                @click.stop
-                v-if="evt.note"
-              >{{ evt.note }}</div>
+                    <p v-if="evt.note" class="text-sm text-slate-600 leading-relaxed opacity-90 line-clamp-2 allow-select">{{ evt.note }}</p>
 
-              <div class="mt-3 flex gap-2 justify-end swipe-protected">
-                <button @click.stop="openEditItin(evt)"
-                        class="text-[10px] text-sky-600 bg-sky-50 border border-sky-100 px-3 py-1 rounded-lg font-bold flex-shrink-0">
-                  編輯
-                </button>
-                <button @click.stop="deleteItin(evt)"
-                        class="text-[10px] text-red-500 bg-red-50 border border-red-100 px-3 py-1 rounded-lg font-bold flex-shrink-0">
-                  刪除
-                </button>
-              </div>
-            </div>
+                    <div class="absolute right-2 bottom-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <span class="text-[10px] text-slate-300">Tap to Edit</span>
+                    </div>
+                </div>
+             </div>
+
+             <div class="pl-8 pt-4">
+               <button @click="openAddItin" class="w-full py-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 font-bold text-sm hover:bg-slate-50 hover:border-slate-300 transition ios-press flex items-center justify-center gap-2 swipe-protected">
+                 <span class="text-xl">+</span> Add Activity
+               </button>
+             </div>
           </div>
-
-          <button @click="openAddItin"
-                  class="w-full py-4 mt-4 border-2 border-dashed border-sky-200 text-sky-400 rounded-2xl font-bold hover:bg-sky-50 transition swipe-protected">
-            + 新增行程
-          </button>
-          <div class="h-10"></div>
         </div>
       </div>
 
-      <div v-else-if="tab==='expense'" key="expense">
-        <div class="glass-card p-6 space-y-5 shadow-lg swipe-protected">
-          <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2"><span class="w-1 h-6 bg-sky-500 rounded-full"></span>新增消費</h3>
-
-          <div class="flex gap-3">
-            <select v-model="newExp.payer" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
-              <option value="" disabled selected>泥是誰</option><option>家齊</option><option>亭穎</option><option>媽媽</option>
-            </select>
-            <select v-model="newExp.location" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
-              <option value="" disabled selected>在哪消費</option><option>台灣</option><option>杜拜</option><option>挪威</option><option>冰島</option><option>英國</option>
-            </select>
-          </div>
-
-          <div class="flex gap-3">
-            <select v-model="newExp.item" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
-              <option value="" disabled selected>消費項目</option>
-              <option>早餐</option><option>午餐</option><option>晚餐</option><option>零食</option><option>住宿</option>
-              <option>交通（機票）</option><option>交通（租車）</option><option>交通（停車費）</option><option>交通（油錢）</option>
-              <option>紀念品</option><option>門票</option><option>其他</option>
-            </select>
-            <select v-model="newExp.payment" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
-              <option value="" disabled selected>付款方式</option><option>現金</option><option>信用卡-國泰</option><option>信用卡-永豐</option><option>信用卡-元大</option>
-            </select>
-          </div>
-
-          <div class="flex gap-3">
-            <select v-model="newExp.currency" class="w-1/3 glass-input p-3 rounded-xl text-sm font-bold bg-sky-50 text-sky-700">
-              <option>NTD</option><option>NOK</option><option>ISK</option><option>EUR</option><option>GBP</option><option>AED</option>
-            </select>
-            <input type="number" v-model="newExp.amount" placeholder="金額"
-                   class="w-2/3 glass-input p-3 rounded-xl outline-none text-xl font-mono font-bold text-slate-800">
-          </div>
-
-          <div class="text-xs text-right text-slate-400 font-mono font-bold" v-if="newExp.amount && newExp.currency !== 'NTD'">
-            ≈ {{ formatNumber(Math.round(newExp.amount * rates[newExp.currency])) }} NTD
-          </div>
-
-          <input v-model="newExp.note" placeholder="備註 (選填)" class="w-full glass-input p-3 rounded-xl text-sm outline-none">
-
-          <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-            <div class="flex justify-between items-center mb-3">
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">分攤給</span>
-              <button @click="toggleSelectAll" class="text-[10px] text-sky-600 font-bold bg-white px-2 py-1 rounded shadow-sm">全選</button>
-            </div>
-            <div class="flex gap-2 flex-wrap">
-              <label v-for="m in members" :key="m"
-                     class="flex flex-1 justify-center items-center space-x-2 border px-4 py-3 rounded-xl cursor-pointer transition-all duration-200"
-                     :class="newExp.involved.includes(m)?'bg-white border-sky-400 text-sky-700 shadow-md transform -translate-y-0.5':'bg-transparent border-slate-200 text-slate-400'">
-                <input type="checkbox" :value="m" v-model="newExp.involved" class="hidden"><span class="text-sm font-bold">{{m}}</span>
-              </label>
-            </div>
-          </div>
-
-          <button @click="submitExp" class="w-full btn-glacier py-4 rounded-xl font-bold text-lg tracking-wide">確認記帳</button>
-        </div>
-      </div>
-
-      <div v-else-if="tab==='analysis'" key="analysis">
-        <div class="flex justify-end mb-3 swipe-protected">
-          <button @click="openRateModal"
-                  class="text-xs text-slate-500 bg-white/50 border border-white px-4 py-2 rounded-full flex items-center shadow-sm backdrop-blur-sm font-bold">
-            匯率設定
-          </button>
-        </div>
-
-        <div class="bg-gradient-to-br from-[#3b82f6] to-[#6366f1] text-white rounded-3xl p-6 shadow-xl mb-6 relative overflow-hidden ring-1 ring-white/20">
-          <div class="absolute -top-10 -right-10 w-48 h-48 bg-white opacity-10 rounded-full blur-3xl"></div>
-
-          <div class="border-b border-white/10 pb-3 mb-3 flex justify-between items-center relative z-10">
-            <div class="text-xs font-medium opacity-80 tracking-widest uppercase">家齊+亭穎 預算</div>
-            <div class="font-bold text-lg font-mono tracking-wider opacity-90">500,000</div>
-          </div>
-
-          <div class="flex justify-between items-end relative z-10">
-            <div>
-              <div class="text-4xl font-black tracking-tighter drop-shadow-sm">{{ formatNumber(Math.round(500000 - publicSpent)) }}</div>
-              <div class="text-xs font-bold opacity-70 mt-1">剩餘經費 (NTD)</div>
-            </div>
-            <div class="text-right">
-              <div class="text-lg font-bold">{{ formatNumber(Math.round(publicSpent)) }}</div>
-              <div class="text-xs opacity-70 font-medium">已支出 ({{ Math.round(publicSpent/500000*100) }}%)</div>
-            </div>
-          </div>
-
-          <div class="w-full bg-black/20 h-2 rounded-full mt-5 overflow-hidden relative z-10">
-            <div class="bg-white h-full shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all duration-1000"
-                 :style="{width: Math.min((publicSpent/500000)*100, 100) + '%'}"></div>
-          </div>
-
-          <div class="mt-4 pt-3 border-t border-white/20 flex justify-between items-center text-yellow-100 relative z-10">
-            <span class="text-xs font-bold">媽媽個人與分攤支出</span>
-            <span class="font-bold font-mono text-lg">+ {{ formatNumber(Math.round(momSpent)) }}</span>
-          </div>
-        </div>
-
-        <div class="mb-4 swipe-protected">
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="font-bold text-slate-700 text-lg">消費明細</h3>
-                <button @click="showFilterMenu = !showFilterMenu" 
-                        class="text-xs text-sky-600 bg-sky-50 border border-sky-100 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition">
-                    <span v-if="!showFilterMenu">🔍 篩選</span>
-                    <span v-else>▲ 收起</span>
-                </button>
-            </div>
+      <div v-else-if="tab==='expense'" key="expense" class="px-5 pb-10">
+        
+        <div class="glass-card p-5 rounded-3xl shadow-lg mb-6 swipe-protected relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-sky-400 to-blue-500"></div>
             
-            <div v-if="showFilterMenu" class="glass-card p-4 mb-4 transition-all">
-                <div class="grid grid-cols-2 gap-3">
-                    <select v-model="filters.item" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
-                        <option value="ALL">全部項目</option>
-                        <option v-for="i in uniqueItems" :key="i" :value="i">{{ i }}</option>
-                    </select>
-                    <select v-model="filters.date" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
-                        <option value="ALL">全部日期</option>
-                        <option v-for="d in uniqueExpDates" :key="d" :value="d">{{ d }}</option>
-                    </select>
-                    <select v-model="filters.payer" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
-                        <option value="ALL">全部付款人</option>
-                        <option v-for="p in members" :key="p" :value="p">{{ p }}</option>
-                    </select>
-                    <select v-model="filters.location" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
-                        <option value="ALL">全部地點</option>
-                        <option v-for="l in uniqueLocations" :key="l" :value="l">{{ l }}</option>
-                    </select>
-                    <select v-model="filters.payment" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none col-span-2">
-                        <option value="ALL">全部付款方式</option>
-                        <option v-for="p in uniquePayments" :key="p" :value="p">{{ p }}</option>
-                    </select>
+            <div class="flex items-center gap-2 mb-4">
+                <select v-model="newExp.currency" class="bg-slate-100 text-slate-700 font-bold text-xs rounded-lg px-2 py-1 outline-none">
+                    <option>NTD</option><option>NOK</option><option>ISK</option><option>EUR</option><option>GBP</option><option>AED</option>
+                </select>
+                <div class="flex-1 text-right">
+                    <input type="number" v-model="newExp.amount" placeholder="0" 
+                           class="w-full bg-transparent text-right text-4xl font-black text-slate-800 outline-none placeholder-slate-200 font-mono">
                 </div>
-                <button @click="resetFilters" class="w-full mt-3 bg-slate-100 text-slate-500 py-2 rounded-lg text-xs font-bold hover:bg-slate-200 transition">
-                    重置篩選條件
-                </button>
+            </div>
+            <div v-if="newExp.amount && newExp.currency !== 'NTD'" class="text-right text-[10px] text-slate-400 font-bold mb-4">
+                ≈ NT$ {{ formatNumber(Math.round(newExp.amount * rates[newExp.currency])) }}
             </div>
 
-            <div class="flex flex-wrap gap-2 mb-2" v-if="hasActiveFilters">
-                <span v-if="filters.item !== 'ALL'" @click="filters.item='ALL'" class="filter-chip">
-                    {{ filters.item }} ✕
-                </span>
-                <span v-if="filters.date !== 'ALL'" @click="filters.date='ALL'" class="filter-chip">
-                    {{ filters.date }} ✕
-                </span>
-                <span v-if="filters.payer !== 'ALL'" @click="filters.payer='ALL'" class="filter-chip">
-                    {{ filters.payer }} ✕
-                </span>
-                <span v-if="filters.location !== 'ALL'" @click="filters.location='ALL'" class="filter-chip">
-                    {{ filters.location }} ✕
-                </span>
-                 <span v-if="filters.payment !== 'ALL'" @click="filters.payment='ALL'" class="filter-chip">
-                    {{ filters.payment }} ✕
-                </span>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <select v-model="newExp.payer" class="glass-input h-10 px-3 rounded-xl text-xs font-bold text-slate-600 outline-none">
+                    <option value="" disabled selected>誰付錢</option><option>家齊</option><option>亭穎</option><option>媽媽</option>
+                </select>
+                <select v-model="newExp.item" class="glass-input h-10 px-3 rounded-xl text-xs font-bold text-slate-600 outline-none">
+                    <option value="" disabled selected>項目</option>
+                    <option>早餐</option><option>午餐</option><option>晚餐</option><option>零食</option><option>住宿</option>
+                    <option>交通（機票）</option><option>交通（租車）</option><option>交通（油錢）</option><option>紀念品</option><option>門票</option><option>其他</option>
+                </select>
             </div>
+
+            <input v-model="newExp.note" placeholder="備註..." class="w-full glass-input px-4 py-3 rounded-xl text-sm mb-4 outline-none">
+
+            <div class="bg-white/50 p-3 rounded-xl mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Shared By</span>
+                    <button @click="toggleSelectAll" class="text-[10px] font-bold text-sky-600">All</button>
+                </div>
+                <div class="flex gap-2">
+                    <label v-for="m in members" :key="m" 
+                           class="flex-1 py-2 text-center rounded-lg text-xs font-bold border transition cursor-pointer"
+                           :class="newExp.involved.includes(m) ? 'bg-sky-500 text-white border-sky-500 shadow-md' : 'bg-white text-slate-400 border-slate-200'">
+                        <input type="checkbox" :value="m" v-model="newExp.involved" class="hidden">{{ m }}
+                    </label>
+                </div>
+            </div>
+
+            <button @click="submitExp" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-slate-200 ios-press">
+                確認記帳
+            </button>
         </div>
 
-        <div class="glass-card p-4 mb-6">
-          <div class="relative h-64 w-full">
-            <div v-if="chartBusy" class="absolute inset-0 flex items-center justify-center text-xs text-slate-400 font-bold">
-              圖表載入中...
+        <div class="space-y-3">
+            <h3 class="font-bold text-slate-400 text-xs uppercase tracking-widest pl-2">Recent</h3>
+            
+            <div v-for="exp in expenses.slice(0, 10)" :key="exp.row" 
+                 @click="openEditExp(exp)"
+                 class="glass-card p-4 rounded-2xl flex justify-between items-center ios-press"
+                 :class="{'opacity-70 border-dashed border-amber-300': isItemPending(exp.row)}">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-white shadow-sm">
+                        {{ exp.item.includes('食') ? '🍔' : (exp.item.includes('交通') ? '✈️' : (exp.item.includes('住') ? '🏨' : '🛍️')) }}
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-800 text-sm">{{ exp.note || exp.item }}</div>
+                        <div class="text-[10px] text-slate-400 font-mono">{{ exp.date.slice(5) }} · {{ exp.payer }}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-bold text-slate-800 font-mono">{{ formatNumber(exp.amount) }} <span class="text-[10px]">{{ exp.currency }}</span></div>
+                    <div v-if="exp.currency!=='NTD'" class="text-[10px] text-slate-400">≈ {{ formatNumber(getAmountTWD(exp)) }}</div>
+                </div>
             </div>
-            <canvas id="expenseChart"></canvas>
-          </div>
-        </div>
-
-        <div class="space-y-3 mb-8">
-          <div v-for="exp in filteredExpenses" :key="exp.row"
-               :class="['glass-card p-4 transition hover:shadow-md border-l-4 border-l-sky-400', isItemPending(exp.row) ? 'pending-sync' : '']">
-            <div class="flex justify-between items-start gap-4">
-              <div class="min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span :class="['tag', getItemTagClass(exp.item)]">{{ exp.item }}</span>
-                  <span class="text-[10px] text-slate-400 font-mono font-bold uppercase">{{ exp.date }} · {{ exp.time }}</span>
-                </div>
-
-                <div class="mt-2 font-bold text-slate-800 text-base break-anywhere allow-select" @click.stop>
-                  {{ exp.note ? exp.note : exp.item }}
-                </div>
-
-                <div class="text-xs text-slate-500 mt-2 flex items-center flex-wrap gap-2">
-                  <span class="bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">{{ exp.payer }}</span>
-                  <span v-if="exp.involved && exp.involved.length > 0" class="bg-orange-50 px-2 py-0.5 rounded text-orange-700 font-bold border border-orange-100 flex items-center gap-1">
-                      <span class="text-[9px] opacity-60">分</span>{{ exp.involved.join('、') }}
-                  </span>
-                  <span class="text-sky-600 font-bold bg-sky-50 px-2 py-0.5 rounded">{{ exp.payment }}</span>
-                  <span class="text-slate-400 font-medium">{{ exp.location }}</span>
-                </div>
-              </div>
-
-              <div class="text-right min-w-[96px] swipe-protected">
-                <div class="font-bold text-slate-800 text-lg tracking-tight">
-                  {{ exp.amount }} <span class="text-[10px] text-slate-400 font-bold">{{ exp.currency }}</span>
-                </div>
-                <div v-if="exp.currency !== 'NTD'" class="text-[10px] text-slate-400 font-mono font-bold mt-1">≈ {{ formatNumber(getAmountTWD(exp)) }}</div>
-                <div class="mt-3 flex gap-2 justify-end opacity-60 hover:opacity-100 transition">
-                  <button @click="openEditExp(exp)" class="text-[10px] text-sky-600 bg-white border border-sky-100 px-2 py-1 rounded">編輯</button>
-                  <button @click="deleteExp(exp)" class="text-[10px] text-red-500 bg-white border border-red-100 px-2 py-1 rounded">刪除</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="filteredExpenses.length===0" class="text-center text-slate-400 py-12 text-sm glass-panel rounded-2xl">尚無消費紀錄</div>
-        </div>
-
-        <div class="glass-card p-6 mb-8">
-          <h3 class="font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2 flex items-center">分帳結算</h3>
-          <div v-for="d in debts" :key="d.from + '_' + d.to"
-               class="flex justify-between items-center py-3 text-sm border-b border-slate-50 last:border-0">
-            <span class="flex items-center gap-2">
-              <span class="font-bold text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100">{{d.from}}</span>
-              <span class="text-slate-300 font-bold">-></span>
-              <span class="font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">{{d.to}}</span>
-            </span>
-            <span class="font-bold text-slate-800 font-mono text-base">{{ formatNumber(d.amount) }}</span>
-          </div>
-          <div v-if="debts.length===0" class="text-center text-slate-400 text-xs py-2">目前大家都付得剛剛好，沒有欠款！</div>
         </div>
       </div>
+
+      <div v-else-if="tab==='analysis'" key="analysis" class="px-5 pb-10">
+         
+         <div class="flex justify-between items-center mb-4 swipe-protected">
+             <h2 class="font-bold text-lg text-slate-700">Overview</h2>
+             <button @click="openRateModal" class="bg-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border text-slate-600">匯率設定</button>
+         </div>
+
+         <div class="relative overflow-hidden rounded-[2rem] bg-slate-900 p-6 text-white shadow-xl mb-6">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-[80px] opacity-20 transform translate-x-1/2 -translate-y-1/2"></div>
+            
+            <div class="relative z-10">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">剩餘預算</div>
+                        <div class="text-3xl font-black tracking-tight font-mono">
+                            ${{ formatNumber(Math.round(500000 - publicSpent)) }}
+                        </div>
+                    </div>
+                    <div class="text-right">
+                         <div class="text-slate-400 text-[10px] font-bold">總預算</div>
+                         <div class="font-mono text-sm font-bold opacity-80">$500,000</div>
+                    </div>
+                </div>
+                
+                <div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden mb-2">
+                    <div class="bg-gradient-to-r from-sky-400 to-blue-500 h-full rounded-full transition-all duration-1000" :style="{width: Math.min((publicSpent/500000)*100, 100) + '%'}"></div>
+                </div>
+                <div class="text-right text-[10px] font-bold text-sky-300">已使用 {{ Math.round(publicSpent/500000*100) }}%</div>
+            </div>
+         </div>
+
+         <div class="glass-card p-6 rounded-3xl mb-6 relative">
+             <h3 class="font-bold text-slate-800 mb-4">消費分佈</h3>
+             <div class="h-48 relative">
+                <canvas id="expenseChart"></canvas>
+                <div v-if="chartBusy" class="absolute inset-0 flex items-center justify-center bg-white/50 text-xs font-bold">Loading...</div>
+             </div>
+         </div>
+
+         <div class="glass-card p-6 rounded-3xl">
+             <h3 class="font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">分帳結算</h3>
+             <div v-if="debts.length === 0" class="text-center text-slate-400 text-xs py-4">目前沒有欠款 🎉</div>
+             <div v-for="d in debts" :key="d.from+d.to" class="flex items-center justify-between py-2 border-b border-dashed border-slate-100 last:border-0">
+                 <div class="flex items-center gap-2 text-sm">
+                     <span class="font-bold text-slate-700">{{ d.from }}</span>
+                     <span class="text-[10px] text-slate-400">給</span>
+                     <span class="font-bold text-slate-700">{{ d.to }}</span>
+                 </div>
+                 <div class="font-mono font-bold text-sky-600">NT$ {{ formatNumber(d.amount) }}</div>
+             </div>
+         </div>
+         
+         <div class="h-10"></div>
+      </div>
+
     </Transition>
   </div>
 
+  <nav class="fixed bottom-0 left-0 right-0 z-40 glass-tabbar safe-pb swipe-protected">
+    <div class="flex justify-around items-center h-[60px]">
+      <button @click="tab='itinerary'" class="flex-1 flex flex-col items-center justify-center gap-1 group">
+        <div class="w-12 h-8 rounded-full flex items-center justify-center transition-all duration-300" 
+             :class="tab==='itinerary' ? 'bg-sky-100 text-sky-600' : 'text-slate-400 group-hover:bg-slate-50'">
+           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+        </div>
+        <span class="text-[10px] font-bold" :class="tab==='itinerary' ? 'text-sky-600' : 'text-slate-400'">行程</span>
+      </button>
+
+      <button @click="tab='expense'" class="flex-1 flex flex-col items-center justify-center gap-1 group">
+        <div class="w-12 h-8 rounded-full flex items-center justify-center transition-all duration-300"
+             :class="tab==='expense' ? 'bg-sky-100 text-sky-600' : 'text-slate-400 group-hover:bg-slate-50'">
+           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+        <span class="text-[10px] font-bold" :class="tab==='expense' ? 'text-sky-600' : 'text-slate-400'">記帳</span>
+      </button>
+
+      <button @click="changeTabToAnalysis" class="flex-1 flex flex-col items-center justify-center gap-1 group">
+        <div class="w-12 h-8 rounded-full flex items-center justify-center transition-all duration-300"
+             :class="tab==='analysis' ? 'bg-sky-100 text-sky-600' : 'text-slate-400 group-hover:bg-slate-50'">
+           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>
+        </div>
+        <span class="text-[10px] font-bold" :class="tab==='analysis' ? 'text-sky-600' : 'text-slate-400'">分析</span>
+      </button>
+    </div>
+  </nav>
+
   <Transition name="fade">
-    <div v-if="showImgViewer" 
-         class="img-viewer-overlay" 
-         @click="closeImgViewer"
-         @touchstart="handleImgTouchStart"
-         @touchmove="handleImgTouchMove"
-         @touchend="handleImgTouchEnd"
-         @dblclick="toggleZoom"> <div v-if="imgGesture.scale === 1" :class="['pull-hint', {'show-hint': imgGesture.isPulling}]">↓ 下拉關閉</div>
-        
-        <div class="img-viewer-close" @click.stop="closeImgViewer">✕</div>
-        
-        <img :src="viewingImg" 
-             ref="imgViewerEl"
-             class="img-viewer-img" 
-             @click.stop>
-    </div>
+    <div v-if="showItinModal" class="bottom-sheet-overlay" @click="showItinModal=false"></div>
   </Transition>
+  <Transition name="slide-up">
+    <div v-if="showItinModal" class="bottom-sheet swipe-protected" @click.stop>
+      <div class="w-full flex justify-center pt-3 pb-1" @click="showItinModal=false">
+         <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+      </div>
+      
+      <div class="px-6 py-4 border-b border-slate-50 flex justify-between items-center">
+         <h3 class="font-black text-xl text-slate-800">{{ isEditing ? 'Edit Activity' : 'New Activity' }}</h3>
+         <button @click="showItinModal=false" class="bg-slate-100 rounded-full w-8 h-8 font-bold text-slate-500">✕</button>
+      </div>
 
-  <Transition name="modal">
-    <div v-if="showItinModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 swipe-protected">
-      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showItinModal=false"></div>
-      <div class="modal-content w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10">
-        <div class="bg-slate-50 p-4 border-b flex justify-between items-center">
-          <h3 class="font-bold text-slate-800">{{ isEditing ? '編輯行程' : '新增行程' }}</h3>
-          <button @click="showItinModal=false" class="text-slate-400 p-2">✕</button>
-        </div>
-        <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-          <div class="flex gap-3">
-            <div class="w-1/2">
-              <label class="text-[10px] font-bold text-slate-400 uppercase">開始時間</label>
-              <input type="time" v-model="itinForm.startTime" class="w-full glass-input p-3 rounded-xl mt-1 outline-none font-bold">
-            </div>
-            <div class="w-1/2">
-              <label class="text-[10px] font-bold text-slate-400 uppercase">結束時間 (選)</label>
-              <input type="time" v-model="itinForm.endTime" class="w-full glass-input p-3 rounded-xl mt-1 outline-none font-bold">
-            </div>
-          </div>
-          <div>
-            <label class="text-[10px] font-bold text-slate-400 uppercase">類別</label>
-            <div class="flex gap-2 mt-1 flex-wrap">
-              <button v-for="c in ['景點','飲食','交通','住宿','其他']" :key="c" @click="itinForm.category=c"
-                      :class="['flex-1 min-w-[3rem] py-2 rounded-xl text-xs font-bold border transition',
-                               itinForm.category===c ? 'bg-sky-500 text-white border-sky-500 shadow-md' : 'bg-white text-slate-500 border-slate-200']">
-                {{c}}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label class="text-[10px] font-bold text-slate-400 uppercase">標題</label>
-            <input v-model="itinForm.title" class="w-full glass-input p-3 rounded-xl mt-1 outline-none font-bold placeholder-slate-300" placeholder="行程名稱">
-          </div>
-          <div>
-            <label class="text-[10px] font-bold text-slate-400 uppercase">圖片 (點擊上傳)</label>
-            <div class="img-upload-btn mt-1">
-                <div v-if="!itinForm.imgUrl" class="img-preview">
-                    <span>+ 選擇照片</span>
+      <div class="overflow-y-auto p-6 space-y-5">
+         <div class="flex gap-4">
+             <div class="flex-1">
+                 <label class="text-[10px] font-bold text-slate-400 uppercase">Start</label>
+                 <input type="time" v-model="itinForm.startTime" class="w-full glass-input h-12 rounded-xl px-3 font-bold mt-1">
+             </div>
+             <div class="flex-1">
+                 <label class="text-[10px] font-bold text-slate-400 uppercase">End</label>
+                 <input type="time" v-model="itinForm.endTime" class="w-full glass-input h-12 rounded-xl px-3 font-bold mt-1">
+             </div>
+         </div>
+
+         <div>
+             <label class="text-[10px] font-bold text-slate-400 uppercase">Category</label>
+             <div class="flex gap-2 mt-1 overflow-x-auto no-scrollbar py-1">
+                 <button v-for="c in ['景點','飲食','交通','住宿','其他']" :key="c" @click="itinForm.category=c"
+                         class="px-4 py-2 rounded-full text-xs font-bold border transition whitespace-nowrap"
+                         :class="itinForm.category===c ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-slate-500 border-slate-200'">
+                    {{c}}
+                 </button>
+             </div>
+         </div>
+
+         <div class="space-y-3">
+             <input v-model="itinForm.title" placeholder="What are we doing?" class="w-full glass-input h-12 rounded-xl px-4 font-bold text-slate-800">
+             <input v-model="itinForm.location" placeholder="📍 Location" class="w-full glass-input h-12 rounded-xl px-4 text-sm">
+             <input v-model="itinForm.link" placeholder="🔗 Link" class="w-full glass-input h-12 rounded-xl px-4 text-sm text-blue-500">
+         </div>
+
+         <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Photo</label>
+            <div class="relative w-full h-32 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden">
+                <img v-if="itinForm.imgUrl" :src="itinForm.imgUrl" class="w-full h-full object-cover">
+                <div v-else class="text-slate-400 text-xs font-bold flex flex-col items-center">
+                    <span>📷 Tap to upload</span>
                 </div>
-                <div v-else class="relative">
-                    <img :src="itinForm.imgUrl" class="w-full h-32 object-cover rounded-xl border border-slate-200">
-                    <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md text-xs font-bold px-2">移除</button>
-                </div>
-                <input type="file" accept="image/*" @change="handleImageUpload" v-if="!itinForm.imgUrl || itinForm.newImageBase64">
+                <input type="file" accept="image/*" @change="handleImageUpload" class="absolute inset-0 opacity-0 cursor-pointer">
+                <button v-if="itinForm.imgUrl" @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 text-xs">✕</button>
             </div>
-          </div>
-          <div>
-            <label class="text-[10px] font-bold text-slate-400 uppercase">地點 (Google Maps)</label>
-            <input v-model="itinForm.location" class="w-full glass-input p-3 rounded-xl mt-1 outline-none text-sm" placeholder="輸入地點">
-          </div>
-          <div>
-            <label class="text-[10px] font-bold text-slate-400 uppercase">連結 (選)</label>
-            <input v-model="itinForm.link" class="w-full glass-input p-3 rounded-xl mt-1 outline-none text-sm text-blue-600" placeholder="https://...">
-          </div>
-          <div>
-            <label class="text-[10px] font-bold text-slate-400 uppercase">備註</label>
-            <textarea v-model="itinForm.note" rows="3" class="w-full glass-input p-3 rounded-xl mt-1 outline-none text-sm" placeholder="備註事項..."></textarea>
-          </div>
-        </div>
-        <div class="p-4 bg-slate-50 border-t flex gap-3">
-          <button @click="showItinModal=false" class="flex-1 btn-cancel py-3 rounded-xl font-bold shadow-sm">取消</button>
-          <button @click="submitItin" class="flex-1 btn-glacier py-3 rounded-xl font-bold shadow-lg">儲存</button>
-        </div>
+         </div>
+
+         <textarea v-model="itinForm.note" rows="3" placeholder="Notes..." class="w-full glass-input rounded-xl p-4 text-sm"></textarea>
+         
+         <div class="flex gap-3 pt-4">
+             <button v-if="isEditing" @click="deleteItin(itinForm)" class="flex-1 bg-red-50 text-red-500 py-3 rounded-xl font-bold">Delete</button>
+             <button @click="submitItin" class="flex-[2] bg-sky-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-sky-200">Save</button>
+         </div>
       </div>
     </div>
   </Transition>
 
-  <Transition name="modal">
-    <div v-if="showExpModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 swipe-protected">
-      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showExpModal=false"></div>
-      <div class="modal-content w-full max-w-sm bg-white rounded-3xl shadow-2xl relative z-10 p-6 space-y-4 max-h-[85vh] overflow-y-auto">
-        <h3 class="font-bold text-slate-800 text-lg">編輯消費</h3>
+  <Transition name="fade">
+    <div v-if="showExpModal" class="bottom-sheet-overlay" @click="showExpModal=false"></div>
+  </Transition>
+  <Transition name="slide-up">
+    <div v-if="showExpModal" class="bottom-sheet swipe-protected" @click.stop>
+       <div class="w-full flex justify-center pt-3 pb-1" @click="showExpModal=false"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
+       
+       <div class="px-6 py-4 flex justify-between items-center">
+         <h3 class="font-black text-xl text-slate-800">Edit Expense</h3>
+         <button @click="showExpModal=false" class="bg-slate-100 rounded-full w-8 h-8 font-bold text-slate-500">✕</button>
+       </div>
+
+       <div class="p-6 space-y-4 overflow-y-auto">
+          <div class="flex gap-2">
+             <select v-model="editExpForm.currency" class="bg-slate-100 rounded-lg px-2 font-bold text-xs"><option>NTD</option><option>NOK</option><option>ISK</option><option>EUR</option></select>
+             <input type="number" v-model="editExpForm.amount" class="flex-1 text-right text-2xl font-bold border-b border-slate-200 outline-none pb-1">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+             <select v-model="editExpForm.payer" class="glass-input h-10 px-2 rounded-lg font-bold text-xs"><option>家齊</option><option>亭穎</option><option>媽媽</option></select>
+             <select v-model="editExpForm.item" class="glass-input h-10 px-2 rounded-lg font-bold text-xs"><option>早餐</option><option>午餐</option><option>住宿</option><option>交通（機票）</option><option>其他</option></select>
+          </div>
+          <input v-model="editExpForm.note" class="w-full glass-input h-10 px-3 rounded-lg text-sm" placeholder="備註">
+          
+          <div class="bg-slate-50 p-3 rounded-lg">
+             <div class="flex justify-between mb-2"><span class="text-[10px] font-bold text-slate-400">SHARED BY</span><button @click="toggleSelectAllEdit" class="text-[10px] text-sky-500 font-bold">ALL</button></div>
+             <div class="flex gap-2">
+                 <label v-for="m in members" :key="m" class="flex-1 border rounded px-2 py-2 text-center text-xs font-bold transition" 
+                        :class="(editExpForm.involved||[]).includes(m)?'bg-white border-sky-400 text-sky-600 shadow-sm':'text-slate-400 border-slate-200'">
+                     <input type="checkbox" :value="m" v-model="editExpForm.involved" class="hidden">{{m}}
+                 </label>
+             </div>
+          </div>
+          
+          <div class="flex gap-3 pt-2">
+             <button @click="deleteExp(editExpForm)" class="flex-1 bg-red-50 text-red-500 py-3 rounded-xl font-bold">Delete</button>
+             <button @click="submitEditExp" class="flex-[2] bg-sky-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-sky-200">Update</button>
+          </div>
+       </div>
+    </div>
+  </Transition>
+
+  <Transition name="fade">
+    <div v-if="showRateModal" class="fixed inset-0 z-50 flex items-center justify-center p-6 swipe-protected">
+       <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showRateModal=false"></div>
+       <div class="bg-white w-full max-w-xs rounded-3xl p-6 relative z-10 shadow-2xl">
+          <h3 class="font-bold text-lg mb-4 text-center">Exchange Rates</h3>
+          <div class="space-y-3">
+             <div v-for="c in ['NOK','ISK','EUR','GBP','AED']" :key="c" class="flex items-center justify-between">
+                <span class="font-bold text-slate-400 w-10">{{c}}</span>
+                <input type="number" v-model="tempRates[c]" class="w-24 text-right bg-slate-50 rounded p-2 font-mono font-bold border border-slate-100 focus:border-sky-400 outline-none">
+             </div>
+          </div>
+          <button @click="saveRates" class="w-full mt-6 bg-slate-900 text-white py-3 rounded-xl font-bold">Save</button>
+       </div>
+    </div>
+  </Transition>
+
+  <Transition name="fade">
+    <div v-if="showImgViewer" class="img-viewer" @click="closeImgViewer"
+         @touchstart="handleImgTouchStart" @touchmove="handleImgTouchMove" @touchend="handleImgTouchEnd">
         
-        <div class="flex gap-3">
-          <select v-model="editExpForm.payer" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
-            <option value="" disabled selected>泥是誰</option><option>家齊</option><option>亭穎</option><option>媽媽</option>
-          </select>
-          <select v-model="editExpForm.location" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
-            <option value="" disabled selected>在哪消費</option><option>台灣</option><option>杜拜</option><option>挪威</option><option>冰島</option><option>英國</option>
-          </select>
-        </div>
+        <button class="absolute top-12 right-5 w-10 h-10 bg-white/20 rounded-full text-white flex items-center justify-center backdrop-blur-md z-50 border border-white/20" @click.stop="closeImgViewer">✕</button>
+        
+        <div v-if="imgGesture.scale===1" class="absolute top-16 text-white/50 text-xs font-bold tracking-widest px-3 py-1 bg-black/30 rounded-full backdrop-blur pointer-events-none" :style="{opacity: imgGesture.isPulling ? 1 : 0}">RELEASE TO CLOSE</div>
 
-        <div class="flex gap-3">
-          <select v-model="editExpForm.item" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
-            <option value="" disabled selected>消費項目</option>
-            <option>早餐</option><option>午餐</option><option>晚餐</option><option>零食</option><option>住宿</option>
-            <option>交通（機票）</option><option>交通（租車）</option><option>交通（停車費）</option><option>交通（油錢）</option>
-            <option>紀念品</option><option>門票</option><option>其他</option>
-          </select>
-          <select v-model="editExpForm.payment" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
-            <option value="" disabled selected>付款方式</option><option>現金</option><option>信用卡-國泰</option><option>信用卡-永豐</option><option>信用卡-元大</option>
-          </select>
-        </div>
-
-        <div class="flex gap-3">
-          <select v-model="editExpForm.currency" class="w-1/3 glass-input p-3 rounded-xl text-sm font-bold bg-sky-50 text-sky-700">
-            <option>NTD</option><option>NOK</option><option>ISK</option><option>EUR</option><option>GBP</option><option>AED</option>
-          </select>
-          <input type="number" v-model="editExpForm.amount" class="w-2/3 glass-input p-3 rounded-xl text-xl font-bold" placeholder="金額">
-        </div>
-
-        <div class="text-xs text-right text-slate-400 font-mono font-bold" v-if="editExpForm.amount && editExpForm.currency !== 'NTD'">
-            ≈ {{ formatNumber(Math.round(editExpForm.amount * rates[editExpForm.currency])) }} NTD
-        </div>
-
-        <input v-model="editExpForm.note" class="w-full glass-input p-3 rounded-xl text-sm" placeholder="備註">
-
-        <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-          <div class="flex justify-between items-center mb-3">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">分攤給</span>
-            <button @click="toggleSelectAllEdit" class="text-[10px] text-sky-600 font-bold bg-white px-2 py-1 rounded shadow-sm">全選</button>
-          </div>
-          <div class="flex gap-2 flex-wrap">
-            <label v-for="m in members" :key="m"
-                   class="flex flex-1 justify-center items-center space-x-2 border px-4 py-3 rounded-xl cursor-pointer transition-all duration-200"
-                   :class="(editExpForm.involved || []).includes(m)?'bg-white border-sky-400 text-sky-700 shadow-md transform -translate-y-0.5':'bg-transparent border-slate-200 text-slate-400'">
-              <input type="checkbox" :value="m" v-model="editExpForm.involved" class="hidden"><span class="text-sm font-bold">{{m}}</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="flex gap-2">
-          <button @click="submitEditExp" class="flex-1 btn-glacier py-3 rounded-xl font-bold">更新</button>
-          <button @click="showExpModal=false" class="px-4 bg-slate-100 text-slate-500 rounded-xl font-bold">取消</button>
-        </div>
-      </div>
-    </div>
-  </Transition>
-
-  <Transition name="modal">
-    <div v-if="showRateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 swipe-protected">
-      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showRateModal=false"></div>
-      <div class="modal-content w-full max-w-sm bg-white rounded-3xl shadow-2xl relative z-10 p-6">
-        <h3 class="font-bold text-slate-800 mb-4">設定匯率 (對台幣)</h3>
-        <div class="space-y-3">
-          <div v-for="c in ['NOK','ISK','EUR','GBP','AED']" :key="c" class="flex items-center gap-3">
-            <span class="w-10 font-bold text-slate-400 text-sm">{{c}}</span>
-            <input type="number" v-model="tempRates[c]" class="flex-1 glass-input p-2 rounded-lg font-mono font-bold text-right">
-          </div>
-        </div>
-        <button @click="saveRates" class="w-full btn-glacier mt-6 py-3 rounded-xl font-bold">儲存設定</button>
-      </div>
+        <img :src="viewingImg" ref="imgViewerEl" class="max-w-full max-h-full object-contain transition-transform duration-0 ease-linear" @dblclick="toggleZoom" @click.stop style="will-change: transform;">
     </div>
   </Transition>
 
 </div>
 
 <script>
+// Logic Context (Preserved)
 const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbz6PZtqLJzlS2a71R-RfZjpJCuqJVPoP7RuNxEe74mS_uvxBejMNGKboFSn2ArNnXAu/exec';
 
+// Service Worker Registration
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
   });
 }
 
+// API Helper
 async function callApi(action, data = null, method = 'GET') {
   const options = { method };
   if (method === 'POST') {
@@ -821,17 +613,11 @@ async function callApi(action, data = null, method = 'GET') {
   }
   let url = YOUR_GAS_URL;
   if (method === 'GET') url += `?action=${action}`;
-
   try {
     const response = await fetch(url, options);
-    const ct = response.headers.get("content-type");
-    if (ct && ct.indexOf("application/json") === -1) throw new Error("Server Response Not JSON");
     if (!response.ok) throw new Error("Network error");
     return await response.json();
-  } catch(e) {
-    console.warn("API Fail:", e);
-    return null; 
-  }
+  } catch(e) { return null; }
 }
 
 const { createApp, ref, computed, onMounted, nextTick, watch, onBeforeUnmount } = Vue;
@@ -843,13 +629,10 @@ createApp({
     const isFirstLoad = ref(true);
     const isPullRefreshing = ref(false);
     const isOnline = ref(navigator.onLine);
-    
-    // Status Flags
     const isSyncing = ref(false);
-
-    // Sync Queue
     const syncQueue = ref([]);
-    
+    const scrollY = ref(0); // Track scroll for header effect
+
     const members = ref([]);
     const expenses = ref([]);
     const itinerary = ref([]);
@@ -861,34 +644,19 @@ createApp({
     const todayDate = ref('');
     const todayWeekday = ref('');
 
-    // Image Viewer State & Gesture Logic
+    // --- Image Viewer & Gestures ---
     const showImgViewer = ref(false);
     const viewingImg = ref('');
     const imgViewerEl = ref(null);
-    const imgGesture = ref({ 
-        startX: 0, startY: 0, 
-        currentX: 0, currentY: 0, 
-        scale: 1, 
-        isPulling: false,
-        isZooming: false,
-        startDistance: 0
-    });
+    const imgGesture = ref({ startX: 0, startY: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 });
 
-    // PULL DOWN + PINCH ZOOM LOGIC
-    const getDistance = (touches) => {
-        return Math.hypot(
-            touches[0].clientX - touches[1].clientX,
-            touches[0].clientY - touches[1].clientY
-        );
-    };
+    const getDistance = (touches) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
 
     const handleImgTouchStart = (e) => {
         if (e.touches.length === 2) {
-            // Pinch start
             imgGesture.value.isZooming = true;
             imgGesture.value.startDistance = getDistance(e.touches);
         } else if (e.touches.length === 1) {
-            // Pan/Pull start
             imgGesture.value.startX = e.touches[0].clientX;
             imgGesture.value.startY = e.touches[0].clientY;
             imgGesture.value.isPulling = false;
@@ -897,103 +665,49 @@ createApp({
 
     const handleImgTouchMove = (e) => {
         if(!showImgViewer.value) return;
-        e.preventDefault(); // Prevent native scroll
-
+        e.preventDefault(); 
         if (e.touches.length === 2 && imgGesture.value.isZooming) {
-            // Pinching
             const dist = getDistance(e.touches);
-            const scaleChange = dist / imgGesture.value.startDistance;
-            // Limit zoom range
-            let newScale = imgGesture.value.scale * scaleChange;
-            newScale = Math.max(1, Math.min(newScale, 4));
-            
-            if (imgViewerEl.value) {
-                imgViewerEl.value.style.transform = `scale(${newScale}) translate(${imgGesture.value.currentX}px, ${imgGesture.value.currentY}px)`;
-            }
-            // Store tentative scale (applied fully on end for simplicity, or continuously)
-            // Simplified: we just visual transform here, commit on end is tricky without matrix
-            // For robust simple zoom: just apply scale visually
-            imgViewerEl.value.style.transform = `scale(${newScale})`;
-            imgGesture.value.tempScale = newScale; 
-        } 
-        else if (e.touches.length === 1) {
+            const scale = Math.max(1, Math.min(imgGesture.value.scale * (dist / imgGesture.value.startDistance), 4));
+            if(imgViewerEl.value) imgViewerEl.value.style.transform = `scale(${scale})`;
+            imgGesture.value.tempScale = scale;
+        } else if (e.touches.length === 1 && imgGesture.value.scale === 1) {
             const dy = e.touches[0].clientY - imgGesture.value.startY;
-            const dx = e.touches[0].clientX - imgGesture.value.startX;
-
-            // Only allow pull-down close if NOT zoomed in
-            if (imgGesture.value.scale === 1) {
-                if (dy > 0) {
-                    imgGesture.value.currentY = dy;
-                    imgGesture.value.isPulling = true;
-                    if (imgViewerEl.value) {
-                        imgViewerEl.value.style.transform = `translateY(${dy}px) scale(${1 - dy/1000})`;
-                    }
-                    const overlay = document.querySelector('.img-viewer-overlay');
-                    if(overlay) overlay.style.backgroundColor = `rgba(0,0,0,${Math.max(0, 0.98 - dy/600)})`;
-                }
-            } else {
-                // Pan logic (simplified: moving image when zoomed)
-                // Note: proper panning requires tracking limits, this is basic free-move
-                if (imgViewerEl.value) {
-                     imgViewerEl.value.style.transform = `scale(${imgGesture.value.scale}) translate(${dx/imgGesture.value.scale}px, ${dy/imgGesture.value.scale}px)`;
-                }
+            if (dy > 0) {
+                imgGesture.value.currentY = dy;
+                imgGesture.value.isPulling = true;
+                if(imgViewerEl.value) imgViewerEl.value.style.transform = `translateY(${dy}px) scale(${1 - dy/1000})`;
             }
         }
     };
 
     const handleImgTouchEnd = (e) => {
         if (imgGesture.value.isZooming) {
-            // Commit zoom
-            if (imgGesture.value.tempScale) {
-                imgGesture.value.scale = imgGesture.value.tempScale;
-            }
+            if (imgGesture.value.tempScale) imgGesture.value.scale = imgGesture.value.tempScale;
             imgGesture.value.isZooming = false;
-            // Reset to 1 if user pinched out too much
-            if (imgGesture.value.scale < 1) {
-                imgGesture.value.scale = 1;
-                resetImgTransform();
-            }
+            if (imgGesture.value.scale < 1) { imgGesture.value.scale = 1; resetImgTransform(); }
         } else if (imgGesture.value.isPulling) {
-            if (imgGesture.value.currentY > 100) {
-                closeImgViewer();
-            } else {
-                resetImgTransform();
-                const overlay = document.querySelector('.img-viewer-overlay');
-                if(overlay) overlay.style.backgroundColor = '';
-            }
+            if (imgGesture.value.currentY > 100) closeImgViewer();
+            else resetImgTransform();
             imgGesture.value.isPulling = false;
         }
     };
 
     const resetImgTransform = () => {
-        if (imgViewerEl.value) {
-            imgViewerEl.value.style.transform = `scale(${imgGesture.value.scale})`;
-        }
+        if (imgViewerEl.value) imgViewerEl.value.style.transform = `scale(${imgGesture.value.scale})`;
     };
 
     const toggleZoom = () => {
-        if (imgGesture.value.scale > 1) {
-            imgGesture.value.scale = 1;
-        } else {
-            imgGesture.value.scale = 2.5;
-        }
+        imgGesture.value.scale = (imgGesture.value.scale > 1) ? 1 : 2.5;
         resetImgTransform();
     };
 
+    // --- App Logic ---
     const tripStatus = computed(() => {
       const now = new Date();
       const start = new Date('2026-08-30');
-      const end = new Date('2026-09-26');
-      now.setHours(0,0,0,0); start.setHours(0,0,0,0); end.setHours(0,0,0,0);
-      
       if (now < start) return `倒數 ${Math.ceil((start - now)/86400000)} 天`;
-      
-      if (now >= start && now <= end) {
-         const diff = Math.floor((now - start)/86400000) + 1;
-         return `DAY ${diff}`;
-      }
-      
-      return '';
+      return 'ON TRIP';
     });
 
     const tripDates = [];
@@ -1003,753 +717,256 @@ createApp({
     }
     const selDate = ref(tripDates[0].date);
     
-    // Filter State
-    const showFilterMenu = ref(false);
-    const filters = ref({
-        date: 'ALL',
-        item: 'ALL',
-        payer: 'ALL',
-        location: 'ALL',
-        payment: 'ALL'
-    });
-
+    // UI State
     const showRateModal = ref(false);
     const showItinModal = ref(false);
     const showExpModal = ref(false);
     const isEditing = ref(false);
-    const itinForm = ref({ row: null, startTime: '09:00', endTime: '', category: '景點', title: '', location: '', link: '', note: '', imgUrl: '', newImageBase64: null, deleteImage: false, imgId: '' });
+    const itinForm = ref({ row: null, startTime: '09:00', endTime: '', category: '景點', title: '', location: '', link: '', note: '', imgUrl: '' });
     const newExp = ref({ payer: '', location: '', item: '', payment: '', currency: 'NTD', amount: null, involved: [], note: '' });
     const editExpForm = ref({});
     const tempRates = ref({});
 
+    // Watchers
     watch(() => newExp.value.payer, (v) => { if (v) newExp.value.involved = [v]; });
-
-    const pullDistance = ref(0);
-    const refreshText = computed(() => isPullRefreshing.value ? '更新中...' : '下拉更新');
-
-    const initDate = () => {
-      const now = new Date();
-      todayDate.value = now.getFullYear() + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + String(now.getDate()).padStart(2,'0');
-      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-      todayWeekday.value = days[now.getDay()];
-    };
-
-    /* iOS Gesture Engine (15% Logic) with Text Selection Protection */
-    const gesture = {
-      active:false, mode:null,
-      startX:0, startY:0, dx:0, dy:0,
-      startedAtLeftEdge:false,
-      startedAtRightEdge:false,
-      inSelectable:false,
-      selectIntent:false, // New Flag: If user holds still for a moment, lock as selection
-      longPressTimer:null
-    };
     
-    // Check if user has selected text
-    const hasTextSelection = () => {
-      const sel = window.getSelection();
-      return !!(sel && sel.toString && sel.toString().length > 0);
-    };
-
-    const isBlockedTarget = (target) => {
-      if (target.closest('.swipe-protected')) return true;
-      const tag = (target.tagName || '').toLowerCase();
-      if (['input','textarea','select','button','a','label'].includes(tag)) return true;
-      return false;
-    };
-
-    const clearLongPress = () => {
-      if (gesture.longPressTimer) {
-        clearTimeout(gesture.longPressTimer);
-        gesture.longPressTimer = null;
-      }
-    };
-
+    // Pull Refresh Logic
+    const pullDistance = ref(0);
     const attachGestureListeners = () => {
       const el = scrollContainer.value;
       if (!el) return;
+      
+      let startY = 0;
+      let pulling = false;
 
-      const onTouchStart = (e) => {
-        const t = e.touches[0];
-        gesture.active = true;
-        gesture.mode = null;
-        gesture.dx = 0;
-        gesture.dy = 0;
-        gesture.startX = t.clientX;
-        gesture.startY = t.clientY;
-        
-        // 15% Edge Logic
-        const w = window.innerWidth;
-        const edgeThreshold = w * 0.15;
-        
-        gesture.startedAtLeftEdge = (gesture.startX <= edgeThreshold);
-        gesture.startedAtRightEdge = (gesture.startX >= w - edgeThreshold);
-
-        gesture.inSelectable = !!e.target.closest('.allow-select');
-        gesture.selectIntent = false; // Reset intent
-        clearLongPress();
-
-        if (gesture.inSelectable) {
-          // If touching text, wait 220ms. If no move -> assume selection intended
-          gesture.longPressTimer = setTimeout(() => {
-            gesture.selectIntent = true;
-          }, 220);
+      el.addEventListener('touchstart', (e) => {
+        if (el.scrollTop <= 0) {
+            startY = e.touches[0].clientY;
+            pulling = true;
         }
+      }, { passive: true });
 
-        gesture.blocked = isBlockedTarget(e.target);
-      };
-
-      const onTouchMove = (e) => {
-        if (!gesture.active) return;
-        if (gesture.blocked) return;
-
-        const t = e.touches[0];
-        gesture.dx = t.clientX - gesture.startX;
-        gesture.dy = t.clientY - gesture.startY;
-        const absX = Math.abs(gesture.dx);
-        const absY = Math.abs(gesture.dy);
-
-        // If user moved significantly (>10px), cancel the "Selection Intent" timer
-        // This means it's a swipe, not a hold
-        if (gesture.inSelectable) {
-           if (absX > 10 || absY > 10) clearLongPress();
-        }
-
-        // CRITICAL: If intent is already selection or text is selected, STOP gesture logic
-        if (gesture.inSelectable && (gesture.selectIntent || hasTextSelection())) return;
-
-        if (!gesture.mode) {
-          if (absX < 10 && absY < 10) return;
-          gesture.mode = (absX > absY) ? 'h' : 'v';
-        }
-
-        if (gesture.mode === 'h') {
-          if ((gesture.startedAtLeftEdge || gesture.startedAtRightEdge) && e.cancelable) {
-             e.preventDefault();
-          }
-          return;
-        }
-
-        if (gesture.mode === 'v') {
-          const scroller = scrollContainer.value;
-          const isTop = scroller ? scroller.scrollTop <= 0 : true;
-          if (isTop && gesture.dy > 0) {
-            if (e.cancelable) e.preventDefault();
-            pullDistance.value = Math.min(72, Math.pow(gesture.dy, 0.7));
-          }
-        }
-      };
-
-      const onTouchEnd = () => {
-        if (!gesture.active) return;
-        gesture.active = false;
-        clearLongPress();
-
-        // CRITICAL PROTECTION for iOS Menu
-        // If text is selected OR we determined intent was selection -> DO NOTHING
-        if (gesture.inSelectable && (gesture.selectIntent || hasTextSelection())) {
-          pullDistance.value = 0;
-          gesture.mode = null;
-          return; // Exit immediately, do not trigger date switch
-        }
-
-        if (pullDistance.value > 60) {
-          pullDistance.value = 60;
-          isPullRefreshing.value = true;
-          loadData();
-          return;
+      el.addEventListener('touchmove', (e) => {
+        if (!pulling) return;
+        const y = e.touches[0].clientY;
+        const dy = y - startY;
+        if (dy > 0 && el.scrollTop <= 0) {
+            // e.preventDefault(); // Chrome requires passive:false for preventDefault
+            pullDistance.value = Math.min(dy * 0.4, 80); // Damping
         } else {
-          pullDistance.value = 0;
+            pullDistance.value = 0;
         }
+      }, { passive: true });
 
-        if (gesture.mode === 'h') {
-           const absX = Math.abs(gesture.dx);
-           if (absX > 60) {
-             if (gesture.startedAtLeftEdge && gesture.dx > 0) {
-                if (tab.value === 'expense') tab.value = 'itinerary';
-                else if (tab.value === 'analysis') tab.value = 'expense';
-             }
-             else if (gesture.startedAtRightEdge && gesture.dx < 0) {
-                if (tab.value === 'itinerary') tab.value = 'expense';
-                else if (tab.value === 'expense') changeTabToAnalysis();
-             }
-             else if (tab.value === 'itinerary' && !gesture.startedAtLeftEdge && !gesture.startedAtRightEdge) {
-                if (gesture.dx < 0) switchDay('next');
-                else switchDay('prev');
-             }
-           }
+      el.addEventListener('touchend', () => {
+        if (pullDistance.value > 60) {
+            isPullRefreshing.value = true;
+            loadData();
         }
-
-        gesture.mode = null;
-        gesture.inSelectable = false;
-        gesture.selectIntent = false;
-      };
-
-      attachGestureListeners._handlers = { onTouchStart, onTouchMove, onTouchEnd };
-
-      el.addEventListener('touchstart', onTouchStart, { passive: true });
-      el.addEventListener('touchmove',  onTouchMove,  { passive: false });
-      el.addEventListener('touchend',   onTouchEnd,   { passive: true });
-      el.addEventListener('touchcancel',onTouchEnd,   { passive: true });
+        pulling = false;
+        pullDistance.value = 0;
+      }, { passive: true });
     };
 
-    const detachGestureListeners = () => {
-      const el = scrollContainer.value;
-      const h = attachGestureListeners._handlers;
-      if (!el || !h) return;
-      el.removeEventListener('touchstart', h.onTouchStart);
-      el.removeEventListener('touchmove', h.onTouchMove);
-      el.removeEventListener('touchend', h.onTouchEnd);
-      el.removeEventListener('touchcancel', h.onTouchEnd);
-      attachGestureListeners._handlers = null;
+    // Scroll Handler for Header
+    const handleScroll = (e) => {
+        scrollY.value = e.target.scrollTop;
     };
 
-    const saveLocal = (data) => {
-      try {
-        const toSave = {
-           expenses: expenses.value,
-           itinerary: itinerary.value,
-           members: members.value,
-           rates: rates.value
-        };
-        localStorage.setItem('tripData_v36', JSON.stringify(toSave));
-        localStorage.setItem('syncQueue_v36', JSON.stringify(syncQueue.value));
-      } catch(e){}
+    // --- Data Handling ---
+    const saveLocal = () => {
+        localStorage.setItem('tripData_v2', JSON.stringify({ expenses: expenses.value, itinerary: itinerary.value, members: members.value, rates: rates.value }));
+        localStorage.setItem('syncQueue_v2', JSON.stringify(syncQueue.value));
     };
 
     const loadLocal = () => {
-      const data = localStorage.getItem('tripData_v36');
-      const q = localStorage.getItem('syncQueue_v36');
-      if (q) syncQueue.value = JSON.parse(q);
-      if (data) {
-        const parsed = JSON.parse(data);
-        expenses.value = parsed.expenses || [];
-        itinerary.value = parsed.itinerary || [];
-        members.value = parsed.members || [];
-        rates.value = parsed.rates || {};
-        return true;
-      }
-      return false;
-    };
-
-    const getBackendActionName = (type, action) => {
-      if (action === 'delete') return 'deleteRow';
-      const suffix = (type === 'itin') ? 'Itinerary' : 'Expense';
-      return action + suffix;
-    };
-
-    const updateLocalData = (res) => {
-      if (res && res.expenses) {
-        expenses.value = res.expenses;
-        itinerary.value = res.itinerary;
-        members.value = res.members;
-        rates.value = res.rates;
-        saveLocal({}); // Save the fresh data with real IDs to local storage
-        if (tab.value === 'analysis') scheduleRenderChart();
-      }
-    };
-
-    const processSyncQueue = async () => {
-      if (syncQueue.value.length === 0 || !navigator.onLine || isSyncing.value) return;
-      
-      isSyncing.value = true;
-      const queue = [...syncQueue.value];
-      const remaining = [];
-
-      for (const job of queue) {
-        try {
-          const apiAction = getBackendActionName(job.type, job.action);
-          const res = await callApi(apiAction, job.data, 'POST');
-          
-          if (res) {
-            updateLocalData(res);
-          } else {
-            remaining.push(job);
-          }
-        } catch (e) {
-          remaining.push(job);
+        const d = localStorage.getItem('tripData_v2');
+        if(d) {
+            const p = JSON.parse(d);
+            expenses.value = p.expenses||[]; itinerary.value = p.itinerary||[]; members.value = p.members||[]; rates.value = p.rates||{};
+            return true;
         }
-      }
-
-      syncQueue.value = remaining;
-      saveLocal({});
-      isSyncing.value = false;
-      
-      if (syncQueue.value.length === 0) loadData();
+        return false;
     };
 
     const handleCRUD = async (type, action, data) => {
        if (navigator.onLine) {
          isSyncing.value = true;
          try {
-           const apiAction = getBackendActionName(type, action);
-           const res = await callApi(apiAction, data, 'POST');
-           if (!res) throw new Error("API Fail");
-           updateLocalData(res);
-         } catch (e) {
-           syncQueue.value.push({ type, action, data });
-         } finally {
-           isSyncing.value = false;
-         }
-       } else {
-         syncQueue.value.push({ type, action, data });
-       }
-       saveLocal({});
+           const suffix = (type==='itin'?'Itinerary':'Expense');
+           const res = await callApi(action==='delete'?'deleteRow':action+suffix, data, 'POST');
+           if(res && res.expenses) {
+               expenses.value = res.expenses; itinerary.value = res.itinerary;
+           }
+         } catch (e) { syncQueue.value.push({ type, action, data }); }
+         isSyncing.value = false;
+       } else { syncQueue.value.push({ type, action, data }); }
+       saveLocal();
     };
 
     const loadData = async () => {
       if (!isPullRefreshing.value) isLoading.value = true;
-
-      if (loadLocal()) {
-        if (isFirstLoad.value) {
-          nextTick(() => checkAndScrollToToday());
-          isFirstLoad.value = false;
-        }
-        if (tab.value === 'analysis') scheduleRenderChart();
-        setTimeout(() => { if (!isPullRefreshing.value) isLoading.value = false; }, 150);
+      loadLocal();
+      if(navigator.onLine) {
+         try {
+            const res = await callApi('getData');
+            if(res && res.expenses) {
+                expenses.value = res.expenses; itinerary.value = res.itinerary; members.value = res.members; rates.value = res.rates;
+                saveLocal();
+            }
+         } catch(e){}
       }
-
-      if (!navigator.onLine) {
-        isLoading.value = false;
-        isPullRefreshing.value = false;
-        pullDistance.value = 0;
-        return;
-      }
-
-      try {
-        const res = await callApi('getData');
-        updateLocalData(res);
-      } catch(e) {
-      } finally {
-        isLoading.value = false;
-        isPullRefreshing.value = false;
-        pullDistance.value = 0;
-      }
+      isLoading.value = false; isPullRefreshing.value = false;
+      if(tab.value === 'analysis') scheduleRenderChart();
     };
 
-    const selectDate = (date) => { 
-        selDate.value = date; 
-        scrollToDateBtn(date);
-        // Scroll content to top on date switch
-        if(scrollContainer.value) scrollContainer.value.scrollTop = 0;
+    // --- Utility ---
+    const selectDate = (d) => { 
+        selDate.value = d;
+        nextTick(() => {
+            const btn = document.getElementById('date-btn-'+d);
+            if(btn) btn.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+        });
     };
-
-    const scrollToDateBtn = (date) => {
-      nextTick(() => {
-        const btn = document.getElementById('date-btn-' + date);
-        if (btn && dateContainer.value) {
-          const centerPos = (btn.offsetLeft - dateContainer.value.offsetLeft) - (dateContainer.value.clientWidth / 2) + (btn.clientWidth / 2);
-          dateContainer.value.scrollTo({ left: centerPos, behavior: 'smooth' });
-        }
-      });
-    };
-
-    const checkAndScrollToToday = () => {
-      const d = new Date(); const offset = d.getTimezoneOffset() * 60000;
-      const todayStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
-      if (tripDates.some(x => x.date === todayStr)) selectDate(todayStr);
-      else selectDate(tripDates[0].date);
-    };
-
-    const switchDay = (direction) => {
-      const idx = tripDates.findIndex(d => d.date === selDate.value);
-      if (direction === 'next' && idx < tripDates.length - 1) selectDate(tripDates[idx + 1].date);
-      if (direction === 'prev' && idx > 0) selectDate(tripDates[idx - 1].date);
-    };
-
-    const getDayInfo = (dStr) => {
-      const d = new Date(dStr);
-      const diff = Math.ceil((d - startDate)/86400000) + 1;
-      return `DAY ${diff} · ${['週日','週一','週二','週三','週四','週五','週六'][d.getDay()]}`;
-    };
-
-    const getCategoryClass = (cat) => {
-      switch(cat) {
-        case '交通': return 'cat-traffic';
-        case '住宿': return 'cat-stay';
-        case '景點': return 'cat-spot';
-        case '飲食': return 'cat-food';
-        default: return 'cat-note';
-      }
-    };
-
     const getEvents = (d) => itinerary.value.filter(e => e.date === d).sort((a,b)=>a.startTime.localeCompare(b.startTime));
     const formatNumber = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    const getAmountTWD = (exp) => Math.round(exp.amount * (rates.value[exp.currency] || 1));
+    const isItemPending = (row) => syncQueue.value.some(j => j.data.row === row);
 
-    // Dynamic Options for Filters
-    const uniqueExpDates = computed(() => [...new Set(expenses.value.map(e => e.date))].sort());
-    const uniqueItems = computed(() => [...new Set(expenses.value.map(e => e.item))].filter(Boolean));
-    const uniqueLocations = computed(() => [...new Set(expenses.value.map(e => e.location))].filter(Boolean));
-    const uniquePayments = computed(() => [...new Set(expenses.value.map(e => e.payment))].filter(Boolean));
-
-    const hasActiveFilters = computed(() => {
-        return Object.values(filters.value).some(v => v !== 'ALL');
-    });
-
-    const resetFilters = () => {
-        filters.value = { date: 'ALL', item: 'ALL', payer: 'ALL', location: 'ALL', payment: 'ALL' };
-    };
-
-    // Updated Filtering Logic
-    const filteredExpenses = computed(() => {
-        return expenses.value.filter(e => {
-            if (filters.value.date !== 'ALL' && e.date !== filters.value.date) return false;
-            if (filters.value.item !== 'ALL' && e.item !== filters.value.item) return false;
-            if (filters.value.payer !== 'ALL' && e.payer !== filters.value.payer) return false;
-            if (filters.value.location !== 'ALL' && e.location !== filters.value.location) return false;
-            if (filters.value.payment !== 'ALL' && e.payment !== filters.value.payment) return false;
-            return true;
-        });
-    });
-
-    const getAmountTWD = (exp) => {
-      if (exp.amountTWD && exp.amountTWD > 0) return exp.amountTWD;
-      return Math.round(exp.amount * (rates.value[exp.currency] || 1));
-    };
-
-    const publicSpent = computed(() => {
-      return expenses.value.reduce((sum, e) => {
+    // Analysis Logic
+    const publicSpent = computed(() => expenses.value.reduce((sum, e) => {
         const amt = getAmountTWD(e);
-        if (!e.involved || e.involved.length === 0) return sum;
-        const perShare = amt / e.involved.length;
-        let bill = 0;
-        if (e.involved.includes('家齊')) bill += perShare;
-        if (e.involved.includes('亭穎')) bill += perShare;
-        return sum + bill;
-      }, 0);
-    });
-
-    const momSpent = computed(() => {
-      return expenses.value.reduce((sum, e) => {
-        const amt = getAmountTWD(e);
-        if (e.involved && e.involved.includes('媽媽')) return sum + (amt / e.involved.length);
-        return sum;
-      }, 0);
-    });
+        if(!e.involved?.length) return sum;
+        let bill = 0; const share = amt/e.involved.length;
+        if(e.involved.includes('家齊')) bill+=share;
+        if(e.involved.includes('亭穎')) bill+=share;
+        return sum+bill;
+    },0));
 
     const debts = computed(() => {
-      if (members.value.length === 0) return [];
-      const bal = {}; members.value.forEach(m => bal[m] = 0);
-      expenses.value.forEach(e => {
-        const amt = getAmountTWD(e);
-        const split = e.involved || [];
-        if (split.length > 0) {
-          bal[e.payer] += amt;
-          const share = amt / split.length;
-          split.forEach(p => { if (bal[p] !== undefined) bal[p] -= share; });
+        if(!members.value.length) return [];
+        const bal={}; members.value.forEach(m=>bal[m]=0);
+        expenses.value.forEach(e=>{
+            const amt=getAmountTWD(e); const inv=e.involved||[];
+            if(inv.length){ bal[e.payer]+=amt; inv.forEach(p=>bal[p]-=amt/inv.length); }
+        });
+        let d=[],c=[]; for(let m in bal){ if(bal[m]<-1) d.push({p:m,a:bal[m]}); if(bal[m]>1) c.push({p:m,a:bal[m]}); }
+        d.sort((a,b)=>a.a-b.a); c.sort((a,b)=>b.a-a.a);
+        const res=[]; let i=0,j=0;
+        while(i<d.length && j<c.length){
+            const amt=Math.min(Math.abs(d[i].a), c[j].a);
+            res.push({from:d[i].p, to:c[j].p, amount:Math.round(amt)});
+            d[i].a+=amt; c[j].a-=amt;
+            if(Math.abs(d[i].a)<1) i++; if(c[j].a<1) j++;
         }
-      });
-      let debtors=[], creditors=[];
-      for (const m in bal) {
-        if (bal[m] < -1) debtors.push({p:m, a:bal[m]});
-        if (bal[m] > 1) creditors.push({p:m, a:bal[m]});
-      }
-      debtors.sort((a,b)=>a.a-b.a);
-      creditors.sort((a,b)=>b.a-a.a);
-      const res=[]; let i=0, j=0;
-      while(i<debtors.length && j<creditors.length){
-        const d=debtors[i], c=creditors[j];
-        const amt=Math.min(Math.abs(d.a), c.a);
-        res.push({from:d.p, to:c.p, amount:Math.round(amt)});
-        d.a += amt; c.a -= amt;
-        if (Math.abs(d.a)<1) i++;
-        if (c.a<1) j++;
-      }
-      return res;
+        return res;
     });
 
-    const getItemTagClass = (item) => {
-      const s = String(item || '');
-      if (s.includes('交通')) {
-        if (s.includes('機票')) return 'tag-ticket';
-        return 'tag-traffic';
-      }
-      if (s.includes('住宿')) return 'tag-stay';
-      if (['早餐','午餐','晚餐','零食'].some(k => s.includes(k))) return 'tag-food';
-      if (['紀念品'].some(k => s.includes(k))) return 'tag-shop';
-      return 'tag-other';
-    };
-
-    /* Chart Logic */
+    // Chart
     let chartInstance = null;
     const chartBusy = ref(false);
-    let chartTimer = null;
-
-    const buildStats = () => {
-      const stats = {};
-      const list = filteredExpenses.value;
-      for (let i=0;i<list.length;i++){
-        const e = list[i];
-        const key = e.item || '其他';
-        stats[key] = (stats[key] || 0) + getAmountTWD(e);
-      }
-      return stats;
-    };
-
-    const renderChart = () => {
-      const canvas = document.getElementById('expenseChart');
-      if (!canvas) return;
-
-      const stats = buildStats();
-      const labels = Object.keys(stats);
-      const data = Object.values(stats);
-
-      const nordicColors = ['#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#fb7185', '#22d3ee', '#34d399', '#a78bfa', '#fbcfe8', '#e2e8f0'];
-
-      if (chartInstance) {
-        chartInstance.data.labels = labels;
-        chartInstance.data.datasets[0].data = data;
-        chartInstance.data.datasets[0].backgroundColor = labels.map((_,i)=>nordicColors[i % nordicColors.length]);
-        chartInstance.update('none');
-      } else {
-        chartInstance = new Chart(canvas, {
-          type: 'doughnut',
-          data: { labels, datasets: [{ data, backgroundColor: labels.map((_,i)=>nordicColors[i % nordicColors.length]), borderWidth: 0, hoverOffset: 4 }] },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            animation: { duration: 800 },
-            plugins: {
-              legend: {
-                position: 'bottom',
-                labels: {
-                  font: { family: 'Inter', size: 11, weight: 'bold' },
-                  color: '#64748b',
-                  usePointStyle: true,
-                  padding: 12,
-                  boxWidth: 8
+    const scheduleRenderChart = () => {
+        if(tab.value!=='analysis') return;
+        chartBusy.value = true;
+        setTimeout(() => {
+            const ctx = document.getElementById('expenseChart');
+            if(!ctx) return;
+            const stats = {};
+            expenses.value.forEach(e => {
+                const k = e.item || '其他';
+                stats[k] = (stats[k]||0) + getAmountTWD(e);
+            });
+            const labels = Object.keys(stats);
+            const data = Object.values(stats);
+            
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: { 
+                    labels, 
+                    datasets: [{ 
+                        data, 
+                        backgroundColor: ['#38bdf8','#818cf8','#c084fc','#f472b6','#fb7185','#22d3ee'], 
+                        borderWidth: 0 
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    cutout: '75%',
+                    plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: {size: 10} } } } 
                 }
-              }
-            }
-          }
-        });
-      }
-      chartBusy.value = false;
+            });
+            chartBusy.value = false;
+        }, 200);
     };
 
-    const scheduleRenderChart = async () => {
-      if (tab.value !== 'analysis') return;
-      chartBusy.value = true;
-
-      if (chartTimer) clearTimeout(chartTimer);
-      chartTimer = setTimeout(() => {
-        nextTick(() => {
-          renderChart();
-        });
-      }, 300);
-    };
-
-    const changeTabToAnalysis = async () => {
-      tab.value = 'analysis';
-      if (chartInstance) {
-        chartInstance.destroy();
-        chartInstance = null;
-      }
-      scheduleRenderChart();
-    };
-
-    // Watch filters change for chart update
-    watch(tab, (val) => {
-      if (val === 'analysis') scheduleRenderChart();
-      if (val === 'expense') {
-        newExp.value = { payer: '', location: '', item: '', payment: '', currency: 'NTD', amount: null, involved: [], note: '' };
-      }
-    });
-    watch(filters, () => { if (tab.value === 'analysis') scheduleRenderChart(); }, { deep: true });
-    watch(expenses, () => { if (tab.value === 'analysis') scheduleRenderChart(); }, { deep: true });
-
-    const openRateModal = () => { tempRates.value = { ...rates.value }; showRateModal.value = true; };
-    const openAddItin = () => { itinForm.value = { row: null, startTime: '09:00', endTime: '', category: '景點', title: '', location: '', link: '', note: '', imgUrl: '', newImageBase64: null, deleteImage: false, imgId: '' }; isEditing.value = false; showItinModal.value = true; };
-    const openEditItin = (evt) => { itinForm.value = { ...evt, newImageBase64: null, deleteImage: false }; isEditing.value = true; showItinModal.value = true; };
-    const openEditExp = (exp) => { editExpForm.value = JSON.parse(JSON.stringify(exp)); showExpModal.value = true; };
-    
-    // Image Handling
-    const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            itinForm.value.imgUrl = evt.target.result; // Preview
-            itinForm.value.newImageBase64 = evt.target.result; // For upload
-            itinForm.value.deleteImage = false;
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const removeImage = () => {
-        itinForm.value.imgUrl = '';
-        itinForm.value.newImageBase64 = null;
-        itinForm.value.deleteImage = true;
-    };
-
-    const viewImage = (url) => {
-        viewingImg.value = url;
-        showImgViewer.value = true;
-        imgGesture.value = { startX: 0, startY: 0, currentX: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 };
-    };
-    const closeImgViewer = () => { 
-        if (imgViewerEl.value) imgViewerEl.value.style.transform = '';
-        const overlay = document.querySelector('.img-viewer-overlay');
-        if(overlay) overlay.style.backgroundColor = '';
-        showImgViewer.value = false; 
-    };
-
-    // ===================================
     // Actions
-    // ===================================
-
-    const deleteItin = async (evt) => { 
-      if(!confirm('確定刪除?')) return; 
-      
-      itinerary.value = itinerary.value.filter(x => x.row !== evt.row); 
-      
-      const pendingIdx = syncQueue.value.findIndex(job => 
-        job.type === 'itin' && job.action === 'add' && job.data.row === evt.row
-      );
-
-      if (pendingIdx !== -1) {
-        syncQueue.value.splice(pendingIdx, 1);
-        saveLocal({});
-      } else {
-        handleCRUD('itin', 'delete', { row: evt.row, sheetName: 'Itinerary' });
-      }
+    const openAddItin = () => { itinForm.value={row:null,startTime:'09:00',endTime:'',category:'景點',title:'',imgUrl:''}; isEditing.value=false; showItinModal.value=true; };
+    const openEditItin = (e) => { itinForm.value={...e}; isEditing.value=true; showItinModal.value=true; };
+    const submitItin = () => {
+        if(!itinForm.value.title) return;
+        const p = { ...itinForm.value, row: isEditing.value?itinForm.value.row:Date.now(), date: selDate.value };
+        if(isEditing.value) { const i=itinerary.value.findIndex(x=>x.row===p.row); if(i!==-1) itinerary.value[i]=p; handleCRUD('itin','edit',p); }
+        else { itinerary.value.push(p); handleCRUD('itin','add',p); }
+        showItinModal.value=false;
     };
+    const deleteItin = (e) => { if(confirm('Del?')){ itinerary.value=itinerary.value.filter(x=>x.row!==e.row); handleCRUD('itin','delete',{row:e.row,sheetName:'Itinerary'}); showItinModal.value=false; }};
 
-    const deleteExp = async (exp) => { 
-      if(!confirm('確定刪除?')) return; 
-      expenses.value = expenses.value.filter(x => x.row !== exp.row); 
-      
-      const pendingIdx = syncQueue.value.findIndex(job => 
-        job.type === 'exp' && job.action === 'add' && job.data.row === exp.row
-      );
-
-      if (pendingIdx !== -1) {
-        syncQueue.value.splice(pendingIdx, 1);
-        saveLocal({});
-      } else {
-        handleCRUD('exp', 'delete', { row: exp.row, sheetName: 'Expenses' });
-      }
+    const submitExp = () => {
+        if(!newExp.value.amount || !newExp.value.item) return;
+        const p = { ...newExp.value, row: Date.now(), date: new Date().toISOString().split('T')[0] };
+        expenses.value.unshift(p);
+        handleCRUD('exp','add',p);
+        newExp.value.amount=null; newExp.value.note=''; alert('Saved!');
     };
-
-    const submitItin = async () => {
-      if(!itinForm.value.title) return alert('請輸入標題');
-      const newRow = isEditing.value ? itinForm.value.row : Date.now();
-      const payload = { ...itinForm.value, row: newRow, date: selDate.value };
-      
-      if(isEditing.value) {
-         const idx = itinerary.value.findIndex(x => x.row === newRow);
-         if(idx !== -1) itinerary.value[idx] = payload;
-         handleCRUD('itin', 'edit', payload);
-      } else {
-         itinerary.value.push(payload);
-         handleCRUD('itin', 'add', payload);
-      }
-      showItinModal.value = false;
+    const openEditExp = (e) => { editExpForm.value=JSON.parse(JSON.stringify(e)); showExpModal.value=true; };
+    const submitEditExp = () => {
+        const i=expenses.value.findIndex(e=>e.row===editExpForm.value.row);
+        if(i!==-1) expenses.value[i]=editExpForm.value;
+        handleCRUD('exp','edit',editExpForm.value);
+        showExpModal.value=false;
     };
-
-    const submitExp = async () => {
-      if(!newExp.value.amount || !newExp.value.item) return alert('請輸入金額與項目');
-      const payload = { 
-        ...newExp.value, 
-        row: Date.now(), 
-        date: new Date().toISOString().split('T')[0], 
-        time: new Date().toTimeString().slice(0,5),
-        amountTWD: Math.round(newExp.value.amount * (rates.value[newExp.value.currency] || 1))
-      };
-      
-      expenses.value.unshift(payload);
-      handleCRUD('exp', 'add', payload);
-      
-      newExp.value.amount = null; newExp.value.item = ''; newExp.value.note = ''; newExp.value.involved = [];
-      alert('記帳成功');
-    };
-
-    const submitEditExp = async () => {
-        const idx = expenses.value.findIndex(e => e.row === editExpForm.value.row);
-        if(idx === -1) return;
-        
-        const updated = { ...editExpForm.value };
-        updated.amountTWD = Math.round(updated.amount * (rates.value[updated.currency] || 1));
-        
-        expenses.value[idx] = updated;
-        showExpModal.value = false;
-        handleCRUD('exp', 'edit', updated);
-    };
-
-    const saveRates = () => {
-       rates.value = { ...tempRates.value };
-       saveLocal({});
-       showRateModal.value = false;
-       callApi('updateRates', rates.value, 'POST');
-    };
-
-    const confirmClearSync = () => { 
-      if(confirm('確定要強制清空所有待上傳資料嗎？\n注意：這會導致離線新增的資料無法同步到伺服器。')) {
-        syncQueue.value = []; 
-        saveLocal({});
-      }
-    };
+    const deleteExp = (e) => { if(confirm('Del?')){ expenses.value=expenses.value.filter(x=>x.row!==e.row); handleCRUD('exp','delete',{row:e.row,sheetName:'Expenses'}); showExpModal.value=false; }};
     
-    const toggleSelectAll = () => { if(newExp.value.involved.length === members.value.length) newExp.value.involved=[]; else newExp.value.involved=[...members.value]; };
-    
-    const toggleSelectAllEdit = () => { 
-        if(!editExpForm.value.involved) editExpForm.value.involved = [];
-        if(editExpForm.value.involved.length === members.value.length) editExpForm.value.involved=[]; 
-        else editExpForm.value.involved=[...members.value]; 
+    // Image Upload
+    const handleImageUpload = (e) => {
+        const f = e.target.files[0]; if(!f)return;
+        const r = new FileReader();
+        r.onload = (evt) => itinForm.value.imgUrl = evt.target.result;
+        r.readAsDataURL(f);
     };
+    const removeImage = () => itinForm.value.imgUrl = '';
+    const viewImage = (u) => { viewingImg.value=u; showImgViewer.value=true; imgGesture.value.scale=1; };
+    const closeImgViewer = () => { showImgViewer.value=false; };
 
-    const updateOnlineStatus = () => { 
-      isOnline.value = navigator.onLine; 
-      if (isOnline.value) processSyncQueue();
-    };
-
-    const isItemPending = (rowId) => {
-      return syncQueue.value.some(job => job.data.row === rowId);
-    };
-
+    // Init
     onMounted(async () => {
-      initDate();
-      window.addEventListener('online', updateOnlineStatus);
-      window.addEventListener('offline', updateOnlineStatus);
-      await nextTick();
-      attachGestureListeners();
-      loadData();
-      
-      // Try processing queue on load if online
-      if(navigator.onLine) processSyncQueue();
+        const d = new Date(); todayDate.value = (d.getMonth()+1)+'.'+d.getDate(); 
+        todayWeekday.value = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
+        await nextTick();
+        loadData();
+        attachGestureListeners();
     });
 
-    onBeforeUnmount(() => {
-      detachGestureListeners();
-      window.removeEventListener('online', updateOnlineStatus);
-      window.removeEventListener('offline', updateOnlineStatus);
-      if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
-    });
+    watch(tab, (v) => { if(v==='analysis') scheduleRenderChart(); });
 
     return {
-      tab, isLoading, isOnline, isSyncing, syncQueue,
-      dateContainer, scrollContainer,
-      todayDate, todayWeekday,
-      pullDistance, isPullRefreshing, refreshText,
-      tripStatus, tripDates, selDate,
-      itinerary, 
-      selectDate, getDayInfo, getEvents, getCategoryClass,
-      expenses, rates, members, 
-      filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments,
-      resetFilters, hasActiveFilters, filteredExpenses,
-      formatNumber, getAmountTWD,
-      publicSpent, momSpent, debts,
-      getItemTagClass,
-      chartBusy,
-      changeTabToAnalysis,
-      showRateModal, showItinModal, showExpModal, isEditing,
-      itinForm, newExp, editExpForm, tempRates,
-      openRateModal, openAddItin, openEditItin, openEditExp,
-      deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, 
-      confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending,
-      handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg,
-      imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom
+       tab, isLoading, isOnline, isSyncing, syncQueue, tripStatus, tripDates, selDate, selectDate, getDayInfo, getEvents,
+       itinerary, expenses, rates, members, 
+       newExp, editExpForm, itinForm, isEditing, showItinModal, showExpModal, showRateModal, tempRates,
+       openAddItin, openEditItin, submitItin, deleteItin, submitExp, openEditExp, submitEditExp, deleteExp,
+       handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg, imgViewerEl,
+       handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom,
+       formatNumber, getAmountTWD, publicSpent, debts, isItemPending,
+       scrollY, handleScroll, dateContainer, scrollContainer, pullDistance, isPullRefreshing,
+       todayDate, todayWeekday,
+       openRateModal: () => { tempRates.value={...rates.value}; showRateModal.value=true; },
+       saveRates: () => { rates.value={...tempRates.value}; saveLocal(); showRateModal.value=false; callApi('updateRates',rates.value,'POST'); },
+       confirmClearSync: () => { if(confirm('Clear sync queue?')) syncQueue.value=[]; saveLocal(); },
+       toggleSelectAll: () => newExp.value.involved = (newExp.value.involved.length===members.value.length)?[]:[...members.value],
+       toggleSelectAllEdit: () => editExpForm.value.involved = (editExpForm.value.involved.length===members.value.length)?[]:[...members.value],
+       chartBusy, changeTabToAnalysis: () => tab.value='analysis'
     };
   }
 }).mount('#app');
