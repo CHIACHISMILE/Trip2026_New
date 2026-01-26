@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>2026挪威冰島之旅</title>
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="2026挪威冰島之旅">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#dbeafe">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="https://img.icons8.com/color/180/snowflake.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* CSS Setup */
+    html, body {
+      height: 100dvh;
+      width: 100%;
+      overflow: hidden;
+      font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
+      background-color: #f0f9ff;
+      color: #1e3a8a;
+      overscroll-behavior: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none; /* 禁止瀏覽器預設縮放行為，交給 JS 處理 */
+    }
+
+    body { -webkit-touch-callout: default; }
+
+    #fixed-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(160deg, #dbeafe 0%, #eff6ff 40%, #f0f9ff 100%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    #app {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      -webkit-touch-callout: none;
+    }
+
+    .scrollable-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+      position: relative;
+      padding-top: 10px;
+      /* 確保內容填滿到底部安全區域 */
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+      touch-action: pan-y;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(148, 163, 184, 0.08);
+      transition: transform 0.15s ease-out;
+    }
+    .glass-card:active { transform: scale(0.99); }
+
+    .glass-input {
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+      color: #334155;
+      transition: all 0.3s;
+    }
+    .glass-input:focus {
+      background: #fff;
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    .btn-glacier {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+    }
+
+    .btn-cancel {
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+
+    .tab-bar {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+    }
+    .tab-btn { color: #94a3b8; transition: all 0.3s; }
+    .tab-active { color: #0284c7; position: relative; }
+    .tab-active::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 35%;
+      width: 30%; height: 4px;
+      background: #0284c7;
+      border-radius: 4px 4px 0 0;
+      box-shadow: 0 -2px 8px rgba(2, 132, 199, 0.5);
+    }
+
+    .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+    .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+    .pull-indicator {
+      height: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      padding-bottom: 5px;
+      overflow: hidden;
+      color: #64748b;
+      font-weight: 600;
+      font-size: 0.8rem;
+      transition: height 0.12s ease-out;
+      padding-top: env(safe-area-inset-top);
+      box-sizing: content-box;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+    .title-link {
+      text-decoration: none;
+      color: #0f172a;
+      font-weight: 700;
+      border-bottom: 1px dashed #cbd5e1;
+    }
+
+    .map-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      font-size: 10px;
+      font-weight: bold;
+      color: #0284c7;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .cat-traffic { border-left: 4px solid #3b82f6; background: white; }
+    .cat-stay    { border-left: 4px solid #eab308; background: white; }
+    .cat-spot    { border-left: 4px solid #a855f7; background: white; }
+    .cat-food    { border-left: 4px solid #f97316; background: white; }
+    .cat-note    { border-left: 4px solid #64748b; background: white; }
+
+    .allow-select {
+      user-select: text !important;
+      -webkit-user-select: text !important;
+      -webkit-touch-callout: default !important;
+      cursor: auto; 
+    }
+    .allow-select::selection { background: rgba(56, 189, 248, 0.25); }
+
+    .break-anywhere { overflow-wrap: anywhere; word-break: break-all; }
+
+    .skeleton {
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .pending-sync { opacity: 0.85; border: 2px dashed #f59e0b !important; position: relative; }
+    .pending-badge { display: none; }
+
+    .tag { display:inline-flex; align-items:center; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .tag-food { background:#fff7ed; color:#c2410c; border:1px solid #ffedd5; }
+    .tag-stay { background:#fefce8; color:#a16207; border:1px solid #fef9c3; }
+    .tag-traffic { background:#eff6ff; color:#1d4ed8; border:1px solid #dbeafe; }
+    .tag-ticket { background:#eef2ff; color:#4338ca; border:1px solid #e0e7ff; }
+    .tag-shop { background:#fdf2f8; color:#be185d; border:1px solid #fce7f3; }
+    .tag-other { background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
+
+    .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .filter-chip:hover { background: #bae6fd; }
+
+    /* Modal Styling */
+    .modal-enter-active, .modal-leave-active { transition: opacity 0.3s ease; }
+    .modal-enter-from, .modal-leave-to { opacity: 0; }
+    .modal-enter-active .modal-content, .modal-leave-active .modal-content { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .modal-enter-from .modal-content, .modal-leave-to .modal-content { transform: scale(0.9) translateY(20px); }
+    
+    /* Image Upload Styles */
+    .img-upload-btn { position: relative; overflow: hidden; }
+    .img-upload-btn input[type=file] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    .img-preview {
+        width: 100%; height: 120px;
+        object-fit: cover; border-radius: 12px;
+        border: 2px dashed #cbd5e1;
+        display: flex; justify-content: center; align-items: center;
+        color: #94a3b8; font-size: 12px; font-weight: bold;
+        background: #f8fafc;
+    }
+    .itinerary-img {
+        width: 100%; max-height: 200px; object-fit: cover;
+        border-radius: 12px; margin-top: 12px;
+        border: 1px solid rgba(0,0,0,0.05);
+        cursor: zoom-in;
+    }
+
+    /* --- FIXED IMAGE VIEWER STYLES --- */
+    .img-viewer-overlay {
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(0, 0, 0, 1); 
+        display: flex; justify-content: center; align-items: center;
+        flex-direction: column;
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        transition: background 0.2s;
+        touch-action: none;
+        overflow: hidden;
+    }
+    .img-viewer-img {
+        max-width: 100%; 
+        max-height: 100%; 
+        object-fit: contain;
+        transform-origin: center center;
+    }
+    .img-viewer-close {
+        position: absolute;
+        top: max(20px, env(safe-area-inset-top) + 20px); 
+        right: 20px;
+        width: 44px; height: 44px;
+        background: rgba(80, 80, 80, 0.8);
+        color: white;
+        border-radius: 50%;
+        display: flex; justify-content: center; align-items: center;
+        font-size: 24px; font-weight: 800;
+        z-index: 10000;
+        cursor: pointer;
+        border: 2px solid rgba(255,255,255,0.3);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    
+    .pull-hint {
+        position: absolute;
+        top: max(80px, env(safe-area-inset-top) + 80px);
+        color: rgba(255,255,255,0.6);
+        font-size: 13px;
+        font-weight: bold;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+        background: rgba(0,0,0,0.4);
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+    .show-hint .pull-hint { opacity: 1; }
+  </style>
+</head>
+
+<body>
+<div id="fixed-bg"></div>
+
+<div id="app">
+  <div class="pull-indicator" :style="{ height: pullDistance + 'px' }">
+    <span v-if="pullDistance > 20">{{ refreshText }}</span>
+  </div>
+
+  <div class="px-6 pb-4 rounded-b-[2.5rem] shadow-sm swipe-protected relative z-20"
+       style="background: rgba(255,255,255,0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border-bottom: 1px solid rgba(255,255,255,0.4);
+       padding-top: max(20px, env(safe-area-inset-top) + 12px);">
+    <div class="flex justify-between items-center">
+      <h1 class="text-xl font-black tracking-tighter text-slate-800 drop-shadow-sm">2026 挪威冰島之旅</h1>
+      <div class="text-right">
+        <button v-if="isSyncing"
+                class="bg-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1 mb-1 ml-auto animate-pulse">
+           <span class="w-2 h-2 bg-white rounded-full animate-ping"></span>
+           同步中...
+        </button>
+        <button v-else-if="syncQueue.length > 0" @click="confirmClearSync"
+                class="bg-amber-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse flex items-center gap-1 mb-1 ml-auto">
+          待上傳 ({{ syncQueue.length }})
+        </button>
+        
+        <div class="text-lg font-black text-sky-900 leading-none tracking-wide font-mono mt-1">{{ todayDate }}</div>
+        <div class="text-[10px] text-sky-600 font-bold opacity-80 mt-1 uppercase tracking-[0.2em]">{{ todayWeekday }}</div>
+      </div>
+    </div>
+    <div class="flex justify-between items-center mt-4">
+      <div class="glass-input px-3 py-1.5 rounded-full text-[10px] font-bold text-slate-500 tracking-wide">AUG 30 - SEP 26</div>
+      <div class="flex gap-2">
+        <span v-if="!isOnline" class="bg-slate-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md flex items-center gap-1">離線</span>
+        <span v-if="tripStatus" class="bg-gradient-to-r from-sky-400 to-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">{{ tripStatus }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex tab-bar z-10 text-sm font-bold swipe-protected flex-shrink-0">
+    <button @click="tab='itinerary'" :class="['flex-1 p-4 tab-btn', tab==='itinerary'?'tab-active':'']">行程</button>
+    <button @click="tab='expense'" :class="['flex-1 p-4 tab-btn', tab==='expense'?'tab-active':'']">記帳</button>
+    <button @click="changeTabToAnalysis" :class="['flex-1 p-4 tab-btn', tab==='analysis'?'tab-active':'']">分析</button>
+  </div>
+
+  <div class="scrollable-content p-4" ref="scrollContainer">
+    <Transition name="fade" mode="out-in">
+      
+      <div v-if="tab==='itinerary'" key="itinerary">
+        <div ref="dateContainer" class="overflow-x-auto whitespace-nowrap pb-4 px-1 scrollbar-hide scroll-smooth swipe-protected">
+          <button v-for="d in tripDates" :key="d.date" :id="'date-btn-' + d.date" @click="selectDate(d.date)"
+                  :class="[
+                    'px-4 py-2.5 rounded-2xl text-xs mr-2 border transition-all duration-300 font-bold shadow-sm',
+                    selDate===d.date ? 'bg-sky-600 text-white border-sky-600 shadow-sky-200 shadow-lg scale-105'
+                                     : 'glass-input text-slate-400 border-transparent hover:bg-white'
+                  ]">
+            {{ d.short }}
+          </button>
+        </div>
+
+        <div v-if="isLoading && itinerary.length===0" class="space-y-4">
+          <div v-for="i in 3" :key="i" class="glass-card h-24 skeleton"></div>
+        </div>
+
+        <div v-else>
+          <div class="text-center mb-6">
+            <div class="inline-block glass-input px-6 py-2 rounded-full text-sm font-bold text-slate-600 shadow-sm">
+              {{ getDayInfo(selDate) }}
+            </div>
+          </div>
+
+          <div v-for="evt in getEvents(selDate)" :key="evt.row"
+               :class="['glass-card flex mb-4 items-stretch overflow-hidden group', isItemPending(evt.row) ? 'pending-sync' : '', getCategoryClass(evt.category)]">
+            <div class="w-16 flex flex-col justify-center items-center p-2 bg-slate-50/50 border-r border-slate-100 flex-shrink-0 swipe-protected">
+              <div class="font-black text-sm text-slate-700">{{ evt.startTime }}</div>
+              <div v-if="evt.endTime" class="text-[10px] text-slate-400 mt-1 font-medium">{{ evt.endTime }}</div>
+              <div class="mt-2 text-[10px] font-bold px-1.5 py-0.5 rounded text-slate-500 bg-white border border-slate-200 tracking-wider">
+                {{ evt.category }}
+              </div>
+            </div>
+
+            <div class="flex-1 p-4 relative min-w-0">
+              <div class="flex justify-between items-start">
+                <span v-if="!evt.link" class="font-bold text-base text-slate-800 leading-tight truncate pr-2">
+                  {{ evt.title }}
+                </span>
+                <a v-else :href="evt.link" target="_blank" class="title-link text-base leading-tight truncate pr-2 swipe-protected">
+                  {{ evt.title }}
+                </a>
+              </div>
+
+              <div class="text-xs mt-2 text-slate-500 flex items-start gap-2" v-if="evt.location">
+                <span class="flex-1 pt-1 opacity-80 break-words">📍 {{ evt.location }}</span>
+                <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(evt.location)"
+                   target="_blank"
+                   class="map-btn swipe-protected">地圖</a>
+              </div>
+
+              <div v-if="evt.imgUrl" class="mt-2">
+                  <img :src="evt.imgUrl" class="itinerary-img" loading="lazy" alt="行程圖片"
+                       @click.stop="viewImage(evt.imgUrl)">
+              </div>
+
+              <div
+                class="text-sm mt-3 text-slate-600 whitespace-pre-wrap opacity-90 allow-select break-anywhere"
+                @click.stop
+                v-if="evt.note"
+              >{{ evt.note }}</div>
+
+              <div class="mt-3 flex gap-2 justify-end swipe-protected">
+                <button @click.stop="openEditItin(evt)"
+                        class="text-[10px] text-sky-600 bg-sky-50 border border-sky-100 px-3 py-1 rounded-lg font-bold flex-shrink-0">
+                  編輯
+                </button>
+                <button @click.stop="deleteItin(evt)"
+                        class="text-[10px] text-red-500 bg-red-50 border border-red-100 px-3 py-1 rounded-lg font-bold flex-shrink-0">
+                  刪除
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button @click="openAddItin"
+                  class="w-full py-4 mt-4 border-2 border-dashed border-sky-200 text-sky-400 rounded-2xl font-bold hover:bg-sky-50 transition swipe-protected">
+            + 新增行程
+          </button>
+          <div class="h-10"></div>
+        </div>
+      </div>
+
+      <div v-else-if="tab==='expense'" key="expense">
+        <div class="glass-card p-6 space-y-5 shadow-lg swipe-protected">
+          <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2"><span class="w-1 h-6 bg-sky-500 rounded-full"></span>新增消費</h3>
+
+          <div class="flex gap-3">
+            <select v-model="newExp.payer" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
+              <option value="" disabled selected>泥是誰</option><option>家齊</option><option>亭穎</option><option>媽媽</option>
+            </select>
+            <select v-model="newExp.location" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
+              <option value="" disabled selected>在哪消費</option><option>台灣</option><option>杜拜</option><option>挪威</option><option>冰島</option><option>英國</option>
+            </select>
+          </div>
+
+          <div class="flex gap-3">
+            <select v-model="newExp.item" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
+              <option value="" disabled selected>消費項目</option>
+              <option>早餐</option><option>午餐</option><option>晚餐</option><option>零食</option><option>住宿</option>
+              <option>交通（機票）</option><option>交通（租車）</option><option>交通（停車費）</option><option>交通（油錢）</option>
+              <option>紀念品</option><option>門票</option><option>其他</option>
+            </select>
+            <select v-model="newExp.payment" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
+              <option value="" disabled selected>付款方式</option><option>現金</option><option>信用卡-國泰</option><option>信用卡-永豐</option><option>信用卡-元大</option>
+            </select>
+          </div>
+
+          <div class="flex gap-3">
+            <select v-model="newExp.currency" class="w-1/3 glass-input p-3 rounded-xl text-sm font-bold bg-sky-50 text-sky-700">
+              <option>NTD</option><option>NOK</option><option>ISK</option><option>EUR</option><option>GBP</option><option>AED</option>
+            </select>
+            <input type="number" v-model="newExp.amount" placeholder="金額"
+                   class="w-2/3 glass-input p-3 rounded-xl outline-none text-xl font-mono font-bold text-slate-800">
+          </div>
+
+          <div class="text-xs text-right text-slate-400 font-mono font-bold" v-if="newExp.amount && newExp.currency !== 'NTD'">
+            ≈ {{ formatNumber(Math.round(newExp.amount * rates[newExp.currency])) }} NTD
+          </div>
+
+          <input v-model="newExp.note" placeholder="備註 (選填)" class="w-full glass-input p-3 rounded-xl text-sm outline-none">
+
+          <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+            <div class="flex justify-between items-center mb-3">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">分攤給</span>
+              <button @click="toggleSelectAll" class="text-[10px] text-sky-600 font-bold bg-white px-2 py-1 rounded shadow-sm">全選</button>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+              <label v-for="m in members" :key="m"
+                     class="flex flex-1 justify-center items-center space-x-2 border px-4 py-3 rounded-xl cursor-pointer transition-all duration-200"
+                     :class="newExp.involved.includes(m)?'bg-white border-sky-400 text-sky-700 shadow-md transform -translate-y-0.5':'bg-transparent border-slate-200 text-slate-400'">
+                <input type="checkbox" :value="m" v-model="newExp.involved" class="hidden"><span class="text-sm font-bold">{{m}}</span>
+              </label>
+            </div>
+          </div>
+
+          <button @click="submitExp" class="w-full btn-glacier py-4 rounded-xl font-bold text-lg tracking-wide">確認記帳</button>
+        </div>
+      </div>
+
+      <div v-else-if="tab==='analysis'" key="analysis">
+        <div class="flex justify-end mb-3 swipe-protected">
+          <button @click="openRateModal"
+                  class="text-xs text-slate-500 bg-white/50 border border-white px-4 py-2 rounded-full flex items-center shadow-sm backdrop-blur-sm font-bold">
+            匯率設定
+          </button>
+        </div>
+
+        <div class="bg-gradient-to-br from-[#3b82f6] to-[#6366f1] text-white rounded-3xl p-6 shadow-xl mb-6 relative overflow-hidden ring-1 ring-white/20">
+          <div class="absolute -top-10 -right-10 w-48 h-48 bg-white opacity-10 rounded-full blur-3xl"></div>
+
+          <div class="border-b border-white/10 pb-3 mb-3 flex justify-between items-center relative z-10">
+            <div class="text-xs font-medium opacity-80 tracking-widest uppercase">家齊+亭穎 預算</div>
+            <div class="font-bold text-lg font-mono tracking-wider opacity-90">500,000</div>
+          </div>
+
+          <div class="flex justify-between items-end relative z-10">
+            <div>
+              <div class="text-4xl font-black tracking-tighter drop-shadow-sm">{{ formatNumber(Math.round(500000 - publicSpent)) }}</div>
+              <div class="text-xs font-bold opacity-70 mt-1">剩餘經費 (NTD)</div>
+            </div>
+            <div class="text-right">
+              <div class="text-lg font-bold">{{ formatNumber(Math.round(publicSpent)) }}</div>
+              <div class="text-xs opacity-70 font-medium">已支出 ({{ Math.round(publicSpent/500000*100) }}%)</div>
+            </div>
+          </div>
+
+          <div class="w-full bg-black/20 h-2 rounded-full mt-5 overflow-hidden relative z-10">
+            <div class="bg-white h-full shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all duration-1000"
+                 :style="{width: Math.min((publicSpent/500000)*100, 100) + '%'}"></div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-white/20 flex justify-between items-center text-yellow-100 relative z-10">
+            <span class="text-xs font-bold">媽媽個人與分攤支出</span>
+            <span class="font-bold font-mono text-lg">+ {{ formatNumber(Math.round(momSpent)) }}</span>
+          </div>
+        </div>
+
+        <div class="mb-4 swipe-protected">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-slate-700 text-lg">消費明細</h3>
+                <button @click="showFilterMenu = !showFilterMenu" 
+                        class="text-xs text-sky-600 bg-sky-50 border border-sky-100 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition">
+                    <span v-if="!showFilterMenu">🔍 篩選</span>
+                    <span v-else>▲ 收起</span>
+                </button>
+            </div>
+            
+            <div v-if="showFilterMenu" class="glass-card p-4 mb-4 transition-all">
+                <div class="grid grid-cols-2 gap-3">
+                    <select v-model="filters.item" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
+                        <option value="ALL">全部項目</option>
+                        <option v-for="i in uniqueItems" :key="i" :value="i">{{ i }}</option>
+                    </select>
+                    <select v-model="filters.date" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
+                        <option value="ALL">全部日期</option>
+                        <option v-for="d in uniqueExpDates" :key="d" :value="d">{{ d }}</option>
+                    </select>
+                    <select v-model="filters.payer" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
+                        <option value="ALL">全部付款人</option>
+                        <option v-for="p in members" :key="p" :value="p">{{ p }}</option>
+                    </select>
+                    <select v-model="filters.location" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
+                        <option value="ALL">全部地點</option>
+                        <option v-for="l in uniqueLocations" :key="l" :value="l">{{ l }}</option>
+                    </select>
+                    <select v-model="filters.payment" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none col-span-2">
+                        <option value="ALL">全部付款方式</option>
+                        <option v-for="p in uniquePayments" :key="p" :value="p">{{ p }}</option>
+                    </select>
+                </div>
+                <button @click="resetFilters" class="w-full mt-3 bg-slate-100 text-slate-500 py-2 rounded-lg text-xs font-bold hover:bg-slate-200 transition">
+                    重置篩選條件
+                </button>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mb-2" v-if="hasActiveFilters">
+                <span v-if="filters.item !== 'ALL'" @click="filters.item='ALL'" class="filter-chip">
+                    {{ filters.item }} ✕
+                </span>
+                <span v-if="filters.date !== 'ALL'" @click="filters.date='ALL'" class="filter-chip">
+                    {{ filters.date }} ✕
+                </span>
+                <span v-if="filters.payer !== 'ALL'" @click="filters.payer='ALL'" class="filter-chip">
+                    {{ filters.payer }} ✕
+                </span>
+                <span v-if="filters.location !== 'ALL'" @click="filters.location='ALL'" class="filter-chip">
+                    {{ filters.location }} ✕
+                </span>
+                 <span v-if="filters.payment !== 'ALL'" @click="filters.payment='ALL'" class="filter-chip">
+                    {{ filters.payment }} ✕
+                </span>
+            </div>
+        </div>
+
+        <div class="glass-card p-4 mb-6">
+          <div class="relative h-64 w-full">
+            <div v-if="chartBusy" class="absolute inset-0 flex items-center justify-center text-xs text-slate-400 font-bold">
+              圖表載入中...
+            </div>
+            <canvas id="expenseChart"></canvas>
+          </div>
+        </div>
+
+        <div class="space-y-3 mb-8">
+          <div v-for="exp in filteredExpenses" :key="exp.row"
+               :class="['glass-card p-4 transition hover:shadow-md border-l-4 border-l-sky-400', isItemPending(exp.row) ? 'pending-sync' : '']">
+            <div class="flex justify-between items-start gap-4">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span :class="['tag', getItemTagClass(exp.item)]">{{ exp.item }}</span>
+                  <span class="text-[10px] text-slate-400 font-mono font-bold uppercase">{{ exp.date }} · {{ exp.time }}</span>
+                </div>
+
+                <div class="mt-2 font-bold text-slate-800 text-base break-anywhere allow-select" @click.stop>
+                  {{ exp.note ? exp.note : exp.item }}
+                </div>
+
+                <div class="text-xs text-slate-500 mt-2 flex items-center flex-wrap gap-2">
+                  <span class="bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">{{ exp.payer }}</span>
+                  <span v-if="exp.involved && exp.involved.length > 0" class="bg-orange-50 px-2 py-0.5 rounded text-orange-700 font-bold border border-orange-100 flex items-center gap-1">
+                      <span class="text-[9px] opacity-60">分</span>{{ exp.involved.join('、') }}
+                  </span>
+                  <span class="text-sky-600 font-bold bg-sky-50 px-2 py-0.5 rounded">{{ exp.payment }}</span>
+                  <span class="text-slate-400 font-medium">{{ exp.location }}</span>
+                </div>
+              </div>
+
+              <div class="text-right min-w-[96px] swipe-protected">
+                <div class="font-bold text-slate-800 text-lg tracking-tight">
+                  {{ exp.amount }} <span class="text-[10px] text-slate-400 font-bold">{{ exp.currency }}</span>
+                </div>
+                <div v-if="exp.currency !== 'NTD'" class="text-[10px] text-slate-400 font-mono font-bold mt-1">≈ {{ formatNumber(getAmountTWD(exp)) }}</div>
+                <div class="mt-3 flex gap-2 justify-end opacity-60 hover:opacity-100 transition">
+                  <button @click="openEditExp(exp)" class="text-[10px] text-sky-600 bg-white border border-sky-100 px-2 py-1 rounded">編輯</button>
+                  <button @click="deleteExp(exp)" class="text-[10px] text-red-500 bg-white border border-red-100 px-2 py-1 rounded">刪除</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="filteredExpenses.length===0" class="text-center text-slate-400 py-12 text-sm glass-panel rounded-2xl">尚無消費紀錄</div>
+        </div>
+
+        <div class="glass-card p-6 mb-8">
+          <h3 class="font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2 flex items-center">分帳結算</h3>
+          <div v-for="d in debts" :key="d.from + '_' + d.to"
+               class="flex justify-between items-center py-3 text-sm border-b border-slate-50 last:border-0">
+            <span class="flex items-center gap-2">
+              <span class="font-bold text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100">{{d.from}}</span>
+              <span class="text-slate-300 font-bold">-></span>
+              <span class="font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">{{d.to}}</span>
+            </span>
+            <span class="font-bold text-slate-800 font-mono text-base">{{ formatNumber(d.amount) }}</span>
+          </div>
+          <div v-if="debts.length===0" class="text-center text-slate-400 text-xs py-2">目前大家都付得剛剛好，沒有欠款！</div>
+        </div>
+      </div>
+    </Transition>
+  </div>
+
+  <Transition name="fade">
+    <div v-if="showImgViewer" 
+         class="img-viewer-overlay" 
+         @click="closeImgViewer"
+         @touchstart="handleImgTouchStart"
+         @touchmove="handleImgTouchMove"
+         @touchend="handleImgTouchEnd"
+         @dblclick="toggleZoom"> <div v-if="imgGesture.scale === 1" :class="['pull-hint', {'show-hint': imgGesture.isPulling}]">↓ 下拉關閉</div>
+        
+        <div class="img-viewer-close" @click.stop="closeImgViewer">✕</div>
+        
+        <img :src="viewingImg" 
+             ref="imgViewerEl"
+             class="img-viewer-img" 
+             @click.stop>
+    </div>
+  </Transition>
+
+  <Transition name="modal">
+    <div v-if="showItinModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 swipe-protected">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showItinModal=false"></div>
+      <div class="modal-content w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10">
+        <div class="bg-slate-50 p-4 border-b flex justify-between items-center">
+          <h3 class="font-bold text-slate-800">{{ isEditing ? '編輯行程' : '新增行程' }}</h3>
+          <button @click="showItinModal=false" class="text-slate-400 p-2">✕</button>
+        </div>
+        <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+          <div class="flex gap-3">
+            <div class="w-1/2">
+              <label class="text-[10px] font-bold text-slate-400 uppercase">開始時間</label>
+              <input type="time" v-model="itinForm.startTime" class="w-full glass-input p-3 rounded-xl mt-1 outline-none font-bold">
+            </div>
+            <div class="w-1/2">
+              <label class="text-[10px] font-bold text-slate-400 uppercase">結束時間 (選)</label>
+              <input type="time" v-model="itinForm.endTime" class="w-full glass-input p-3 rounded-xl mt-1 outline-none font-bold">
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase">類別</label>
+            <div class="flex gap-2 mt-1 flex-wrap">
+              <button v-for="c in ['景點','飲食','交通','住宿','其他']" :key="c" @click="itinForm.category=c"
+                      :class="['flex-1 min-w-[3rem] py-2 rounded-xl text-xs font-bold border transition',
+                               itinForm.category===c ? 'bg-sky-500 text-white border-sky-500 shadow-md' : 'bg-white text-slate-500 border-slate-200']">
+                {{c}}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase">標題</label>
+            <input v-model="itinForm.title" class="w-full glass-input p-3 rounded-xl mt-1 outline-none font-bold placeholder-slate-300" placeholder="行程名稱">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase">圖片 (點擊上傳)</label>
+            <div class="img-upload-btn mt-1">
+                <div v-if="!itinForm.imgUrl" class="img-preview">
+                    <span>+ 選擇照片</span>
+                </div>
+                <div v-else class="relative">
+                    <img :src="itinForm.imgUrl" class="w-full h-32 object-cover rounded-xl border border-slate-200">
+                    <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md text-xs font-bold px-2">移除</button>
+                </div>
+                <input type="file" accept="image/*" @change="handleImageUpload" v-if="!itinForm.imgUrl || itinForm.newImageBase64">
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase">地點 (Google Maps)</label>
+            <input v-model="itinForm.location" class="w-full glass-input p-3 rounded-xl mt-1 outline-none text-sm" placeholder="輸入地點">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase">連結 (選)</label>
+            <input v-model="itinForm.link" class="w-full glass-input p-3 rounded-xl mt-1 outline-none text-sm text-blue-600" placeholder="https://...">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase">備註</label>
+            <textarea v-model="itinForm.note" rows="3" class="w-full glass-input p-3 rounded-xl mt-1 outline-none text-sm" placeholder="備註事項..."></textarea>
+          </div>
+        </div>
+        <div class="p-4 bg-slate-50 border-t flex gap-3">
+          <button @click="showItinModal=false" class="flex-1 btn-cancel py-3 rounded-xl font-bold shadow-sm">取消</button>
+          <button @click="submitItin" class="flex-1 btn-glacier py-3 rounded-xl font-bold shadow-lg">儲存</button>
+        </div>
+      </div>
+    </div>
+  </Transition>
+
+  <Transition name="modal">
+    <div v-if="showExpModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 swipe-protected">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showExpModal=false"></div>
+      <div class="modal-content w-full max-w-sm bg-white rounded-3xl shadow-2xl relative z-10 p-6 space-y-4 max-h-[85vh] overflow-y-auto">
+        <h3 class="font-bold text-slate-800 text-lg">編輯消費</h3>
+        
+        <div class="flex gap-3">
+          <select v-model="editExpForm.payer" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
+            <option value="" disabled selected>泥是誰</option><option>家齊</option><option>亭穎</option><option>媽媽</option>
+          </select>
+          <select v-model="editExpForm.location" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
+            <option value="" disabled selected>在哪消費</option><option>台灣</option><option>杜拜</option><option>挪威</option><option>冰島</option><option>英國</option>
+          </select>
+        </div>
+
+        <div class="flex gap-3">
+          <select v-model="editExpForm.item" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
+            <option value="" disabled selected>消費項目</option>
+            <option>早餐</option><option>午餐</option><option>晚餐</option><option>零食</option><option>住宿</option>
+            <option>交通（機票）</option><option>交通（租車）</option><option>交通（停車費）</option><option>交通（油錢）</option>
+            <option>紀念品</option><option>門票</option><option>其他</option>
+          </select>
+          <select v-model="editExpForm.payment" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
+            <option value="" disabled selected>付款方式</option><option>現金</option><option>信用卡-國泰</option><option>信用卡-永豐</option><option>信用卡-元大</option>
+          </select>
+        </div>
+
+        <div class="flex gap-3">
+          <select v-model="editExpForm.currency" class="w-1/3 glass-input p-3 rounded-xl text-sm font-bold bg-sky-50 text-sky-700">
+            <option>NTD</option><option>NOK</option><option>ISK</option><option>EUR</option><option>GBP</option><option>AED</option>
+          </select>
+          <input type="number" v-model="editExpForm.amount" class="w-2/3 glass-input p-3 rounded-xl text-xl font-bold" placeholder="金額">
+        </div>
+
+        <div class="text-xs text-right text-slate-400 font-mono font-bold" v-if="editExpForm.amount && editExpForm.currency !== 'NTD'">
+            ≈ {{ formatNumber(Math.round(editExpForm.amount * rates[editExpForm.currency])) }} NTD
+        </div>
+
+        <input v-model="editExpForm.note" class="w-full glass-input p-3 rounded-xl text-sm" placeholder="備註">
+
+        <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+          <div class="flex justify-between items-center mb-3">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">分攤給</span>
+            <button @click="toggleSelectAllEdit" class="text-[10px] text-sky-600 font-bold bg-white px-2 py-1 rounded shadow-sm">全選</button>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <label v-for="m in members" :key="m"
+                   class="flex flex-1 justify-center items-center space-x-2 border px-4 py-3 rounded-xl cursor-pointer transition-all duration-200"
+                   :class="(editExpForm.involved || []).includes(m)?'bg-white border-sky-400 text-sky-700 shadow-md transform -translate-y-0.5':'bg-transparent border-slate-200 text-slate-400'">
+              <input type="checkbox" :value="m" v-model="editExpForm.involved" class="hidden"><span class="text-sm font-bold">{{m}}</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button @click="submitEditExp" class="flex-1 btn-glacier py-3 rounded-xl font-bold">更新</button>
+          <button @click="showExpModal=false" class="px-4 bg-slate-100 text-slate-500 rounded-xl font-bold">取消</button>
+        </div>
+      </div>
+    </div>
+  </Transition>
+
+  <Transition name="modal">
+    <div v-if="showRateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 swipe-protected">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showRateModal=false"></div>
+      <div class="modal-content w-full max-w-sm bg-white rounded-3xl shadow-2xl relative z-10 p-6">
+        <h3 class="font-bold text-slate-800 mb-4">設定匯率 (對台幣)</h3>
+        <div class="space-y-3">
+          <div v-for="c in ['NOK','ISK','EUR','GBP','AED']" :key="c" class="flex items-center gap-3">
+            <span class="w-10 font-bold text-slate-400 text-sm">{{c}}</span>
+            <input type="number" v-model="tempRates[c]" class="flex-1 glass-input p-2 rounded-lg font-mono font-bold text-right">
+          </div>
+        </div>
+        <button @click="saveRates" class="w-full btn-glacier mt-6 py-3 rounded-xl font-bold">儲存設定</button>
+      </div>
+    </div>
+  </Transition>
+
+</div>
+
+<script>
+const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbz6PZtqLJzlS2a71R-RfZjpJCuqJVPoP7RuNxEe74mS_uvxBejMNGKboFSn2ArNnXAu/exec';
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+
+async function callApi(action, data = null, method = 'GET') {
+  const options = { method };
+  if (method === 'POST') {
+    options.body = JSON.stringify({ action, data });
+    options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
+  }
+  let url = YOUR_GAS_URL;
+  if (method === 'GET') url += `?action=${action}`;
+
+  try {
+    const response = await fetch(url, options);
+    const ct = response.headers.get("content-type");
+    if (ct && ct.indexOf("application/json") === -1) throw new Error("Server Response Not JSON");
+    if (!response.ok) throw new Error("Network error");
+    return await response.json();
+  } catch(e) {
+    console.warn("API Fail:", e);
+    return null; 
+  }
+}
+
+const { createApp, ref, computed, onMounted, nextTick, watch, onBeforeUnmount } = Vue;
+
+createApp({
+  setup() {
+    const tab = ref('itinerary');
+    const isLoading = ref(true);
+    const isFirstLoad = ref(true);
+    const isPullRefreshing = ref(false);
+    const isOnline = ref(navigator.onLine);
+    
+    // Status Flags
+    const isSyncing = ref(false);
+
+    // Sync Queue
+    const syncQueue = ref([]);
+    
+    const members = ref([]);
+    const expenses = ref([]);
+    const itinerary = ref([]);
+    const rates = ref({});
+
+    const dateContainer = ref(null);
+    const scrollContainer = ref(null);
+
+    const todayDate = ref('');
+    const todayWeekday = ref('');
+
+    // Image Viewer State & Gesture Logic
+    const showImgViewer = ref(false);
+    const viewingImg = ref('');
+    const imgViewerEl = ref(null);
+    const imgGesture = ref({ 
+        startX: 0, startY: 0, 
+        currentX: 0, currentY: 0, 
+        scale: 1, 
+        isPulling: false,
+        isZooming: false,
+        startDistance: 0
+    });
+
+    // PULL DOWN + PINCH ZOOM LOGIC
+    const getDistance = (touches) => {
+        return Math.hypot(
+            touches[0].clientX - touches[1].clientX,
+            touches[0].clientY - touches[1].clientY
+        );
+    };
+
+    const handleImgTouchStart = (e) => {
+        if (e.touches.length === 2) {
+            // Pinch start
+            imgGesture.value.isZooming = true;
+            imgGesture.value.startDistance = getDistance(e.touches);
+        } else if (e.touches.length === 1) {
+            // Pan/Pull start
+            imgGesture.value.startX = e.touches[0].clientX;
+            imgGesture.value.startY = e.touches[0].clientY;
+            imgGesture.value.isPulling = false;
+        }
+    };
+
+    const handleImgTouchMove = (e) => {
+        if(!showImgViewer.value) return;
+        e.preventDefault(); // Prevent native scroll
+
+        if (e.touches.length === 2 && imgGesture.value.isZooming) {
+            // Pinching
+            const dist = getDistance(e.touches);
+            const scaleChange = dist / imgGesture.value.startDistance;
+            // Limit zoom range
+            let newScale = imgGesture.value.scale * scaleChange;
+            newScale = Math.max(1, Math.min(newScale, 4));
+            
+            if (imgViewerEl.value) {
+                imgViewerEl.value.style.transform = `scale(${newScale}) translate(${imgGesture.value.currentX}px, ${imgGesture.value.currentY}px)`;
+            }
+            // Store tentative scale (applied fully on end for simplicity, or continuously)
+            // Simplified: we just visual transform here, commit on end is tricky without matrix
+            // For robust simple zoom: just apply scale visually
+            imgViewerEl.value.style.transform = `scale(${newScale})`;
+            imgGesture.value.tempScale = newScale; 
+        } 
+        else if (e.touches.length === 1) {
+            const dy = e.touches[0].clientY - imgGesture.value.startY;
+            const dx = e.touches[0].clientX - imgGesture.value.startX;
+
+            // Only allow pull-down close if NOT zoomed in
+            if (imgGesture.value.scale === 1) {
+                if (dy > 0) {
+                    imgGesture.value.currentY = dy;
+                    imgGesture.value.isPulling = true;
+                    if (imgViewerEl.value) {
+                        imgViewerEl.value.style.transform = `translateY(${dy}px) scale(${1 - dy/1000})`;
+                    }
+                    const overlay = document.querySelector('.img-viewer-overlay');
+                    if(overlay) overlay.style.backgroundColor = `rgba(0,0,0,${Math.max(0, 0.98 - dy/600)})`;
+                }
+            } else {
+                // Pan logic (simplified: moving image when zoomed)
+                // Note: proper panning requires tracking limits, this is basic free-move
+                if (imgViewerEl.value) {
+                     imgViewerEl.value.style.transform = `scale(${imgGesture.value.scale}) translate(${dx/imgGesture.value.scale}px, ${dy/imgGesture.value.scale}px)`;
+                }
+            }
+        }
+    };
+
+    const handleImgTouchEnd = (e) => {
+        if (imgGesture.value.isZooming) {
+            // Commit zoom
+            if (imgGesture.value.tempScale) {
+                imgGesture.value.scale = imgGesture.value.tempScale;
+            }
+            imgGesture.value.isZooming = false;
+            // Reset to 1 if user pinched out too much
+            if (imgGesture.value.scale < 1) {
+                imgGesture.value.scale = 1;
+                resetImgTransform();
+            }
+        } else if (imgGesture.value.isPulling) {
+            if (imgGesture.value.currentY > 100) {
+                closeImgViewer();
+            } else {
+                resetImgTransform();
+                const overlay = document.querySelector('.img-viewer-overlay');
+                if(overlay) overlay.style.backgroundColor = '';
+            }
+            imgGesture.value.isPulling = false;
+        }
+    };
+
+    const resetImgTransform = () => {
+        if (imgViewerEl.value) {
+            imgViewerEl.value.style.transform = `scale(${imgGesture.value.scale})`;
+        }
+    };
+
+    const toggleZoom = () => {
+        if (imgGesture.value.scale > 1) {
+            imgGesture.value.scale = 1;
+        } else {
+            imgGesture.value.scale = 2.5;
+        }
+        resetImgTransform();
+    };
+
+    const tripStatus = computed(() => {
+      const now = new Date();
+      const start = new Date('2026-08-30');
+      const end = new Date('2026-09-26');
+      now.setHours(0,0,0,0); start.setHours(0,0,0,0); end.setHours(0,0,0,0);
+      
+      if (now < start) return `倒數 ${Math.ceil((start - now)/86400000)} 天`;
+      
+      if (now >= start && now <= end) {
+         const diff = Math.floor((now - start)/86400000) + 1;
+         return `DAY ${diff}`;
+      }
+      
+      return '';
+    });
+
+    const tripDates = [];
+    const startDate = new Date('2026-08-30');
+    for (let d = new Date(startDate); d <= new Date('2026-09-26'); d.setDate(d.getDate()+1)) {
+      tripDates.push({ date: d.toISOString().split('T')[0], short: (d.getMonth()+1)+'/'+d.getDate() });
+    }
+    const selDate = ref(tripDates[0].date);
+    
+    // Filter State
+    const showFilterMenu = ref(false);
+    const filters = ref({
+        date: 'ALL',
+        item: 'ALL',
+        payer: 'ALL',
+        location: 'ALL',
+        payment: 'ALL'
+    });
+
+    const showRateModal = ref(false);
+    const showItinModal = ref(false);
+    const showExpModal = ref(false);
+    const isEditing = ref(false);
+    const itinForm = ref({ row: null, startTime: '09:00', endTime: '', category: '景點', title: '', location: '', link: '', note: '', imgUrl: '', newImageBase64: null, deleteImage: false, imgId: '' });
+    const newExp = ref({ payer: '', location: '', item: '', payment: '', currency: 'NTD', amount: null, involved: [], note: '' });
+    const editExpForm = ref({});
+    const tempRates = ref({});
+
+    watch(() => newExp.value.payer, (v) => { if (v) newExp.value.involved = [v]; });
+
+    const pullDistance = ref(0);
+    const refreshText = computed(() => isPullRefreshing.value ? '更新中...' : '下拉更新');
+
+    const initDate = () => {
+      const now = new Date();
+      todayDate.value = now.getFullYear() + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + String(now.getDate()).padStart(2,'0');
+      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      todayWeekday.value = days[now.getDay()];
+    };
+
+    /* iOS Gesture Engine (15% Logic) with Text Selection Protection */
+    const gesture = {
+      active:false, mode:null,
+      startX:0, startY:0, dx:0, dy:0,
+      startedAtLeftEdge:false,
+      startedAtRightEdge:false,
+      inSelectable:false,
+      selectIntent:false, // New Flag: If user holds still for a moment, lock as selection
+      longPressTimer:null
+    };
+    
+    // Check if user has selected text
+    const hasTextSelection = () => {
+      const sel = window.getSelection();
+      return !!(sel && sel.toString && sel.toString().length > 0);
+    };
+
+    const isBlockedTarget = (target) => {
+      if (target.closest('.swipe-protected')) return true;
+      const tag = (target.tagName || '').toLowerCase();
+      if (['input','textarea','select','button','a','label'].includes(tag)) return true;
+      return false;
+    };
+
+    const clearLongPress = () => {
+      if (gesture.longPressTimer) {
+        clearTimeout(gesture.longPressTimer);
+        gesture.longPressTimer = null;
+      }
+    };
+
+    const attachGestureListeners = () => {
+      const el = scrollContainer.value;
+      if (!el) return;
+
+      const onTouchStart = (e) => {
+        const t = e.touches[0];
+        gesture.active = true;
+        gesture.mode = null;
+        gesture.dx = 0;
+        gesture.dy = 0;
+        gesture.startX = t.clientX;
+        gesture.startY = t.clientY;
+        
+        // 15% Edge Logic
+        const w = window.innerWidth;
+        const edgeThreshold = w * 0.15;
+        
+        gesture.startedAtLeftEdge = (gesture.startX <= edgeThreshold);
+        gesture.startedAtRightEdge = (gesture.startX >= w - edgeThreshold);
+
+        gesture.inSelectable = !!e.target.closest('.allow-select');
+        gesture.selectIntent = false; // Reset intent
+        clearLongPress();
+
+        if (gesture.inSelectable) {
+          // If touching text, wait 220ms. If no move -> assume selection intended
+          gesture.longPressTimer = setTimeout(() => {
+            gesture.selectIntent = true;
+          }, 220);
+        }
+
+        gesture.blocked = isBlockedTarget(e.target);
+      };
+
+      const onTouchMove = (e) => {
+        if (!gesture.active) return;
+        if (gesture.blocked) return;
+
+        const t = e.touches[0];
+        gesture.dx = t.clientX - gesture.startX;
+        gesture.dy = t.clientY - gesture.startY;
+        const absX = Math.abs(gesture.dx);
+        const absY = Math.abs(gesture.dy);
+
+        // If user moved significantly (>10px), cancel the "Selection Intent" timer
+        // This means it's a swipe, not a hold
+        if (gesture.inSelectable) {
+           if (absX > 10 || absY > 10) clearLongPress();
+        }
+
+        // CRITICAL: If intent is already selection or text is selected, STOP gesture logic
+        if (gesture.inSelectable && (gesture.selectIntent || hasTextSelection())) return;
+
+        if (!gesture.mode) {
+          if (absX < 10 && absY < 10) return;
+          gesture.mode = (absX > absY) ? 'h' : 'v';
+        }
+
+        if (gesture.mode === 'h') {
+          if ((gesture.startedAtLeftEdge || gesture.startedAtRightEdge) && e.cancelable) {
+             e.preventDefault();
+          }
+          return;
+        }
+
+        if (gesture.mode === 'v') {
+          const scroller = scrollContainer.value;
+          const isTop = scroller ? scroller.scrollTop <= 0 : true;
+          if (isTop && gesture.dy > 0) {
+            if (e.cancelable) e.preventDefault();
+            pullDistance.value = Math.min(72, Math.pow(gesture.dy, 0.7));
+          }
+        }
+      };
+
+      const onTouchEnd = () => {
+        if (!gesture.active) return;
+        gesture.active = false;
+        clearLongPress();
+
+        // CRITICAL PROTECTION for iOS Menu
+        // If text is selected OR we determined intent was selection -> DO NOTHING
+        if (gesture.inSelectable && (gesture.selectIntent || hasTextSelection())) {
+          pullDistance.value = 0;
+          gesture.mode = null;
+          return; // Exit immediately, do not trigger date switch
+        }
+
+        if (pullDistance.value > 60) {
+          pullDistance.value = 60;
+          isPullRefreshing.value = true;
+          loadData();
+          return;
+        } else {
+          pullDistance.value = 0;
+        }
+
+        if (gesture.mode === 'h') {
+           const absX = Math.abs(gesture.dx);
+           if (absX > 60) {
+             if (gesture.startedAtLeftEdge && gesture.dx > 0) {
+                if (tab.value === 'expense') tab.value = 'itinerary';
+                else if (tab.value === 'analysis') tab.value = 'expense';
+             }
+             else if (gesture.startedAtRightEdge && gesture.dx < 0) {
+                if (tab.value === 'itinerary') tab.value = 'expense';
+                else if (tab.value === 'expense') changeTabToAnalysis();
+             }
+             else if (tab.value === 'itinerary' && !gesture.startedAtLeftEdge && !gesture.startedAtRightEdge) {
+                if (gesture.dx < 0) switchDay('next');
+                else switchDay('prev');
+             }
+           }
+        }
+
+        gesture.mode = null;
+        gesture.inSelectable = false;
+        gesture.selectIntent = false;
+      };
+
+      attachGestureListeners._handlers = { onTouchStart, onTouchMove, onTouchEnd };
+
+      el.addEventListener('touchstart', onTouchStart, { passive: true });
+      el.addEventListener('touchmove',  onTouchMove,  { passive: false });
+      el.addEventListener('touchend',   onTouchEnd,   { passive: true });
+      el.addEventListener('touchcancel',onTouchEnd,   { passive: true });
+    };
+
+    const detachGestureListeners = () => {
+      const el = scrollContainer.value;
+      const h = attachGestureListeners._handlers;
+      if (!el || !h) return;
+      el.removeEventListener('touchstart', h.onTouchStart);
+      el.removeEventListener('touchmove', h.onTouchMove);
+      el.removeEventListener('touchend', h.onTouchEnd);
+      el.removeEventListener('touchcancel', h.onTouchEnd);
+      attachGestureListeners._handlers = null;
+    };
+
+    const saveLocal = (data) => {
+      try {
+        const toSave = {
+           expenses: expenses.value,
+           itinerary: itinerary.value,
+           members: members.value,
+           rates: rates.value
+        };
+        localStorage.setItem('tripData_v36', JSON.stringify(toSave));
+        localStorage.setItem('syncQueue_v36', JSON.stringify(syncQueue.value));
+      } catch(e){}
+    };
+
+    const loadLocal = () => {
+      const data = localStorage.getItem('tripData_v36');
+      const q = localStorage.getItem('syncQueue_v36');
+      if (q) syncQueue.value = JSON.parse(q);
+      if (data) {
+        const parsed = JSON.parse(data);
+        expenses.value = parsed.expenses || [];
+        itinerary.value = parsed.itinerary || [];
+        members.value = parsed.members || [];
+        rates.value = parsed.rates || {};
+        return true;
+      }
+      return false;
+    };
+
+    const getBackendActionName = (type, action) => {
+      if (action === 'delete') return 'deleteRow';
+      const suffix = (type === 'itin') ? 'Itinerary' : 'Expense';
+      return action + suffix;
+    };
+
+    const updateLocalData = (res) => {
+      if (res && res.expenses) {
+        expenses.value = res.expenses;
+        itinerary.value = res.itinerary;
+        members.value = res.members;
+        rates.value = res.rates;
+        saveLocal({}); // Save the fresh data with real IDs to local storage
+        if (tab.value === 'analysis') scheduleRenderChart();
+      }
+    };
+
+    const processSyncQueue = async () => {
+      if (syncQueue.value.length === 0 || !navigator.onLine || isSyncing.value) return;
+      
+      isSyncing.value = true;
+      const queue = [...syncQueue.value];
+      const remaining = [];
+
+      for (const job of queue) {
+        try {
+          const apiAction = getBackendActionName(job.type, job.action);
+          const res = await callApi(apiAction, job.data, 'POST');
+          
+          if (res) {
+            updateLocalData(res);
+          } else {
+            remaining.push(job);
+          }
+        } catch (e) {
+          remaining.push(job);
+        }
+      }
+
+      syncQueue.value = remaining;
+      saveLocal({});
+      isSyncing.value = false;
+      
+      if (syncQueue.value.length === 0) loadData();
+    };
+
+    const handleCRUD = async (type, action, data) => {
+       if (navigator.onLine) {
+         isSyncing.value = true;
+         try {
+           const apiAction = getBackendActionName(type, action);
+           const res = await callApi(apiAction, data, 'POST');
+           if (!res) throw new Error("API Fail");
+           updateLocalData(res);
+         } catch (e) {
+           syncQueue.value.push({ type, action, data });
+         } finally {
+           isSyncing.value = false;
+         }
+       } else {
+         syncQueue.value.push({ type, action, data });
+       }
+       saveLocal({});
+    };
+
+    const loadData = async () => {
+      if (!isPullRefreshing.value) isLoading.value = true;
+
+      if (loadLocal()) {
+        if (isFirstLoad.value) {
+          nextTick(() => checkAndScrollToToday());
+          isFirstLoad.value = false;
+        }
+        if (tab.value === 'analysis') scheduleRenderChart();
+        setTimeout(() => { if (!isPullRefreshing.value) isLoading.value = false; }, 150);
+      }
+
+      if (!navigator.onLine) {
+        isLoading.value = false;
+        isPullRefreshing.value = false;
+        pullDistance.value = 0;
+        return;
+      }
+
+      try {
+        const res = await callApi('getData');
+        updateLocalData(res);
+      } catch(e) {
+      } finally {
+        isLoading.value = false;
+        isPullRefreshing.value = false;
+        pullDistance.value = 0;
+      }
+    };
+
+    const selectDate = (date) => { 
+        selDate.value = date; 
+        scrollToDateBtn(date);
+        // Scroll content to top on date switch
+        if(scrollContainer.value) scrollContainer.value.scrollTop = 0;
+    };
+
+    const scrollToDateBtn = (date) => {
+      nextTick(() => {
+        const btn = document.getElementById('date-btn-' + date);
+        if (btn && dateContainer.value) {
+          const centerPos = (btn.offsetLeft - dateContainer.value.offsetLeft) - (dateContainer.value.clientWidth / 2) + (btn.clientWidth / 2);
+          dateContainer.value.scrollTo({ left: centerPos, behavior: 'smooth' });
+        }
+      });
+    };
+
+    const checkAndScrollToToday = () => {
+      const d = new Date(); const offset = d.getTimezoneOffset() * 60000;
+      const todayStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
+      if (tripDates.some(x => x.date === todayStr)) selectDate(todayStr);
+      else selectDate(tripDates[0].date);
+    };
+
+    const switchDay = (direction) => {
+      const idx = tripDates.findIndex(d => d.date === selDate.value);
+      if (direction === 'next' && idx < tripDates.length - 1) selectDate(tripDates[idx + 1].date);
+      if (direction === 'prev' && idx > 0) selectDate(tripDates[idx - 1].date);
+    };
+
+    const getDayInfo = (dStr) => {
+      const d = new Date(dStr);
+      const diff = Math.ceil((d - startDate)/86400000) + 1;
+      return `DAY ${diff} · ${['週日','週一','週二','週三','週四','週五','週六'][d.getDay()]}`;
+    };
+
+    const getCategoryClass = (cat) => {
+      switch(cat) {
+        case '交通': return 'cat-traffic';
+        case '住宿': return 'cat-stay';
+        case '景點': return 'cat-spot';
+        case '飲食': return 'cat-food';
+        default: return 'cat-note';
+      }
+    };
+
+    const getEvents = (d) => itinerary.value.filter(e => e.date === d).sort((a,b)=>a.startTime.localeCompare(b.startTime));
+    const formatNumber = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+    // Dynamic Options for Filters
+    const uniqueExpDates = computed(() => [...new Set(expenses.value.map(e => e.date))].sort());
+    const uniqueItems = computed(() => [...new Set(expenses.value.map(e => e.item))].filter(Boolean));
+    const uniqueLocations = computed(() => [...new Set(expenses.value.map(e => e.location))].filter(Boolean));
+    const uniquePayments = computed(() => [...new Set(expenses.value.map(e => e.payment))].filter(Boolean));
+
+    const hasActiveFilters = computed(() => {
+        return Object.values(filters.value).some(v => v !== 'ALL');
+    });
+
+    const resetFilters = () => {
+        filters.value = { date: 'ALL', item: 'ALL', payer: 'ALL', location: 'ALL', payment: 'ALL' };
+    };
+
+    // Updated Filtering Logic
+    const filteredExpenses = computed(() => {
+        return expenses.value.filter(e => {
+            if (filters.value.date !== 'ALL' && e.date !== filters.value.date) return false;
+            if (filters.value.item !== 'ALL' && e.item !== filters.value.item) return false;
+            if (filters.value.payer !== 'ALL' && e.payer !== filters.value.payer) return false;
+            if (filters.value.location !== 'ALL' && e.location !== filters.value.location) return false;
+            if (filters.value.payment !== 'ALL' && e.payment !== filters.value.payment) return false;
+            return true;
+        });
+    });
+
+    const getAmountTWD = (exp) => {
+      if (exp.amountTWD && exp.amountTWD > 0) return exp.amountTWD;
+      return Math.round(exp.amount * (rates.value[exp.currency] || 1));
+    };
+
+    const publicSpent = computed(() => {
+      return expenses.value.reduce((sum, e) => {
+        const amt = getAmountTWD(e);
+        if (!e.involved || e.involved.length === 0) return sum;
+        const perShare = amt / e.involved.length;
+        let bill = 0;
+        if (e.involved.includes('家齊')) bill += perShare;
+        if (e.involved.includes('亭穎')) bill += perShare;
+        return sum + bill;
+      }, 0);
+    });
+
+    const momSpent = computed(() => {
+      return expenses.value.reduce((sum, e) => {
+        const amt = getAmountTWD(e);
+        if (e.involved && e.involved.includes('媽媽')) return sum + (amt / e.involved.length);
+        return sum;
+      }, 0);
+    });
+
+    const debts = computed(() => {
+      if (members.value.length === 0) return [];
+      const bal = {}; members.value.forEach(m => bal[m] = 0);
+      expenses.value.forEach(e => {
+        const amt = getAmountTWD(e);
+        const split = e.involved || [];
+        if (split.length > 0) {
+          bal[e.payer] += amt;
+          const share = amt / split.length;
+          split.forEach(p => { if (bal[p] !== undefined) bal[p] -= share; });
+        }
+      });
+      let debtors=[], creditors=[];
+      for (const m in bal) {
+        if (bal[m] < -1) debtors.push({p:m, a:bal[m]});
+        if (bal[m] > 1) creditors.push({p:m, a:bal[m]});
+      }
+      debtors.sort((a,b)=>a.a-b.a);
+      creditors.sort((a,b)=>b.a-a.a);
+      const res=[]; let i=0, j=0;
+      while(i<debtors.length && j<creditors.length){
+        const d=debtors[i], c=creditors[j];
+        const amt=Math.min(Math.abs(d.a), c.a);
+        res.push({from:d.p, to:c.p, amount:Math.round(amt)});
+        d.a += amt; c.a -= amt;
+        if (Math.abs(d.a)<1) i++;
+        if (c.a<1) j++;
+      }
+      return res;
+    });
+
+    const getItemTagClass = (item) => {
+      const s = String(item || '');
+      if (s.includes('交通')) {
+        if (s.includes('機票')) return 'tag-ticket';
+        return 'tag-traffic';
+      }
+      if (s.includes('住宿')) return 'tag-stay';
+      if (['早餐','午餐','晚餐','零食'].some(k => s.includes(k))) return 'tag-food';
+      if (['紀念品'].some(k => s.includes(k))) return 'tag-shop';
+      return 'tag-other';
+    };
+
+    /* Chart Logic */
+    let chartInstance = null;
+    const chartBusy = ref(false);
+    let chartTimer = null;
+
+    const buildStats = () => {
+      const stats = {};
+      const list = filteredExpenses.value;
+      for (let i=0;i<list.length;i++){
+        const e = list[i];
+        const key = e.item || '其他';
+        stats[key] = (stats[key] || 0) + getAmountTWD(e);
+      }
+      return stats;
+    };
+
+    const renderChart = () => {
+      const canvas = document.getElementById('expenseChart');
+      if (!canvas) return;
+
+      const stats = buildStats();
+      const labels = Object.keys(stats);
+      const data = Object.values(stats);
+
+      const nordicColors = ['#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#fb7185', '#22d3ee', '#34d399', '#a78bfa', '#fbcfe8', '#e2e8f0'];
+
+      if (chartInstance) {
+        chartInstance.data.labels = labels;
+        chartInstance.data.datasets[0].data = data;
+        chartInstance.data.datasets[0].backgroundColor = labels.map((_,i)=>nordicColors[i % nordicColors.length]);
+        chartInstance.update('none');
+      } else {
+        chartInstance = new Chart(canvas, {
+          type: 'doughnut',
+          data: { labels, datasets: [{ data, backgroundColor: labels.map((_,i)=>nordicColors[i % nordicColors.length]), borderWidth: 0, hoverOffset: 4 }] },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            animation: { duration: 800 },
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  font: { family: 'Inter', size: 11, weight: 'bold' },
+                  color: '#64748b',
+                  usePointStyle: true,
+                  padding: 12,
+                  boxWidth: 8
+                }
+              }
+            }
+          }
+        });
+      }
+      chartBusy.value = false;
+    };
+
+    const scheduleRenderChart = async () => {
+      if (tab.value !== 'analysis') return;
+      chartBusy.value = true;
+
+      if (chartTimer) clearTimeout(chartTimer);
+      chartTimer = setTimeout(() => {
+        nextTick(() => {
+          renderChart();
+        });
+      }, 300);
+    };
+
+    const changeTabToAnalysis = async () => {
+      tab.value = 'analysis';
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+      }
+      scheduleRenderChart();
+    };
+
+    // Watch filters change for chart update
+    watch(tab, (val) => {
+      if (val === 'analysis') scheduleRenderChart();
+      if (val === 'expense') {
+        newExp.value = { payer: '', location: '', item: '', payment: '', currency: 'NTD', amount: null, involved: [], note: '' };
+      }
+    });
+    watch(filters, () => { if (tab.value === 'analysis') scheduleRenderChart(); }, { deep: true });
+    watch(expenses, () => { if (tab.value === 'analysis') scheduleRenderChart(); }, { deep: true });
+
+    const openRateModal = () => { tempRates.value = { ...rates.value }; showRateModal.value = true; };
+    const openAddItin = () => { itinForm.value = { row: null, startTime: '09:00', endTime: '', category: '景點', title: '', location: '', link: '', note: '', imgUrl: '', newImageBase64: null, deleteImage: false, imgId: '' }; isEditing.value = false; showItinModal.value = true; };
+    const openEditItin = (evt) => { itinForm.value = { ...evt, newImageBase64: null, deleteImage: false }; isEditing.value = true; showItinModal.value = true; };
+    const openEditExp = (exp) => { editExpForm.value = JSON.parse(JSON.stringify(exp)); showExpModal.value = true; };
+    
+    // Image Handling
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            itinForm.value.imgUrl = evt.target.result; // Preview
+            itinForm.value.newImageBase64 = evt.target.result; // For upload
+            itinForm.value.deleteImage = false;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const removeImage = () => {
+        itinForm.value.imgUrl = '';
+        itinForm.value.newImageBase64 = null;
+        itinForm.value.deleteImage = true;
+    };
+
+    const viewImage = (url) => {
+        viewingImg.value = url;
+        showImgViewer.value = true;
+        imgGesture.value = { startX: 0, startY: 0, currentX: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 };
+    };
+    const closeImgViewer = () => { 
+        if (imgViewerEl.value) imgViewerEl.value.style.transform = '';
+        const overlay = document.querySelector('.img-viewer-overlay');
+        if(overlay) overlay.style.backgroundColor = '';
+        showImgViewer.value = false; 
+    };
+
+    // ===================================
+    // Actions
+    // ===================================
+
+    const deleteItin = async (evt) => { 
+      if(!confirm('確定刪除?')) return; 
+      
+      itinerary.value = itinerary.value.filter(x => x.row !== evt.row); 
+      
+      const pendingIdx = syncQueue.value.findIndex(job => 
+        job.type === 'itin' && job.action === 'add' && job.data.row === evt.row
+      );
+
+      if (pendingIdx !== -1) {
+        syncQueue.value.splice(pendingIdx, 1);
+        saveLocal({});
+      } else {
+        handleCRUD('itin', 'delete', { row: evt.row, sheetName: 'Itinerary' });
+      }
+    };
+
+    const deleteExp = async (exp) => { 
+      if(!confirm('確定刪除?')) return; 
+      expenses.value = expenses.value.filter(x => x.row !== exp.row); 
+      
+      const pendingIdx = syncQueue.value.findIndex(job => 
+        job.type === 'exp' && job.action === 'add' && job.data.row === exp.row
+      );
+
+      if (pendingIdx !== -1) {
+        syncQueue.value.splice(pendingIdx, 1);
+        saveLocal({});
+      } else {
+        handleCRUD('exp', 'delete', { row: exp.row, sheetName: 'Expenses' });
+      }
+    };
+
+    const submitItin = async () => {
+      if(!itinForm.value.title) return alert('請輸入標題');
+      const newRow = isEditing.value ? itinForm.value.row : Date.now();
+      const payload = { ...itinForm.value, row: newRow, date: selDate.value };
+      
+      if(isEditing.value) {
+         const idx = itinerary.value.findIndex(x => x.row === newRow);
+         if(idx !== -1) itinerary.value[idx] = payload;
+         handleCRUD('itin', 'edit', payload);
+      } else {
+         itinerary.value.push(payload);
+         handleCRUD('itin', 'add', payload);
+      }
+      showItinModal.value = false;
+    };
+
+    const submitExp = async () => {
+      if(!newExp.value.amount || !newExp.value.item) return alert('請輸入金額與項目');
+      const payload = { 
+        ...newExp.value, 
+        row: Date.now(), 
+        date: new Date().toISOString().split('T')[0], 
+        time: new Date().toTimeString().slice(0,5),
+        amountTWD: Math.round(newExp.value.amount * (rates.value[newExp.value.currency] || 1))
+      };
+      
+      expenses.value.unshift(payload);
+      handleCRUD('exp', 'add', payload);
+      
+      newExp.value.amount = null; newExp.value.item = ''; newExp.value.note = ''; newExp.value.involved = [];
+      alert('記帳成功');
+    };
+
+    const submitEditExp = async () => {
+        const idx = expenses.value.findIndex(e => e.row === editExpForm.value.row);
+        if(idx === -1) return;
+        
+        const updated = { ...editExpForm.value };
+        updated.amountTWD = Math.round(updated.amount * (rates.value[updated.currency] || 1));
+        
+        expenses.value[idx] = updated;
+        showExpModal.value = false;
+        handleCRUD('exp', 'edit', updated);
+    };
+
+    const saveRates = () => {
+       rates.value = { ...tempRates.value };
+       saveLocal({});
+       showRateModal.value = false;
+       callApi('updateRates', rates.value, 'POST');
+    };
+
+    const confirmClearSync = () => { 
+      if(confirm('確定要強制清空所有待上傳資料嗎？\n注意：這會導致離線新增的資料無法同步到伺服器。')) {
+        syncQueue.value = []; 
+        saveLocal({});
+      }
+    };
+    
+    const toggleSelectAll = () => { if(newExp.value.involved.length === members.value.length) newExp.value.involved=[]; else newExp.value.involved=[...members.value]; };
+    
+    const toggleSelectAllEdit = () => { 
+        if(!editExpForm.value.involved) editExpForm.value.involved = [];
+        if(editExpForm.value.involved.length === members.value.length) editExpForm.value.involved=[]; 
+        else editExpForm.value.involved=[...members.value]; 
+    };
+
+    const updateOnlineStatus = () => { 
+      isOnline.value = navigator.onLine; 
+      if (isOnline.value) processSyncQueue();
+    };
+
+    const isItemPending = (rowId) => {
+      return syncQueue.value.some(job => job.data.row === rowId);
+    };
+
+    onMounted(async () => {
+      initDate();
+      window.addEventListener('online', updateOnlineStatus);
+      window.addEventListener('offline', updateOnlineStatus);
+      await nextTick();
+      attachGestureListeners();
+      loadData();
+      
+      // Try processing queue on load if online
+      if(navigator.onLine) processSyncQueue();
+    });
+
+    onBeforeUnmount(() => {
+      detachGestureListeners();
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+      if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+    });
+
+    return {
+      tab, isLoading, isOnline, isSyncing, syncQueue,
+      dateContainer, scrollContainer,
+      todayDate, todayWeekday,
+      pullDistance, isPullRefreshing, refreshText,
+      tripStatus, tripDates, selDate,
+      itinerary, 
+      selectDate, getDayInfo, getEvents, getCategoryClass,
+      expenses, rates, members, 
+      filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments,
+      resetFilters, hasActiveFilters, filteredExpenses,
+      formatNumber, getAmountTWD,
+      publicSpent, momSpent, debts,
+      getItemTagClass,
+      chartBusy,
+      changeTabToAnalysis,
+      showRateModal, showItinModal, showExpModal, isEditing,
+      itinForm, newExp, editExpForm, tempRates,
+      openRateModal, openAddItin, openEditItin, openEditExp,
+      deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, 
+      confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending,
+      handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg,
+      imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
