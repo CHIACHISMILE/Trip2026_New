@@ -8,13 +8,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="2026挪威冰島之旅">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#f4f8fb">
+  <meta name="theme-color" content="#f7f9fb">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="https://img.icons8.com/color/180/snowflake.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -23,49 +23,43 @@
   <style>
     :root {
       color-scheme: light;
-      --nordic-50: #f4f8fb;
-      --nordic-100: #e8f0f7;
-      --nordic-200: #d8e6f2;
-      --nordic-300: #a8c5dd;
-      --nordic-500: #4c8fbf;
-      --nordic-600: #2f6ea3;
-      --glacier-500: #4f9dd9;
-      --glacier-600: #2b7db8;
-      --slate-50: #f8fafc;
-      --slate-200: #e2e8f0;
-      --slate-400: #94a3b8;
-      --slate-500: #64748b;
-      --slate-700: #334155;
-      --slate-800: #1f2937;
-      --ink: #0b1220;
-      --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.08);
-      --shadow-card: 0 18px 40px rgba(15, 23, 42, 0.12);
+      --snow: #f7f9fb;
+      --ice: #eef3f7;
+      --mist: #e3ecf4;
+      --fjord: #a9c4da;
+      --glacier: #5a8fb8;
+      --deep: #2b4f6c;
+      --ink: #0b1a28;
+      --shadow-strong: 0 24px 50px rgba(11, 26, 40, 0.12);
+      --shadow-soft: 0 14px 32px rgba(11, 26, 40, 0.08);
       --radius-xl: 26px;
       --radius-lg: 20px;
+      --radius-md: 14px;
     }
 
     html, body {
       height: 100dvh;
       width: 100%;
-      overflow: hidden;
+      margin: 0;
       font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
-      background: linear-gradient(160deg, #f7fafc 0%, #eff5fb 45%, #f4f8fb 100%);
+      background: radial-gradient(circle at top, #ffffff 0%, #f4f7fa 60%, #eef3f7 100%);
       color: var(--ink);
       overscroll-behavior: none;
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
       touch-action: none;
+      overflow: hidden;
     }
 
     body { -webkit-touch-callout: default; }
 
-    #fixed-bg {
+    #ambient {
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at top, rgba(79, 157, 217, 0.18), transparent 55%),
-                  radial-gradient(circle at 25% 15%, rgba(168, 197, 221, 0.25), transparent 55%),
-                  radial-gradient(circle at 80% 0%, rgba(47, 110, 163, 0.12), transparent 45%);
+      background: radial-gradient(circle at 15% 10%, rgba(90, 143, 184, 0.18), transparent 55%),
+                  radial-gradient(circle at 80% 0%, rgba(169, 196, 218, 0.25), transparent 50%),
+                  radial-gradient(circle at 50% 100%, rgba(227, 236, 244, 0.6), transparent 55%);
       z-index: -1;
       pointer-events: none;
     }
@@ -75,8 +69,6 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      position: relative;
-      -webkit-touch-callout: none;
     }
 
     .scrollable-content {
@@ -85,38 +77,45 @@
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-y: contain;
-      position: relative;
-      padding: 12px 18px calc(20px + env(safe-area-inset-bottom));
+      padding: 10px 18px calc(20px + env(safe-area-inset-bottom));
       touch-action: pan-y;
     }
 
-    .app-header {
-      padding: max(22px, env(safe-area-inset-top) + 14px) 24px 18px;
-      background: rgba(255, 255, 255, 0.82);
-      backdrop-filter: blur(30px);
-      -webkit-backdrop-filter: blur(30px);
-      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    .top-shell {
+      padding: max(22px, env(safe-area-inset-top) + 14px) 22px 18px;
+      background: rgba(255, 255, 255, 0.86);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border-bottom: 1px solid rgba(169, 196, 218, 0.3);
       box-shadow: var(--shadow-soft);
-      border-radius: 0 0 34px 34px;
+      border-radius: 0 0 32px 32px;
       position: relative;
       z-index: 20;
     }
 
-    .title-row {
+    .brand-row {
       display: flex;
-      justify-content: space-between;
       align-items: flex-start;
+      justify-content: space-between;
       gap: 16px;
     }
 
-    .title-block h1 {
+    .brand-title {
       font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--ink);
+      font-weight: 600;
       letter-spacing: -0.01em;
+      color: var(--ink);
     }
 
-    .status-panel {
+    .brand-sub {
+      margin-top: 6px;
+      font-size: 0.72rem;
+      color: #6b7c8f;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .status-stack {
       text-align: right;
       display: flex;
       flex-direction: column;
@@ -124,19 +123,19 @@
       align-items: flex-end;
     }
 
-    .date-big {
-      font-size: 1.1rem;
-      font-weight: 700;
+    .date-pill {
+      font-size: 1.05rem;
+      font-weight: 600;
       font-family: 'Inter', monospace;
-      color: #1e3a5f;
+      color: var(--deep);
     }
 
-    .date-sub {
-      font-size: 0.6rem;
+    .weekday-pill {
+      font-size: 0.58rem;
       letter-spacing: 0.3em;
       text-transform: uppercase;
-      color: var(--glacier-500);
-      font-weight: 700;
+      color: var(--glacier);
+      font-weight: 600;
     }
 
     .pill {
@@ -146,20 +145,20 @@
       padding: 4px 12px;
       border-radius: 999px;
       font-size: 0.62rem;
-      font-weight: 700;
+      font-weight: 600;
       letter-spacing: 0.06em;
     }
 
-    .pill-sky { background: linear-gradient(120deg, #4f9dd9, #78b7e4); color: white; }
-    .pill-amber { background: linear-gradient(120deg, #f4b56a, #f6c58a); color: #4b2d1a; }
-    .pill-emerald { background: linear-gradient(120deg, #7dd3c7, #9fe2d6); color: #0f2f2a; }
-    .pill-muted { background: #64748b; color: white; }
+    .pill-sky { background: linear-gradient(120deg, #5a8fb8, #7aa8c8); color: white; }
+    .pill-amber { background: linear-gradient(120deg, #f4c27b, #f7d6a6); color: #5a3b22; }
+    .pill-emerald { background: linear-gradient(120deg, #a1d6cb, #c3e8df); color: #21443f; }
+    .pill-muted { background: #6b7c8f; color: white; }
 
-    .meta-row {
+    .trip-meta {
+      margin-top: 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 14px;
       gap: 10px;
     }
 
@@ -167,36 +166,36 @@
       padding: 6px 14px;
       border-radius: 999px;
       background: rgba(255,255,255,0.9);
-      color: var(--slate-500);
+      color: #637488;
       font-size: 0.6rem;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      border: 1px solid rgba(148, 163, 184, 0.18);
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      border: 1px solid rgba(169, 196, 218, 0.25);
       text-transform: uppercase;
     }
 
-    .tab-bar {
+    .tab-strip {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       padding: 10px 18px 6px;
       background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(22px);
-      -webkit-backdrop-filter: blur(22px);
-      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(169, 196, 218, 0.2);
       z-index: 10;
     }
 
     .tab-btn {
       padding: 10px 0 14px;
       font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--slate-400);
-      transition: all 0.2s;
+      font-weight: 600;
+      color: #8a99ab;
       position: relative;
+      transition: all 0.2s;
     }
 
     .tab-active {
-      color: var(--glacier-600);
+      color: var(--glacier);
     }
 
     .tab-active::after {
@@ -207,53 +206,53 @@
       width: 40%;
       height: 4px;
       border-radius: 4px 4px 0 0;
-      background: var(--glacier-500);
-      box-shadow: 0 -2px 8px rgba(79, 157, 217, 0.35);
+      background: var(--glacier);
+      box-shadow: 0 -2px 8px rgba(90, 143, 184, 0.3);
     }
 
     .glass-card {
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
-      border: 1px solid rgba(226, 232, 240, 0.7);
+      border: 1px solid rgba(227, 236, 244, 0.9);
       border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-card);
+      box-shadow: var(--shadow-strong);
       transition: transform 0.15s ease-out;
     }
 
     .glass-card:active { transform: scale(0.99); }
 
     .glass-input {
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid rgba(226, 232, 240, 0.9);
-      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
-      color: var(--slate-700);
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(227, 236, 244, 0.9);
+      box-shadow: inset 0 1px 2px rgba(11, 26, 40, 0.04);
+      color: #2c3b4e;
       transition: all 0.2s;
     }
 
     .glass-input:focus {
       background: #fff;
-      border-color: var(--glacier-500);
-      box-shadow: 0 0 0 3px rgba(79, 157, 217, 0.18);
+      border-color: var(--glacier);
+      box-shadow: 0 0 0 3px rgba(90, 143, 184, 0.18);
     }
 
     .btn-glacier {
-      background: linear-gradient(135deg, #4f9dd9 0%, #2f6ea3 100%);
+      background: linear-gradient(135deg, #5a8fb8 0%, #2b4f6c 100%);
       color: white;
       border: 1px solid rgba(255,255,255,0.2);
-      box-shadow: 0 12px 24px rgba(47, 110, 163, 0.3);
+      box-shadow: 0 16px 28px rgba(43, 79, 108, 0.3);
     }
 
     .btn-cancel {
       background: #f1f5f9;
-      color: var(--slate-500);
+      color: #6b7c8f;
       border: 1px solid #e2e8f0;
     }
 
     .section-title {
       font-size: 0.95rem;
-      font-weight: 800;
-      color: var(--slate-800);
+      font-weight: 700;
+      color: #1f2c3a;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -262,7 +261,7 @@
     .section-title span {
       width: 6px;
       height: 20px;
-      background: var(--glacier-500);
+      background: var(--glacier);
       border-radius: 999px;
     }
 
@@ -270,23 +269,23 @@
       padding: 8px 14px;
       border-radius: 999px;
       font-size: 0.7rem;
-      font-weight: 800;
+      font-weight: 700;
       border: 1px solid transparent;
       transition: all 0.25s;
-      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+      box-shadow: 0 6px 14px rgba(11, 26, 40, 0.06);
     }
 
     .date-chip-active {
-      background: var(--glacier-600);
+      background: var(--glacier);
       color: white;
-      border-color: var(--glacier-600);
+      border-color: var(--glacier);
       transform: translateY(-2px);
-      box-shadow: 0 12px 20px rgba(47, 110, 163, 0.25);
+      box-shadow: 0 14px 24px rgba(43, 79, 108, 0.25);
     }
 
     .date-chip-idle {
-      background: rgba(255,255,255,0.6);
-      color: var(--slate-400);
+      background: rgba(255,255,255,0.75);
+      color: #7d8ea3;
     }
 
     .timeline-card {
@@ -299,20 +298,20 @@
       width: 70px;
       flex-shrink: 0;
       padding: 12px 8px;
-      background: rgba(248, 250, 252, 0.9);
-      border-right: 1px solid rgba(226,232,240,0.8);
+      background: rgba(247, 249, 251, 0.9);
+      border-right: 1px solid rgba(227,236,244,0.9);
       text-align: center;
     }
 
     .timeline-time .start {
-      font-weight: 800;
+      font-weight: 700;
       font-size: 0.9rem;
-      color: var(--slate-700);
+      color: #2c3b4e;
     }
 
     .timeline-time .end {
       font-size: 0.65rem;
-      color: var(--slate-400);
+      color: #94a3b8;
       margin-top: 4px;
     }
 
@@ -322,17 +321,17 @@
       padding: 2px 6px;
       border-radius: 6px;
       background: #fff;
-      border: 1px solid rgba(148,163,184,0.3);
+      border: 1px solid rgba(169,196,218,0.35);
       font-size: 0.6rem;
-      font-weight: 800;
+      font-weight: 700;
       letter-spacing: 0.08em;
-      color: var(--slate-500);
+      color: #60748b;
     }
 
     .title-link {
       text-decoration: none;
       color: var(--ink);
-      font-weight: 800;
+      font-weight: 700;
       border-bottom: 1px dashed rgba(148,163,184,0.6);
     }
 
@@ -345,17 +344,17 @@
       border-radius: 8px;
       border: 1px solid #e2e8f0;
       font-size: 10px;
-      font-weight: 800;
-      color: var(--glacier-600);
+      font-weight: 700;
+      color: var(--glacier);
       text-decoration: none;
       flex-shrink: 0;
     }
 
-    .cat-traffic { border-left: 4px solid #3b82f6; background: white; }
-    .cat-stay    { border-left: 4px solid #eab308; background: white; }
-    .cat-spot    { border-left: 4px solid #a855f7; background: white; }
-    .cat-food    { border-left: 4px solid #f97316; background: white; }
-    .cat-note    { border-left: 4px solid #64748b; background: white; }
+    .cat-traffic { border-left: 4px solid #5a8fb8; background: white; }
+    .cat-stay    { border-left: 4px solid #e5b867; background: white; }
+    .cat-spot    { border-left: 4px solid #7f9bce; background: white; }
+    .cat-food    { border-left: 4px solid #f3a568; background: white; }
+    .cat-note    { border-left: 4px solid #7d8ea3; background: white; }
 
     .allow-select {
       user-select: text !important;
@@ -364,7 +363,7 @@
       cursor: auto;
     }
 
-    .allow-select::selection { background: rgba(56, 189, 248, 0.25); }
+    .allow-select::selection { background: rgba(90, 143, 184, 0.2); }
 
     .break-anywhere { overflow-wrap: anywhere; word-break: break-all; }
 
@@ -377,13 +376,13 @@
 
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-    .pending-sync { opacity: 0.85; border: 2px dashed #f59e0b !important; position: relative; }
+    .pending-sync { opacity: 0.85; border: 2px dashed #f4b56a !important; position: relative; }
     .pending-badge { display: none; }
 
-    .tag { display:inline-flex; align-items:center; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-    .tag-food { background:#fff7ed; color:#c2410c; border:1px solid #ffedd5; }
-    .tag-stay { background:#fefce8; color:#a16207; border:1px solid #fef9c3; }
-    .tag-traffic { background:#eff6ff; color:#1d4ed8; border:1px solid #dbeafe; }
+    .tag { display:inline-flex; align-items:center; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .tag-food { background:#fff4e8; color:#b45309; border:1px solid #ffe7c7; }
+    .tag-stay { background:#fff9e8; color:#a16207; border:1px solid #fef0c7; }
+    .tag-traffic { background:#eef5fb; color:#2b4f6c; border:1px solid #d8e6f2; }
     .tag-ticket { background:#eef2ff; color:#4338ca; border:1px solid #e0e7ff; }
     .tag-shop { background:#fdf2f8; color:#be185d; border:1px solid #fce7f3; }
     .tag-other { background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
@@ -393,7 +392,7 @@
       align-items: center;
       gap: 4px;
       background: #e8f0f7;
-      color: #2f6ea3;
+      color: #2b4f6c;
       padding: 4px 10px;
       border-radius: 999px;
       font-size: 11px;
@@ -518,20 +517,20 @@
 </head>
 
 <body>
-<div id="fixed-bg"></div>
+<div id="ambient"></div>
 
 <div id="app">
   <div class="pull-indicator" :style="{ height: pullDistance + 'px' }">
     <span v-if="pullDistance > 20">{{ refreshText }}</span>
   </div>
 
-  <header class="app-header swipe-protected">
-    <div class="title-row">
-      <div class="title-block">
-        <h1>2026 挪威冰島之旅</h1>
-        <p class="text-xs text-slate-500 font-semibold mt-1">Travel Planner · Offline Ready</p>
+  <header class="top-shell swipe-protected">
+    <div class="brand-row">
+      <div>
+        <div class="brand-title">2026 挪威冰島之旅</div>
+        <div class="brand-sub">Nordic Journey Planner</div>
       </div>
-      <div class="status-panel">
+      <div class="status-stack">
         <button v-if="isSyncing"
                 class="pill pill-emerald shadow-lg flex items-center gap-2 animate-pulse">
           <span class="w-2 h-2 bg-white rounded-full animate-ping"></span>
@@ -541,12 +540,12 @@
                 class="pill pill-amber shadow-lg animate-pulse">
           待上傳 ({{ syncQueue.length }})
         </button>
-        <div class="date-big">{{ todayDate }}</div>
-        <div class="date-sub">{{ todayWeekday }}</div>
+        <div class="date-pill">{{ todayDate }}</div>
+        <div class="weekday-pill">{{ todayWeekday }}</div>
       </div>
     </div>
 
-    <div class="meta-row">
+    <div class="trip-meta">
       <div class="range-chip">AUG 30 · SEP 26</div>
       <div class="flex gap-2">
         <span v-if="!isOnline" class="pill pill-muted">離線</span>
@@ -555,7 +554,7 @@
     </div>
   </header>
 
-  <nav class="tab-bar swipe-protected">
+  <nav class="tab-strip swipe-protected">
     <button @click="tab='itinerary'" :class="['tab-btn', tab==='itinerary'?'tab-active':'']">行程</button>
     <button @click="tab='expense'" :class="['tab-btn', tab==='expense'?'tab-active':'']">記帳</button>
     <button @click="changeTabToAnalysis" :class="['tab-btn', tab==='analysis'?'tab-active':'']">分析</button>
@@ -609,7 +608,7 @@
 
               <div v-if="evt.imgUrl" class="mt-2">
                 <img :src="evt.imgUrl" class="itinerary-img" loading="lazy" alt="行程圖片"
-                     referrerpolicy="no-referrer"
+                     referrerpolicy="no-referrer" crossorigin="anonymous"
                      @click.stop="viewImage(evt.imgUrl)">
               </div>
 
@@ -621,7 +620,7 @@
 
               <div class="mt-4 flex gap-2 justify-end swipe-protected">
                 <button @click.stop="openEditItin(evt)"
-                        class="text-[10px] text-sky-600 bg-sky-50 border border-sky-100 px-3 py-1 rounded-lg font-bold flex-shrink-0">
+                        class="text-[10px] text-[#2b4f6c] bg-[#eef3f7] border border-[#d8e6f2] px-3 py-1 rounded-lg font-bold flex-shrink-0">
                   編輯
                 </button>
                 <button @click.stop="deleteItin(evt)"
@@ -633,7 +632,7 @@
           </div>
 
           <button @click="openAddItin"
-                  class="w-full py-4 mt-4 border-2 border-dashed border-sky-200 text-sky-400 rounded-2xl font-bold hover:bg-sky-50 transition swipe-protected">
+                  class="w-full py-4 mt-4 border-2 border-dashed border-[#d8e6f2] text-[#6b7c8f] rounded-2xl font-bold hover:bg-[#eef3f7] transition swipe-protected">
             + 新增行程
           </button>
           <div class="h-10"></div>
@@ -666,7 +665,7 @@
           </div>
 
           <div class="flex gap-3">
-            <select v-model="newExp.currency" class="w-1/3 glass-input p-3 rounded-xl text-sm font-bold bg-[#e8f0f7] text-[#2f6ea3]">
+            <select v-model="newExp.currency" class="w-1/3 glass-input p-3 rounded-xl text-sm font-bold bg-[#eef3f7] text-[#2b4f6c]">
               <option>NTD</option><option>NOK</option><option>ISK</option><option>EUR</option><option>GBP</option><option>AED</option>
             </select>
             <input type="number" v-model="newExp.amount" placeholder="金額"
@@ -679,15 +678,15 @@
 
           <input v-model="newExp.note" placeholder="備註 (選填)" class="w-full glass-input p-3 rounded-xl text-sm outline-none">
 
-          <div class="bg-slate-50/60 p-4 rounded-xl border border-slate-100">
+          <div class="bg-[#f7f9fb] p-4 rounded-xl border border-[#e3ecf4]">
             <div class="flex justify-between items-center mb-3">
               <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">分攤給</span>
-              <button @click="toggleSelectAll" class="text-[10px] text-sky-600 font-bold bg-white px-2 py-1 rounded shadow-sm">全選</button>
+              <button @click="toggleSelectAll" class="text-[10px] text-[#2b4f6c] font-bold bg-white px-2 py-1 rounded shadow-sm">全選</button>
             </div>
             <div class="flex gap-2 flex-wrap">
               <label v-for="m in members" :key="m"
                      class="flex flex-1 justify-center items-center space-x-2 border px-4 py-3 rounded-xl cursor-pointer transition-all duration-200"
-                     :class="newExp.involved.includes(m)?'bg-white border-sky-400 text-sky-700 shadow-md transform -translate-y-0.5':'bg-transparent border-slate-200 text-slate-400'">
+                     :class="newExp.involved.includes(m)?'bg-white border-[#5a8fb8] text-[#2b4f6c] shadow-md transform -translate-y-0.5':'bg-transparent border-slate-200 text-slate-400'">
                 <input type="checkbox" :value="m" v-model="newExp.involved" class="hidden"><span class="text-sm font-bold">{{m}}</span>
               </label>
             </div>
@@ -705,7 +704,7 @@
           </button>
         </div>
 
-        <div class="bg-gradient-to-br from-[#2f6ea3] to-[#5a9bc8] text-white rounded-3xl p-6 shadow-xl mb-6 relative overflow-hidden ring-1 ring-white/20">
+        <div class="bg-gradient-to-br from-[#2b4f6c] to-[#6fa1c4] text-white rounded-3xl p-6 shadow-xl mb-6 relative overflow-hidden ring-1 ring-white/20">
           <div class="absolute -top-10 -right-10 w-48 h-48 bg-white opacity-10 rounded-full blur-3xl"></div>
 
           <div class="border-b border-white/10 pb-3 mb-3 flex justify-between items-center relative z-10">
@@ -739,7 +738,7 @@
           <div class="flex justify-between items-center mb-2">
             <h3 class="section-title"><span></span>消費明細</h3>
             <button @click="showFilterMenu = !showFilterMenu"
-                    class="text-xs text-[#2f6ea3] bg-[#e8f0f7] border border-[#d8e6f2] px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition">
+                    class="text-xs text-[#2b4f6c] bg-[#eef3f7] border border-[#d8e6f2] px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition">
               <span v-if="!showFilterMenu">🔍 篩選</span>
               <span v-else>▲ 收起</span>
             </button>
@@ -803,7 +802,7 @@
 
         <div class="space-y-3 mb-8">
           <div v-for="exp in filteredExpenses" :key="exp.row"
-               :class="['glass-card p-4 transition hover:shadow-md border-l-4 border-l-sky-400', isItemPending(exp.row) ? 'pending-sync' : '']">
+               :class="['glass-card p-4 transition hover:shadow-md border-l-4 border-l-[#5a8fb8]', isItemPending(exp.row) ? 'pending-sync' : '']">
             <div class="flex justify-between items-start gap-4">
               <div class="min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
@@ -820,7 +819,7 @@
                   <span v-if="exp.involved && exp.involved.length > 0" class="bg-orange-50 px-2 py-0.5 rounded text-orange-700 font-bold border border-orange-100 flex items-center gap-1">
                     <span class="text-[9px] opacity-60">分</span>{{ exp.involved.join('、') }}
                   </span>
-                  <span class="text-sky-600 font-bold bg-sky-50 px-2 py-0.5 rounded">{{ exp.payment }}</span>
+                  <span class="text-[#2b4f6c] font-bold bg-[#eef3f7] px-2 py-0.5 rounded">{{ exp.payment }}</span>
                   <span class="text-slate-400 font-medium">{{ exp.location }}</span>
                 </div>
               </div>
@@ -831,7 +830,7 @@
                 </div>
                 <div v-if="exp.currency !== 'NTD'" class="text-[10px] text-slate-400 font-mono font-bold mt-1">≈ {{ formatNumber(getAmountTWD(exp)) }}</div>
                 <div class="mt-3 flex gap-2 justify-end opacity-60 hover:opacity-100 transition">
-                  <button @click="openEditExp(exp)" class="text-[10px] text-sky-600 bg-white border border-sky-100 px-2 py-1 rounded">編輯</button>
+                  <button @click="openEditExp(exp)" class="text-[10px] text-[#2b4f6c] bg-white border border-[#d8e6f2] px-2 py-1 rounded">編輯</button>
                   <button @click="deleteExp(exp)" class="text-[10px] text-red-500 bg-white border border-red-100 px-2 py-1 rounded">刪除</button>
                 </div>
               </div>
@@ -873,7 +872,7 @@
       <img :src="viewingImg"
            ref="imgViewerEl"
            class="img-viewer-img"
-           referrerpolicy="no-referrer"
+           referrerpolicy="no-referrer" crossorigin="anonymous"
            @click.stop>
     </div>
   </Transition>
@@ -902,7 +901,7 @@
             <div class="flex gap-2 mt-1 flex-wrap">
               <button v-for="c in ['景點','飲食','交通','住宿','其他']" :key="c" @click="itinForm.category=c"
                       :class="['flex-1 min-w-[3rem] py-2 rounded-xl text-xs font-bold border transition',
-                               itinForm.category===c ? 'bg-sky-500 text-white border-sky-500 shadow-md' : 'bg-white text-slate-500 border-slate-200']">
+                               itinForm.category===c ? 'bg-[#5a8fb8] text-white border-[#5a8fb8] shadow-md' : 'bg-white text-slate-500 border-slate-200']">
                 {{c}}
               </button>
             </div>
@@ -918,7 +917,7 @@
                 <span>+ 選擇照片</span>
               </div>
               <div v-else class="relative">
-                <img :src="itinForm.imgUrl" class="w-full h-32 object-cover rounded-xl border border-slate-200" referrerpolicy="no-referrer">
+                <img :src="itinForm.imgUrl" class="w-full h-32 object-cover rounded-xl border border-slate-200" referrerpolicy="no-referrer" crossorigin="anonymous">
                 <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md text-xs font-bold px-2">移除</button>
               </div>
               <input type="file" accept="image/*" @change="handleImageUpload" v-if="!itinForm.imgUrl || itinForm.newImageBase64">
@@ -973,7 +972,7 @@
         </div>
 
         <div class="flex gap-3">
-          <select v-model="editExpForm.currency" class="w-1/3 glass-input p-3 rounded-xl text-sm font-bold bg-[#e8f0f7] text-[#2f6ea3]">
+          <select v-model="editExpForm.currency" class="w-1/3 glass-input p-3 rounded-xl text-sm font-bold bg-[#eef3f7] text-[#2b4f6c]">
             <option>NTD</option><option>NOK</option><option>ISK</option><option>EUR</option><option>GBP</option><option>AED</option>
           </select>
           <input type="number" v-model="editExpForm.amount" class="w-2/3 glass-input p-3 rounded-xl text-xl font-bold" placeholder="金額">
@@ -985,15 +984,15 @@
 
         <input v-model="editExpForm.note" class="w-full glass-input p-3 rounded-xl text-sm" placeholder="備註">
 
-        <div class="bg-slate-50/60 p-4 rounded-xl border border-slate-100">
+        <div class="bg-[#f7f9fb] p-4 rounded-xl border border-[#e3ecf4]">
           <div class="flex justify-between items-center mb-3">
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">分攤給</span>
-            <button @click="toggleSelectAllEdit" class="text-[10px] text-sky-600 font-bold bg-white px-2 py-1 rounded shadow-sm">全選</button>
+            <button @click="toggleSelectAllEdit" class="text-[10px] text-[#2b4f6c] font-bold bg-white px-2 py-1 rounded shadow-sm">全選</button>
           </div>
           <div class="flex gap-2 flex-wrap">
             <label v-for="m in members" :key="m"
                    class="flex flex-1 justify-center items-center space-x-2 border px-4 py-3 rounded-xl cursor-pointer transition-all duration-200"
-                   :class="(editExpForm.involved || []).includes(m)?'bg-white border-sky-400 text-sky-700 shadow-md transform -translate-y-0.5':'bg-transparent border-slate-200 text-slate-400'">
+                   :class="(editExpForm.involved || []).includes(m)?'bg-white border-[#5a8fb8] text-[#2b4f6c] shadow-md transform -translate-y-0.5':'bg-transparent border-slate-200 text-slate-400'">
               <input type="checkbox" :value="m" v-model="editExpForm.involved" class="hidden"><span class="text-sm font-bold">{{m}}</span>
             </label>
           </div>
@@ -1696,7 +1695,7 @@ createApp({
       const labels = Object.keys(stats);
       const data = Object.values(stats);
 
-      const nordicColors = ['#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#fb7185', '#22d3ee', '#34d399', '#a78bfa', '#fbcfe8', '#e2e8f0'];
+      const nordicColors = ['#5a8fb8', '#7aa8c8', '#a9c4da', '#e5b867', '#f3a568', '#7f9bce', '#8bb7a8', '#2b4f6c', '#b1c7d9', '#e2e8f0'];
 
       if (chartInstance) {
         chartInstance.data.labels = labels;
