@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="2026挪威冰島之旅">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#dbeafe">
+  <meta name="theme-color" content="#f4f8fb">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="https://img.icons8.com/color/180/snowflake.png">
 
@@ -21,29 +21,51 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    /* CSS Setup */
+    :root {
+      color-scheme: light;
+      --nordic-50: #f4f8fb;
+      --nordic-100: #e8f0f7;
+      --nordic-200: #d8e6f2;
+      --nordic-300: #a8c5dd;
+      --nordic-500: #4c8fbf;
+      --nordic-600: #2f6ea3;
+      --glacier-500: #4f9dd9;
+      --glacier-600: #2b7db8;
+      --slate-50: #f8fafc;
+      --slate-200: #e2e8f0;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-700: #334155;
+      --slate-800: #1f2937;
+      --ink: #0b1220;
+      --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.08);
+      --shadow-card: 0 18px 40px rgba(15, 23, 42, 0.12);
+      --radius-xl: 26px;
+      --radius-lg: 20px;
+    }
+
     html, body {
       height: 100dvh;
       width: 100%;
       overflow: hidden;
       font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
-      background-color: #f0f9ff;
-      color: #1e3a8a;
+      background: linear-gradient(160deg, #f7fafc 0%, #eff5fb 45%, #f4f8fb 100%);
+      color: var(--ink);
       overscroll-behavior: none;
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
-      touch-action: none; /* 禁止瀏覽器預設縮放行為，交給 JS 處理 */
+      touch-action: none;
     }
 
     body { -webkit-touch-callout: default; }
 
     #fixed-bg {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(160deg, #dbeafe 0%, #eff6ff 40%, #f0f9ff 100%);
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(79, 157, 217, 0.18), transparent 55%),
+                  radial-gradient(circle at 25% 15%, rgba(168, 197, 221, 0.25), transparent 55%),
+                  radial-gradient(circle at 80% 0%, rgba(47, 110, 163, 0.12), transparent 45%);
       z-index: -1;
       pointer-events: none;
     }
@@ -64,93 +86,254 @@
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-y: contain;
       position: relative;
-      padding-top: 10px;
-      /* 確保內容填滿到底部安全區域 */
-      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+      padding: 12px 18px calc(20px + env(safe-area-inset-bottom));
       touch-action: pan-y;
     }
 
+    .app-header {
+      padding: max(22px, env(safe-area-inset-top) + 14px) 24px 18px;
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: var(--shadow-soft);
+      border-radius: 0 0 34px 34px;
+      position: relative;
+      z-index: 20;
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .title-block h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+
+    .status-panel {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+    }
+
+    .date-big {
+      font-size: 1.1rem;
+      font-weight: 700;
+      font-family: 'Inter', monospace;
+      color: #1e3a5f;
+    }
+
+    .date-sub {
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--glacier-500);
+      font-weight: 700;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    .pill-sky { background: linear-gradient(120deg, #4f9dd9, #78b7e4); color: white; }
+    .pill-amber { background: linear-gradient(120deg, #f4b56a, #f6c58a); color: #4b2d1a; }
+    .pill-emerald { background: linear-gradient(120deg, #7dd3c7, #9fe2d6); color: #0f2f2a; }
+    .pill-muted { background: #64748b; color: white; }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      gap: 10px;
+    }
+
+    .range-chip {
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.9);
+      color: var(--slate-500);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      text-transform: uppercase;
+    }
+
+    .tab-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      padding: 10px 18px 6px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      z-index: 10;
+    }
+
+    .tab-btn {
+      padding: 10px 0 14px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--slate-400);
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .tab-active {
+      color: var(--glacier-600);
+    }
+
+    .tab-active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 30%;
+      width: 40%;
+      height: 4px;
+      border-radius: 4px 4px 0 0;
+      background: var(--glacier-500);
+      box-shadow: 0 -2px 8px rgba(79, 157, 217, 0.35);
+    }
+
     .glass-card {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(148, 163, 184, 0.08);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(226, 232, 240, 0.7);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-card);
       transition: transform 0.15s ease-out;
     }
+
     .glass-card:active { transform: scale(0.99); }
 
     .glass-input {
-      background: rgba(255, 255, 255, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
-      color: #334155;
-      transition: all 0.3s;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+      color: var(--slate-700);
+      transition: all 0.2s;
     }
+
     .glass-input:focus {
       background: #fff;
-      border-color: #38bdf8;
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+      border-color: var(--glacier-500);
+      box-shadow: 0 0 0 3px rgba(79, 157, 217, 0.18);
     }
 
     .btn-glacier {
-      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      background: linear-gradient(135deg, #4f9dd9 0%, #2f6ea3 100%);
       color: white;
       border: 1px solid rgba(255,255,255,0.2);
-      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+      box-shadow: 0 12px 24px rgba(47, 110, 163, 0.3);
     }
 
     .btn-cancel {
       background: #f1f5f9;
-      color: #64748b;
+      color: var(--slate-500);
       border: 1px solid #e2e8f0;
     }
 
-    .tab-bar {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-      box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
-    }
-    .tab-btn { color: #94a3b8; transition: all 0.3s; }
-    .tab-active { color: #0284c7; position: relative; }
-    .tab-active::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 35%;
-      width: 30%; height: 4px;
-      background: #0284c7;
-      border-radius: 4px 4px 0 0;
-      box-shadow: 0 -2px 8px rgba(2, 132, 199, 0.5);
-    }
-
-    .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-    .fade-enter-from, .fade-leave-to { opacity: 0; }
-
-    .pull-indicator {
-      height: 0;
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--slate-800);
       display: flex;
-      justify-content: center;
-      align-items: flex-end;
-      padding-bottom: 5px;
-      overflow: hidden;
-      color: #64748b;
-      font-weight: 600;
-      font-size: 0.8rem;
-      transition: height 0.12s ease-out;
-      padding-top: env(safe-area-inset-top);
-      box-sizing: content-box;
+      align-items: center;
+      gap: 8px;
     }
 
-    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .section-title span {
+      width: 6px;
+      height: 20px;
+      background: var(--glacier-500);
+      border-radius: 999px;
+    }
+
+    .date-chip {
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      border: 1px solid transparent;
+      transition: all 0.25s;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+    }
+
+    .date-chip-active {
+      background: var(--glacier-600);
+      color: white;
+      border-color: var(--glacier-600);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 20px rgba(47, 110, 163, 0.25);
+    }
+
+    .date-chip-idle {
+      background: rgba(255,255,255,0.6);
+      color: var(--slate-400);
+    }
+
+    .timeline-card {
+      display: flex;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .timeline-time {
+      width: 70px;
+      flex-shrink: 0;
+      padding: 12px 8px;
+      background: rgba(248, 250, 252, 0.9);
+      border-right: 1px solid rgba(226,232,240,0.8);
+      text-align: center;
+    }
+
+    .timeline-time .start {
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: var(--slate-700);
+    }
+
+    .timeline-time .end {
+      font-size: 0.65rem;
+      color: var(--slate-400);
+      margin-top: 4px;
+    }
+
+    .timeline-time .badge {
+      display: inline-flex;
+      margin-top: 8px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: #fff;
+      border: 1px solid rgba(148,163,184,0.3);
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: var(--slate-500);
+    }
 
     .title-link {
       text-decoration: none;
-      color: #0f172a;
-      font-weight: 700;
-      border-bottom: 1px dashed #cbd5e1;
+      color: var(--ink);
+      font-weight: 800;
+      border-bottom: 1px dashed rgba(148,163,184,0.6);
     }
 
     .map-btn {
@@ -162,8 +345,8 @@
       border-radius: 8px;
       border: 1px solid #e2e8f0;
       font-size: 10px;
-      font-weight: bold;
-      color: #0284c7;
+      font-weight: 800;
+      color: var(--glacier-600);
       text-decoration: none;
       flex-shrink: 0;
     }
@@ -178,8 +361,9 @@
       user-select: text !important;
       -webkit-user-select: text !important;
       -webkit-touch-callout: default !important;
-      cursor: auto; 
+      cursor: auto;
     }
+
     .allow-select::selection { background: rgba(56, 189, 248, 0.25); }
 
     .break-anywhere { overflow-wrap: anywhere; word-break: break-all; }
@@ -190,6 +374,7 @@
       animation: shimmer 1.5s infinite;
       border-radius: 8px;
     }
+
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
     .pending-sync { opacity: 0.85; border: 2px dashed #f59e0b !important; position: relative; }
@@ -204,92 +389,131 @@
     .tag-other { background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; }
 
     .filter-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        background: #e0f2fe;
-        color: #0369a1;
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #e8f0f7;
+      color: #2f6ea3;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
     }
-    .filter-chip:hover { background: #bae6fd; }
 
-    /* Modal Styling */
+    .filter-chip:hover { background: #d8e6f2; }
+
     .modal-enter-active, .modal-leave-active { transition: opacity 0.3s ease; }
     .modal-enter-from, .modal-leave-to { opacity: 0; }
     .modal-enter-active .modal-content, .modal-leave-active .modal-content { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    .modal-enter-from .modal-content, .modal-leave-to .modal-content { transform: scale(0.9) translateY(20px); }
-    
-    /* Image Upload Styles */
+    .modal-enter-from .modal-content, .modal-leave-to .modal-content { transform: scale(0.92) translateY(20px); }
+
     .img-upload-btn { position: relative; overflow: hidden; }
     .img-upload-btn input[type=file] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
     .img-preview {
-        width: 100%; height: 120px;
-        object-fit: cover; border-radius: 12px;
-        border: 2px dashed #cbd5e1;
-        display: flex; justify-content: center; align-items: center;
-        color: #94a3b8; font-size: 12px; font-weight: bold;
-        background: #f8fafc;
-    }
-    .itinerary-img {
-        width: 100%; max-height: 200px; object-fit: cover;
-        border-radius: 12px; margin-top: 12px;
-        border: 1px solid rgba(0,0,0,0.05);
-        cursor: zoom-in;
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 2px dashed #cbd5e1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: bold;
+      background: #f8fafc;
     }
 
-    /* --- FIXED IMAGE VIEWER STYLES --- */
+    .itinerary-img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-top: 12px;
+      border: 1px solid rgba(0,0,0,0.05);
+      cursor: zoom-in;
+    }
+
     .img-viewer-overlay {
-        position: fixed; inset: 0; z-index: 9999;
-        background: rgba(0, 0, 0, 1); 
-        display: flex; justify-content: center; align-items: center;
-        flex-direction: column;
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-        transition: background 0.2s;
-        touch-action: none;
-        overflow: hidden;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      transition: background 0.2s;
+      touch-action: none;
+      overflow: hidden;
     }
+
     .img-viewer-img {
-        max-width: 100%; 
-        max-height: 100%; 
-        object-fit: contain;
-        transform-origin: center center;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      transform-origin: center center;
     }
+
     .img-viewer-close {
-        position: absolute;
-        top: max(20px, env(safe-area-inset-top) + 20px); 
-        right: 20px;
-        width: 44px; height: 44px;
-        background: rgba(80, 80, 80, 0.8);
-        color: white;
-        border-radius: 50%;
-        display: flex; justify-content: center; align-items: center;
-        font-size: 24px; font-weight: 800;
-        z-index: 10000;
-        cursor: pointer;
-        border: 2px solid rgba(255,255,255,0.3);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      position: absolute;
+      top: max(20px, env(safe-area-inset-top) + 20px);
+      right: 20px;
+      width: 44px;
+      height: 44px;
+      background: rgba(80, 80, 80, 0.8);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      font-weight: 800;
+      z-index: 10000;
+      cursor: pointer;
+      border: 2px solid rgba(255,255,255,0.3);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
-    
+
     .pull-hint {
-        position: absolute;
-        top: max(80px, env(safe-area-inset-top) + 80px);
-        color: rgba(255,255,255,0.6);
-        font-size: 13px;
-        font-weight: bold;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.3s;
-        background: rgba(0,0,0,0.4);
-        padding: 4px 12px;
-        border-radius: 20px;
+      position: absolute;
+      top: max(80px, env(safe-area-inset-top) + 80px);
+      color: rgba(255,255,255,0.6);
+      font-size: 13px;
+      font-weight: bold;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      background: rgba(0,0,0,0.4);
+      padding: 4px 12px;
+      border-radius: 20px;
     }
+
     .show-hint .pull-hint { opacity: 1; }
+
+    .pull-indicator {
+      height: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      padding-bottom: 6px;
+      overflow: hidden;
+      color: #64748b;
+      font-weight: 700;
+      font-size: 0.75rem;
+      transition: height 0.12s ease-out;
+      padding-top: env(safe-area-inset-top);
+      box-sizing: content-box;
+    }
+
+    .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+    .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
   </style>
 </head>
 
@@ -301,52 +525,48 @@
     <span v-if="pullDistance > 20">{{ refreshText }}</span>
   </div>
 
-  <div class="px-6 pb-4 rounded-b-[2.5rem] shadow-sm swipe-protected relative z-20"
-       style="background: rgba(255,255,255,0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border-bottom: 1px solid rgba(255,255,255,0.4);
-       padding-top: max(20px, env(safe-area-inset-top) + 12px);">
-    <div class="flex justify-between items-center">
-      <h1 class="text-xl font-black tracking-tighter text-slate-800 drop-shadow-sm">2026 挪威冰島之旅</h1>
-      <div class="text-right">
+  <header class="app-header swipe-protected">
+    <div class="title-row">
+      <div class="title-block">
+        <h1>2026 挪威冰島之旅</h1>
+        <p class="text-xs text-slate-500 font-semibold mt-1">Travel Planner · Offline Ready</p>
+      </div>
+      <div class="status-panel">
         <button v-if="isSyncing"
-                class="bg-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1 mb-1 ml-auto animate-pulse">
-           <span class="w-2 h-2 bg-white rounded-full animate-ping"></span>
-           同步中...
+                class="pill pill-emerald shadow-lg flex items-center gap-2 animate-pulse">
+          <span class="w-2 h-2 bg-white rounded-full animate-ping"></span>
+          同步中...
         </button>
         <button v-else-if="syncQueue.length > 0" @click="confirmClearSync"
-                class="bg-amber-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse flex items-center gap-1 mb-1 ml-auto">
+                class="pill pill-amber shadow-lg animate-pulse">
           待上傳 ({{ syncQueue.length }})
         </button>
-        
-        <div class="text-lg font-black text-sky-900 leading-none tracking-wide font-mono mt-1">{{ todayDate }}</div>
-        <div class="text-[10px] text-sky-600 font-bold opacity-80 mt-1 uppercase tracking-[0.2em]">{{ todayWeekday }}</div>
+        <div class="date-big">{{ todayDate }}</div>
+        <div class="date-sub">{{ todayWeekday }}</div>
       </div>
     </div>
-    <div class="flex justify-between items-center mt-4">
-      <div class="glass-input px-3 py-1.5 rounded-full text-[10px] font-bold text-slate-500 tracking-wide">AUG 30 - SEP 26</div>
+
+    <div class="meta-row">
+      <div class="range-chip">AUG 30 · SEP 26</div>
       <div class="flex gap-2">
-        <span v-if="!isOnline" class="bg-slate-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md flex items-center gap-1">離線</span>
-        <span v-if="tripStatus" class="bg-gradient-to-r from-sky-400 to-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">{{ tripStatus }}</span>
+        <span v-if="!isOnline" class="pill pill-muted">離線</span>
+        <span v-if="tripStatus" class="pill pill-sky">{{ tripStatus }}</span>
       </div>
     </div>
-  </div>
+  </header>
 
-  <div class="flex tab-bar z-10 text-sm font-bold swipe-protected flex-shrink-0">
-    <button @click="tab='itinerary'" :class="['flex-1 p-4 tab-btn', tab==='itinerary'?'tab-active':'']">行程</button>
-    <button @click="tab='expense'" :class="['flex-1 p-4 tab-btn', tab==='expense'?'tab-active':'']">記帳</button>
-    <button @click="changeTabToAnalysis" :class="['flex-1 p-4 tab-btn', tab==='analysis'?'tab-active':'']">分析</button>
-  </div>
+  <nav class="tab-bar swipe-protected">
+    <button @click="tab='itinerary'" :class="['tab-btn', tab==='itinerary'?'tab-active':'']">行程</button>
+    <button @click="tab='expense'" :class="['tab-btn', tab==='expense'?'tab-active':'']">記帳</button>
+    <button @click="changeTabToAnalysis" :class="['tab-btn', tab==='analysis'?'tab-active':'']">分析</button>
+  </nav>
 
-  <div class="scrollable-content p-4" ref="scrollContainer">
+  <main class="scrollable-content" ref="scrollContainer">
     <Transition name="fade" mode="out-in">
-      
-      <div v-if="tab==='itinerary'" key="itinerary">
+      <section v-if="tab==='itinerary'" key="itinerary">
         <div ref="dateContainer" class="overflow-x-auto whitespace-nowrap pb-4 px-1 scrollbar-hide scroll-smooth swipe-protected">
           <button v-for="d in tripDates" :key="d.date" :id="'date-btn-' + d.date" @click="selectDate(d.date)"
-                  :class="[
-                    'px-4 py-2.5 rounded-2xl text-xs mr-2 border transition-all duration-300 font-bold shadow-sm',
-                    selDate===d.date ? 'bg-sky-600 text-white border-sky-600 shadow-sky-200 shadow-lg scale-105'
-                                     : 'glass-input text-slate-400 border-transparent hover:bg-white'
-                  ]">
+                  :class="['date-chip mr-2', selDate===d.date ? 'date-chip-active' : 'date-chip-idle']">
             {{ d.short }}
           </button>
         </div>
@@ -357,19 +577,17 @@
 
         <div v-else>
           <div class="text-center mb-6">
-            <div class="inline-block glass-input px-6 py-2 rounded-full text-sm font-bold text-slate-600 shadow-sm">
+            <div class="inline-flex items-center gap-2 glass-input px-5 py-2 rounded-full text-sm font-bold text-slate-600 shadow-sm">
               {{ getDayInfo(selDate) }}
             </div>
           </div>
 
           <div v-for="evt in getEvents(selDate)" :key="evt.row"
-               :class="['glass-card flex mb-4 items-stretch overflow-hidden group', isItemPending(evt.row) ? 'pending-sync' : '', getCategoryClass(evt.category)]">
-            <div class="w-16 flex flex-col justify-center items-center p-2 bg-slate-50/50 border-r border-slate-100 flex-shrink-0 swipe-protected">
-              <div class="font-black text-sm text-slate-700">{{ evt.startTime }}</div>
-              <div v-if="evt.endTime" class="text-[10px] text-slate-400 mt-1 font-medium">{{ evt.endTime }}</div>
-              <div class="mt-2 text-[10px] font-bold px-1.5 py-0.5 rounded text-slate-500 bg-white border border-slate-200 tracking-wider">
-                {{ evt.category }}
-              </div>
+               :class="['glass-card mb-4 timeline-card', isItemPending(evt.row) ? 'pending-sync' : '', getCategoryClass(evt.category)]">
+            <div class="timeline-time swipe-protected">
+              <div class="start">{{ evt.startTime }}</div>
+              <div v-if="evt.endTime" class="end">{{ evt.endTime }}</div>
+              <div class="badge">{{ evt.category }}</div>
             </div>
 
             <div class="flex-1 p-4 relative min-w-0">
@@ -390,8 +608,9 @@
               </div>
 
               <div v-if="evt.imgUrl" class="mt-2">
-                  <img :src="evt.imgUrl" class="itinerary-img" loading="lazy" alt="行程圖片"
-                       @click.stop="viewImage(evt.imgUrl)">
+                <img :src="evt.imgUrl" class="itinerary-img" loading="lazy" alt="行程圖片"
+                     referrerpolicy="no-referrer"
+                     @click.stop="viewImage(evt.imgUrl)">
               </div>
 
               <div
@@ -400,7 +619,7 @@
                 v-if="evt.note"
               >{{ evt.note }}</div>
 
-              <div class="mt-3 flex gap-2 justify-end swipe-protected">
+              <div class="mt-4 flex gap-2 justify-end swipe-protected">
                 <button @click.stop="openEditItin(evt)"
                         class="text-[10px] text-sky-600 bg-sky-50 border border-sky-100 px-3 py-1 rounded-lg font-bold flex-shrink-0">
                   編輯
@@ -419,35 +638,35 @@
           </button>
           <div class="h-10"></div>
         </div>
-      </div>
+      </section>
 
-      <div v-else-if="tab==='expense'" key="expense">
+      <section v-else-if="tab==='expense'" key="expense">
         <div class="glass-card p-6 space-y-5 shadow-lg swipe-protected">
-          <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2"><span class="w-1 h-6 bg-sky-500 rounded-full"></span>新增消費</h3>
+          <h3 class="section-title"><span></span>新增消費</h3>
 
-          <div class="flex gap-3">
-            <select v-model="newExp.payer" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
+          <div class="grid grid-cols-2 gap-3">
+            <select v-model="newExp.payer" class="glass-input p-3 rounded-xl text-sm outline-none font-bold">
               <option value="" disabled selected>泥是誰</option><option>家齊</option><option>亭穎</option><option>媽媽</option>
             </select>
-            <select v-model="newExp.location" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
+            <select v-model="newExp.location" class="glass-input p-3 rounded-xl text-sm outline-none font-bold">
               <option value="" disabled selected>在哪消費</option><option>台灣</option><option>杜拜</option><option>挪威</option><option>冰島</option><option>英國</option>
             </select>
           </div>
 
-          <div class="flex gap-3">
-            <select v-model="newExp.item" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
+          <div class="grid grid-cols-2 gap-3">
+            <select v-model="newExp.item" class="glass-input p-3 rounded-xl text-sm outline-none font-bold">
               <option value="" disabled selected>消費項目</option>
               <option>早餐</option><option>午餐</option><option>晚餐</option><option>零食</option><option>住宿</option>
               <option>交通（機票）</option><option>交通（租車）</option><option>交通（停車費）</option><option>交通（油錢）</option>
               <option>紀念品</option><option>門票</option><option>其他</option>
             </select>
-            <select v-model="newExp.payment" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
+            <select v-model="newExp.payment" class="glass-input p-3 rounded-xl text-sm outline-none font-bold">
               <option value="" disabled selected>付款方式</option><option>現金</option><option>信用卡-國泰</option><option>信用卡-永豐</option><option>信用卡-元大</option>
             </select>
           </div>
 
           <div class="flex gap-3">
-            <select v-model="newExp.currency" class="w-1/3 glass-input p-3 rounded-xl text-sm font-bold bg-sky-50 text-sky-700">
+            <select v-model="newExp.currency" class="w-1/3 glass-input p-3 rounded-xl text-sm font-bold bg-[#e8f0f7] text-[#2f6ea3]">
               <option>NTD</option><option>NOK</option><option>ISK</option><option>EUR</option><option>GBP</option><option>AED</option>
             </select>
             <input type="number" v-model="newExp.amount" placeholder="金額"
@@ -460,7 +679,7 @@
 
           <input v-model="newExp.note" placeholder="備註 (選填)" class="w-full glass-input p-3 rounded-xl text-sm outline-none">
 
-          <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+          <div class="bg-slate-50/60 p-4 rounded-xl border border-slate-100">
             <div class="flex justify-between items-center mb-3">
               <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">分攤給</span>
               <button @click="toggleSelectAll" class="text-[10px] text-sky-600 font-bold bg-white px-2 py-1 rounded shadow-sm">全選</button>
@@ -476,17 +695,17 @@
 
           <button @click="submitExp" class="w-full btn-glacier py-4 rounded-xl font-bold text-lg tracking-wide">確認記帳</button>
         </div>
-      </div>
+      </section>
 
-      <div v-else-if="tab==='analysis'" key="analysis">
+      <section v-else-if="tab==='analysis'" key="analysis">
         <div class="flex justify-end mb-3 swipe-protected">
           <button @click="openRateModal"
-                  class="text-xs text-slate-500 bg-white/50 border border-white px-4 py-2 rounded-full flex items-center shadow-sm backdrop-blur-sm font-bold">
+                  class="text-xs text-slate-500 bg-white/70 border border-white px-4 py-2 rounded-full flex items-center shadow-sm backdrop-blur-sm font-bold">
             匯率設定
           </button>
         </div>
 
-        <div class="bg-gradient-to-br from-[#3b82f6] to-[#6366f1] text-white rounded-3xl p-6 shadow-xl mb-6 relative overflow-hidden ring-1 ring-white/20">
+        <div class="bg-gradient-to-br from-[#2f6ea3] to-[#5a9bc8] text-white rounded-3xl p-6 shadow-xl mb-6 relative overflow-hidden ring-1 ring-white/20">
           <div class="absolute -top-10 -right-10 w-48 h-48 bg-white opacity-10 rounded-full blur-3xl"></div>
 
           <div class="border-b border-white/10 pb-3 mb-3 flex justify-between items-center relative z-10">
@@ -517,60 +736,60 @@
         </div>
 
         <div class="mb-4 swipe-protected">
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="font-bold text-slate-700 text-lg">消費明細</h3>
-                <button @click="showFilterMenu = !showFilterMenu" 
-                        class="text-xs text-sky-600 bg-sky-50 border border-sky-100 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition">
-                    <span v-if="!showFilterMenu">🔍 篩選</span>
-                    <span v-else>▲ 收起</span>
-                </button>
-            </div>
-            
-            <div v-if="showFilterMenu" class="glass-card p-4 mb-4 transition-all">
-                <div class="grid grid-cols-2 gap-3">
-                    <select v-model="filters.item" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
-                        <option value="ALL">全部項目</option>
-                        <option v-for="i in uniqueItems" :key="i" :value="i">{{ i }}</option>
-                    </select>
-                    <select v-model="filters.date" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
-                        <option value="ALL">全部日期</option>
-                        <option v-for="d in uniqueExpDates" :key="d" :value="d">{{ d }}</option>
-                    </select>
-                    <select v-model="filters.payer" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
-                        <option value="ALL">全部付款人</option>
-                        <option v-for="p in members" :key="p" :value="p">{{ p }}</option>
-                    </select>
-                    <select v-model="filters.location" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
-                        <option value="ALL">全部地點</option>
-                        <option v-for="l in uniqueLocations" :key="l" :value="l">{{ l }}</option>
-                    </select>
-                    <select v-model="filters.payment" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none col-span-2">
-                        <option value="ALL">全部付款方式</option>
-                        <option v-for="p in uniquePayments" :key="p" :value="p">{{ p }}</option>
-                    </select>
-                </div>
-                <button @click="resetFilters" class="w-full mt-3 bg-slate-100 text-slate-500 py-2 rounded-lg text-xs font-bold hover:bg-slate-200 transition">
-                    重置篩選條件
-                </button>
-            </div>
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="section-title"><span></span>消費明細</h3>
+            <button @click="showFilterMenu = !showFilterMenu"
+                    class="text-xs text-[#2f6ea3] bg-[#e8f0f7] border border-[#d8e6f2] px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition">
+              <span v-if="!showFilterMenu">🔍 篩選</span>
+              <span v-else>▲ 收起</span>
+            </button>
+          </div>
 
-            <div class="flex flex-wrap gap-2 mb-2" v-if="hasActiveFilters">
-                <span v-if="filters.item !== 'ALL'" @click="filters.item='ALL'" class="filter-chip">
-                    {{ filters.item }} ✕
-                </span>
-                <span v-if="filters.date !== 'ALL'" @click="filters.date='ALL'" class="filter-chip">
-                    {{ filters.date }} ✕
-                </span>
-                <span v-if="filters.payer !== 'ALL'" @click="filters.payer='ALL'" class="filter-chip">
-                    {{ filters.payer }} ✕
-                </span>
-                <span v-if="filters.location !== 'ALL'" @click="filters.location='ALL'" class="filter-chip">
-                    {{ filters.location }} ✕
-                </span>
-                 <span v-if="filters.payment !== 'ALL'" @click="filters.payment='ALL'" class="filter-chip">
-                    {{ filters.payment }} ✕
-                </span>
+          <div v-if="showFilterMenu" class="glass-card p-4 mb-4 transition-all">
+            <div class="grid grid-cols-2 gap-3">
+              <select v-model="filters.item" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
+                <option value="ALL">全部項目</option>
+                <option v-for="i in uniqueItems" :key="i" :value="i">{{ i }}</option>
+              </select>
+              <select v-model="filters.date" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
+                <option value="ALL">全部日期</option>
+                <option v-for="d in uniqueExpDates" :key="d" :value="d">{{ d }}</option>
+              </select>
+              <select v-model="filters.payer" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
+                <option value="ALL">全部付款人</option>
+                <option v-for="p in members" :key="p" :value="p">{{ p }}</option>
+              </select>
+              <select v-model="filters.location" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none">
+                <option value="ALL">全部地點</option>
+                <option v-for="l in uniqueLocations" :key="l" :value="l">{{ l }}</option>
+              </select>
+              <select v-model="filters.payment" class="glass-input px-3 py-2 rounded-lg text-xs font-bold outline-none col-span-2">
+                <option value="ALL">全部付款方式</option>
+                <option v-for="p in uniquePayments" :key="p" :value="p">{{ p }}</option>
+              </select>
             </div>
+            <button @click="resetFilters" class="w-full mt-3 bg-slate-100 text-slate-500 py-2 rounded-lg text-xs font-bold hover:bg-slate-200 transition">
+              重置篩選條件
+            </button>
+          </div>
+
+          <div class="flex flex-wrap gap-2 mb-2" v-if="hasActiveFilters">
+            <span v-if="filters.item !== 'ALL'" @click="filters.item='ALL'" class="filter-chip">
+              {{ filters.item }} ✕
+            </span>
+            <span v-if="filters.date !== 'ALL'" @click="filters.date='ALL'" class="filter-chip">
+              {{ filters.date }} ✕
+            </span>
+            <span v-if="filters.payer !== 'ALL'" @click="filters.payer='ALL'" class="filter-chip">
+              {{ filters.payer }} ✕
+            </span>
+            <span v-if="filters.location !== 'ALL'" @click="filters.location='ALL'" class="filter-chip">
+              {{ filters.location }} ✕
+            </span>
+            <span v-if="filters.payment !== 'ALL'" @click="filters.payment='ALL'" class="filter-chip">
+              {{ filters.payment }} ✕
+            </span>
+          </div>
         </div>
 
         <div class="glass-card p-4 mb-6">
@@ -599,7 +818,7 @@
                 <div class="text-xs text-slate-500 mt-2 flex items-center flex-wrap gap-2">
                   <span class="bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">{{ exp.payer }}</span>
                   <span v-if="exp.involved && exp.involved.length > 0" class="bg-orange-50 px-2 py-0.5 rounded text-orange-700 font-bold border border-orange-100 flex items-center gap-1">
-                      <span class="text-[9px] opacity-60">分</span>{{ exp.involved.join('、') }}
+                    <span class="text-[9px] opacity-60">分</span>{{ exp.involved.join('、') }}
                   </span>
                   <span class="text-sky-600 font-bold bg-sky-50 px-2 py-0.5 rounded">{{ exp.payment }}</span>
                   <span class="text-slate-400 font-medium">{{ exp.location }}</span>
@@ -635,25 +854,27 @@
           </div>
           <div v-if="debts.length===0" class="text-center text-slate-400 text-xs py-2">目前大家都付得剛剛好，沒有欠款！</div>
         </div>
-      </div>
+      </section>
     </Transition>
-  </div>
+  </main>
 
   <Transition name="fade">
-    <div v-if="showImgViewer" 
-         class="img-viewer-overlay" 
+    <div v-if="showImgViewer"
+         class="img-viewer-overlay"
          @click="closeImgViewer"
          @touchstart="handleImgTouchStart"
          @touchmove="handleImgTouchMove"
          @touchend="handleImgTouchEnd"
-         @dblclick="toggleZoom"> <div v-if="imgGesture.scale === 1" :class="['pull-hint', {'show-hint': imgGesture.isPulling}]">↓ 下拉關閉</div>
-        
-        <div class="img-viewer-close" @click.stop="closeImgViewer">✕</div>
-        
-        <img :src="viewingImg" 
-             ref="imgViewerEl"
-             class="img-viewer-img" 
-             @click.stop>
+         @dblclick="toggleZoom">
+      <div v-if="imgGesture.scale === 1" :class="['pull-hint', {'show-hint': imgGesture.isPulling}]">↓ 下拉關閉</div>
+
+      <div class="img-viewer-close" @click.stop="closeImgViewer">✕</div>
+
+      <img :src="viewingImg"
+           ref="imgViewerEl"
+           class="img-viewer-img"
+           referrerpolicy="no-referrer"
+           @click.stop>
     </div>
   </Transition>
 
@@ -693,14 +914,14 @@
           <div>
             <label class="text-[10px] font-bold text-slate-400 uppercase">圖片 (點擊上傳)</label>
             <div class="img-upload-btn mt-1">
-                <div v-if="!itinForm.imgUrl" class="img-preview">
-                    <span>+ 選擇照片</span>
-                </div>
-                <div v-else class="relative">
-                    <img :src="itinForm.imgUrl" class="w-full h-32 object-cover rounded-xl border border-slate-200">
-                    <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md text-xs font-bold px-2">移除</button>
-                </div>
-                <input type="file" accept="image/*" @change="handleImageUpload" v-if="!itinForm.imgUrl || itinForm.newImageBase64">
+              <div v-if="!itinForm.imgUrl" class="img-preview">
+                <span>+ 選擇照片</span>
+              </div>
+              <div v-else class="relative">
+                <img :src="itinForm.imgUrl" class="w-full h-32 object-cover rounded-xl border border-slate-200" referrerpolicy="no-referrer">
+                <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md text-xs font-bold px-2">移除</button>
+              </div>
+              <input type="file" accept="image/*" @change="handleImageUpload" v-if="!itinForm.imgUrl || itinForm.newImageBase64">
             </div>
           </div>
           <div>
@@ -729,7 +950,7 @@
       <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showExpModal=false"></div>
       <div class="modal-content w-full max-w-sm bg-white rounded-3xl shadow-2xl relative z-10 p-6 space-y-4 max-h-[85vh] overflow-y-auto">
         <h3 class="font-bold text-slate-800 text-lg">編輯消費</h3>
-        
+
         <div class="flex gap-3">
           <select v-model="editExpForm.payer" class="w-1/2 glass-input p-3 rounded-xl text-sm outline-none font-bold">
             <option value="" disabled selected>泥是誰</option><option>家齊</option><option>亭穎</option><option>媽媽</option>
@@ -752,19 +973,19 @@
         </div>
 
         <div class="flex gap-3">
-          <select v-model="editExpForm.currency" class="w-1/3 glass-input p-3 rounded-xl text-sm font-bold bg-sky-50 text-sky-700">
+          <select v-model="editExpForm.currency" class="w-1/3 glass-input p-3 rounded-xl text-sm font-bold bg-[#e8f0f7] text-[#2f6ea3]">
             <option>NTD</option><option>NOK</option><option>ISK</option><option>EUR</option><option>GBP</option><option>AED</option>
           </select>
           <input type="number" v-model="editExpForm.amount" class="w-2/3 glass-input p-3 rounded-xl text-xl font-bold" placeholder="金額">
         </div>
 
         <div class="text-xs text-right text-slate-400 font-mono font-bold" v-if="editExpForm.amount && editExpForm.currency !== 'NTD'">
-            ≈ {{ formatNumber(Math.round(editExpForm.amount * rates[editExpForm.currency])) }} NTD
+          ≈ {{ formatNumber(Math.round(editExpForm.amount * rates[editExpForm.currency])) }} NTD
         </div>
 
         <input v-model="editExpForm.note" class="w-full glass-input p-3 rounded-xl text-sm" placeholder="備註">
 
-        <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+        <div class="bg-slate-50/60 p-4 rounded-xl border border-slate-100">
           <div class="flex justify-between items-center mb-3">
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">分攤給</span>
             <button @click="toggleSelectAllEdit" class="text-[10px] text-sky-600 font-bold bg-white px-2 py-1 rounded shadow-sm">全選</button>
@@ -830,7 +1051,7 @@ async function callApi(action, data = null, method = 'GET') {
     return await response.json();
   } catch(e) {
     console.warn("API Fail:", e);
-    return null; 
+    return null;
   }
 }
 
@@ -843,13 +1064,11 @@ createApp({
     const isFirstLoad = ref(true);
     const isPullRefreshing = ref(false);
     const isOnline = ref(navigator.onLine);
-    
-    // Status Flags
+
     const isSyncing = ref(false);
 
-    // Sync Queue
     const syncQueue = ref([]);
-    
+
     const members = ref([]);
     const expenses = ref([]);
     const itinerary = ref([]);
@@ -861,20 +1080,18 @@ createApp({
     const todayDate = ref('');
     const todayWeekday = ref('');
 
-    // Image Viewer State & Gesture Logic
     const showImgViewer = ref(false);
     const viewingImg = ref('');
     const imgViewerEl = ref(null);
-    const imgGesture = ref({ 
-        startX: 0, startY: 0, 
-        currentX: 0, currentY: 0, 
-        scale: 1, 
+    const imgGesture = ref({
+        startX: 0, startY: 0,
+        currentX: 0, currentY: 0,
+        scale: 1,
         isPulling: false,
         isZooming: false,
         startDistance: 0
     });
 
-    // PULL DOWN + PINCH ZOOM LOGIC
     const getDistance = (touches) => {
         return Math.hypot(
             touches[0].clientX - touches[1].clientX,
@@ -884,11 +1101,9 @@ createApp({
 
     const handleImgTouchStart = (e) => {
         if (e.touches.length === 2) {
-            // Pinch start
             imgGesture.value.isZooming = true;
             imgGesture.value.startDistance = getDistance(e.touches);
         } else if (e.touches.length === 1) {
-            // Pan/Pull start
             imgGesture.value.startX = e.touches[0].clientX;
             imgGesture.value.startY = e.touches[0].clientY;
             imgGesture.value.isPulling = false;
@@ -897,30 +1112,24 @@ createApp({
 
     const handleImgTouchMove = (e) => {
         if(!showImgViewer.value) return;
-        e.preventDefault(); // Prevent native scroll
+        e.preventDefault();
 
         if (e.touches.length === 2 && imgGesture.value.isZooming) {
-            // Pinching
             const dist = getDistance(e.touches);
             const scaleChange = dist / imgGesture.value.startDistance;
-            // Limit zoom range
             let newScale = imgGesture.value.scale * scaleChange;
             newScale = Math.max(1, Math.min(newScale, 4));
-            
+
             if (imgViewerEl.value) {
                 imgViewerEl.value.style.transform = `scale(${newScale}) translate(${imgGesture.value.currentX}px, ${imgGesture.value.currentY}px)`;
             }
-            // Store tentative scale (applied fully on end for simplicity, or continuously)
-            // Simplified: we just visual transform here, commit on end is tricky without matrix
-            // For robust simple zoom: just apply scale visually
             imgViewerEl.value.style.transform = `scale(${newScale})`;
-            imgGesture.value.tempScale = newScale; 
-        } 
+            imgGesture.value.tempScale = newScale;
+        }
         else if (e.touches.length === 1) {
             const dy = e.touches[0].clientY - imgGesture.value.startY;
             const dx = e.touches[0].clientX - imgGesture.value.startX;
 
-            // Only allow pull-down close if NOT zoomed in
             if (imgGesture.value.scale === 1) {
                 if (dy > 0) {
                     imgGesture.value.currentY = dy;
@@ -932,8 +1141,6 @@ createApp({
                     if(overlay) overlay.style.backgroundColor = `rgba(0,0,0,${Math.max(0, 0.98 - dy/600)})`;
                 }
             } else {
-                // Pan logic (simplified: moving image when zoomed)
-                // Note: proper panning requires tracking limits, this is basic free-move
                 if (imgViewerEl.value) {
                      imgViewerEl.value.style.transform = `scale(${imgGesture.value.scale}) translate(${dx/imgGesture.value.scale}px, ${dy/imgGesture.value.scale}px)`;
                 }
@@ -943,12 +1150,10 @@ createApp({
 
     const handleImgTouchEnd = (e) => {
         if (imgGesture.value.isZooming) {
-            // Commit zoom
             if (imgGesture.value.tempScale) {
                 imgGesture.value.scale = imgGesture.value.tempScale;
             }
             imgGesture.value.isZooming = false;
-            // Reset to 1 if user pinched out too much
             if (imgGesture.value.scale < 1) {
                 imgGesture.value.scale = 1;
                 resetImgTransform();
@@ -985,14 +1190,14 @@ createApp({
       const start = new Date('2026-08-30');
       const end = new Date('2026-09-26');
       now.setHours(0,0,0,0); start.setHours(0,0,0,0); end.setHours(0,0,0,0);
-      
+
       if (now < start) return `倒數 ${Math.ceil((start - now)/86400000)} 天`;
-      
+
       if (now >= start && now <= end) {
          const diff = Math.floor((now - start)/86400000) + 1;
          return `DAY ${diff}`;
       }
-      
+
       return '';
     });
 
@@ -1002,8 +1207,7 @@ createApp({
       tripDates.push({ date: d.toISOString().split('T')[0], short: (d.getMonth()+1)+'/'+d.getDate() });
     }
     const selDate = ref(tripDates[0].date);
-    
-    // Filter State
+
     const showFilterMenu = ref(false);
     const filters = ref({
         date: 'ALL',
@@ -1034,18 +1238,16 @@ createApp({
       todayWeekday.value = days[now.getDay()];
     };
 
-    /* iOS Gesture Engine (15% Logic) with Text Selection Protection */
     const gesture = {
       active:false, mode:null,
       startX:0, startY:0, dx:0, dy:0,
       startedAtLeftEdge:false,
       startedAtRightEdge:false,
       inSelectable:false,
-      selectIntent:false, // New Flag: If user holds still for a moment, lock as selection
+      selectIntent:false,
       longPressTimer:null
     };
-    
-    // Check if user has selected text
+
     const hasTextSelection = () => {
       const sel = window.getSelection();
       return !!(sel && sel.toString && sel.toString().length > 0);
@@ -1077,20 +1279,18 @@ createApp({
         gesture.dy = 0;
         gesture.startX = t.clientX;
         gesture.startY = t.clientY;
-        
-        // 15% Edge Logic
+
         const w = window.innerWidth;
         const edgeThreshold = w * 0.15;
-        
+
         gesture.startedAtLeftEdge = (gesture.startX <= edgeThreshold);
         gesture.startedAtRightEdge = (gesture.startX >= w - edgeThreshold);
 
         gesture.inSelectable = !!e.target.closest('.allow-select');
-        gesture.selectIntent = false; // Reset intent
+        gesture.selectIntent = false;
         clearLongPress();
 
         if (gesture.inSelectable) {
-          // If touching text, wait 220ms. If no move -> assume selection intended
           gesture.longPressTimer = setTimeout(() => {
             gesture.selectIntent = true;
           }, 220);
@@ -1109,13 +1309,10 @@ createApp({
         const absX = Math.abs(gesture.dx);
         const absY = Math.abs(gesture.dy);
 
-        // If user moved significantly (>10px), cancel the "Selection Intent" timer
-        // This means it's a swipe, not a hold
         if (gesture.inSelectable) {
            if (absX > 10 || absY > 10) clearLongPress();
         }
 
-        // CRITICAL: If intent is already selection or text is selected, STOP gesture logic
         if (gesture.inSelectable && (gesture.selectIntent || hasTextSelection())) return;
 
         if (!gesture.mode) {
@@ -1145,12 +1342,10 @@ createApp({
         gesture.active = false;
         clearLongPress();
 
-        // CRITICAL PROTECTION for iOS Menu
-        // If text is selected OR we determined intent was selection -> DO NOTHING
         if (gesture.inSelectable && (gesture.selectIntent || hasTextSelection())) {
           pullDistance.value = 0;
           gesture.mode = null;
-          return; // Exit immediately, do not trigger date switch
+          return;
         }
 
         if (pullDistance.value > 60) {
@@ -1244,14 +1439,14 @@ createApp({
         itinerary.value = res.itinerary;
         members.value = res.members;
         rates.value = res.rates;
-        saveLocal({}); // Save the fresh data with real IDs to local storage
+        saveLocal({});
         if (tab.value === 'analysis') scheduleRenderChart();
       }
     };
 
     const processSyncQueue = async () => {
       if (syncQueue.value.length === 0 || !navigator.onLine || isSyncing.value) return;
-      
+
       isSyncing.value = true;
       const queue = [...syncQueue.value];
       const remaining = [];
@@ -1260,7 +1455,7 @@ createApp({
         try {
           const apiAction = getBackendActionName(job.type, job.action);
           const res = await callApi(apiAction, job.data, 'POST');
-          
+
           if (res) {
             updateLocalData(res);
           } else {
@@ -1274,7 +1469,7 @@ createApp({
       syncQueue.value = remaining;
       saveLocal({});
       isSyncing.value = false;
-      
+
       if (syncQueue.value.length === 0) loadData();
     };
 
@@ -1327,10 +1522,9 @@ createApp({
       }
     };
 
-    const selectDate = (date) => { 
-        selDate.value = date; 
+    const selectDate = (date) => {
+        selDate.value = date;
         scrollToDateBtn(date);
-        // Scroll content to top on date switch
         if(scrollContainer.value) scrollContainer.value.scrollTop = 0;
     };
 
@@ -1376,7 +1570,6 @@ createApp({
     const getEvents = (d) => itinerary.value.filter(e => e.date === d).sort((a,b)=>a.startTime.localeCompare(b.startTime));
     const formatNumber = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-    // Dynamic Options for Filters
     const uniqueExpDates = computed(() => [...new Set(expenses.value.map(e => e.date))].sort());
     const uniqueItems = computed(() => [...new Set(expenses.value.map(e => e.item))].filter(Boolean));
     const uniqueLocations = computed(() => [...new Set(expenses.value.map(e => e.location))].filter(Boolean));
@@ -1390,7 +1583,6 @@ createApp({
         filters.value = { date: 'ALL', item: 'ALL', payer: 'ALL', location: 'ALL', payment: 'ALL' };
     };
 
-    // Updated Filtering Logic
     const filteredExpenses = computed(() => {
         return expenses.value.filter(e => {
             if (filters.value.date !== 'ALL' && e.date !== filters.value.date) return false;
@@ -1470,10 +1662,10 @@ createApp({
       return 'tag-other';
     };
 
-    /* Chart Logic */
     let chartInstance = null;
     const chartBusy = ref(false);
     let chartTimer = null;
+    let chartRetryTimer = null;
 
     const buildStats = () => {
       const stats = {};
@@ -1486,7 +1678,17 @@ createApp({
       return stats;
     };
 
+    const canRenderChart = () => {
+      if (typeof Chart === 'undefined') return false;
+      const canvas = document.getElementById('expenseChart');
+      if (!canvas) return false;
+      if (!canvas.offsetParent) return false;
+      return true;
+    };
+
     const renderChart = () => {
+      if (!canRenderChart()) return;
+
       const canvas = document.getElementById('expenseChart');
       if (!canvas) return;
 
@@ -1533,8 +1735,17 @@ createApp({
       chartBusy.value = true;
 
       if (chartTimer) clearTimeout(chartTimer);
+      if (chartRetryTimer) clearTimeout(chartRetryTimer);
       chartTimer = setTimeout(() => {
         nextTick(() => {
+          if (!canRenderChart()) {
+            chartRetryTimer = setTimeout(() => {
+              nextTick(() => {
+                renderChart();
+              });
+            }, 250);
+            return;
+          }
           renderChart();
         });
       }, 300);
@@ -1549,7 +1760,6 @@ createApp({
       scheduleRenderChart();
     };
 
-    // Watch filters change for chart update
     watch(tab, (val) => {
       if (val === 'analysis') scheduleRenderChart();
       if (val === 'expense') {
@@ -1563,15 +1773,14 @@ createApp({
     const openAddItin = () => { itinForm.value = { row: null, startTime: '09:00', endTime: '', category: '景點', title: '', location: '', link: '', note: '', imgUrl: '', newImageBase64: null, deleteImage: false, imgId: '' }; isEditing.value = false; showItinModal.value = true; };
     const openEditItin = (evt) => { itinForm.value = { ...evt, newImageBase64: null, deleteImage: false }; isEditing.value = true; showItinModal.value = true; };
     const openEditExp = (exp) => { editExpForm.value = JSON.parse(JSON.stringify(exp)); showExpModal.value = true; };
-    
-    // Image Handling
+
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (evt) => {
-            itinForm.value.imgUrl = evt.target.result; // Preview
-            itinForm.value.newImageBase64 = evt.target.result; // For upload
+            itinForm.value.imgUrl = evt.target.result;
+            itinForm.value.newImageBase64 = evt.target.result;
             itinForm.value.deleteImage = false;
         };
         reader.readAsDataURL(file);
@@ -1588,23 +1797,19 @@ createApp({
         showImgViewer.value = true;
         imgGesture.value = { startX: 0, startY: 0, currentX: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 };
     };
-    const closeImgViewer = () => { 
+    const closeImgViewer = () => {
         if (imgViewerEl.value) imgViewerEl.value.style.transform = '';
         const overlay = document.querySelector('.img-viewer-overlay');
         if(overlay) overlay.style.backgroundColor = '';
-        showImgViewer.value = false; 
+        showImgViewer.value = false;
     };
 
-    // ===================================
-    // Actions
-    // ===================================
+    const deleteItin = async (evt) => {
+      if(!confirm('確定刪除?')) return;
 
-    const deleteItin = async (evt) => { 
-      if(!confirm('確定刪除?')) return; 
-      
-      itinerary.value = itinerary.value.filter(x => x.row !== evt.row); 
-      
-      const pendingIdx = syncQueue.value.findIndex(job => 
+      itinerary.value = itinerary.value.filter(x => x.row !== evt.row);
+
+      const pendingIdx = syncQueue.value.findIndex(job =>
         job.type === 'itin' && job.action === 'add' && job.data.row === evt.row
       );
 
@@ -1616,11 +1821,11 @@ createApp({
       }
     };
 
-    const deleteExp = async (exp) => { 
-      if(!confirm('確定刪除?')) return; 
-      expenses.value = expenses.value.filter(x => x.row !== exp.row); 
-      
-      const pendingIdx = syncQueue.value.findIndex(job => 
+    const deleteExp = async (exp) => {
+      if(!confirm('確定刪除?')) return;
+      expenses.value = expenses.value.filter(x => x.row !== exp.row);
+
+      const pendingIdx = syncQueue.value.findIndex(job =>
         job.type === 'exp' && job.action === 'add' && job.data.row === exp.row
       );
 
@@ -1636,7 +1841,7 @@ createApp({
       if(!itinForm.value.title) return alert('請輸入標題');
       const newRow = isEditing.value ? itinForm.value.row : Date.now();
       const payload = { ...itinForm.value, row: newRow, date: selDate.value };
-      
+
       if(isEditing.value) {
          const idx = itinerary.value.findIndex(x => x.row === newRow);
          if(idx !== -1) itinerary.value[idx] = payload;
@@ -1650,17 +1855,17 @@ createApp({
 
     const submitExp = async () => {
       if(!newExp.value.amount || !newExp.value.item) return alert('請輸入金額與項目');
-      const payload = { 
-        ...newExp.value, 
-        row: Date.now(), 
-        date: new Date().toISOString().split('T')[0], 
+      const payload = {
+        ...newExp.value,
+        row: Date.now(),
+        date: new Date().toISOString().split('T')[0],
         time: new Date().toTimeString().slice(0,5),
         amountTWD: Math.round(newExp.value.amount * (rates.value[newExp.value.currency] || 1))
       };
-      
+
       expenses.value.unshift(payload);
       handleCRUD('exp', 'add', payload);
-      
+
       newExp.value.amount = null; newExp.value.item = ''; newExp.value.note = ''; newExp.value.involved = [];
       alert('記帳成功');
     };
@@ -1668,10 +1873,10 @@ createApp({
     const submitEditExp = async () => {
         const idx = expenses.value.findIndex(e => e.row === editExpForm.value.row);
         if(idx === -1) return;
-        
+
         const updated = { ...editExpForm.value };
         updated.amountTWD = Math.round(updated.amount * (rates.value[updated.currency] || 1));
-        
+
         expenses.value[idx] = updated;
         showExpModal.value = false;
         handleCRUD('exp', 'edit', updated);
@@ -1684,23 +1889,23 @@ createApp({
        callApi('updateRates', rates.value, 'POST');
     };
 
-    const confirmClearSync = () => { 
+    const confirmClearSync = () => {
       if(confirm('確定要強制清空所有待上傳資料嗎？\n注意：這會導致離線新增的資料無法同步到伺服器。')) {
-        syncQueue.value = []; 
+        syncQueue.value = [];
         saveLocal({});
       }
     };
-    
+
     const toggleSelectAll = () => { if(newExp.value.involved.length === members.value.length) newExp.value.involved=[]; else newExp.value.involved=[...members.value]; };
-    
-    const toggleSelectAllEdit = () => { 
+
+    const toggleSelectAllEdit = () => {
         if(!editExpForm.value.involved) editExpForm.value.involved = [];
-        if(editExpForm.value.involved.length === members.value.length) editExpForm.value.involved=[]; 
-        else editExpForm.value.involved=[...members.value]; 
+        if(editExpForm.value.involved.length === members.value.length) editExpForm.value.involved=[];
+        else editExpForm.value.involved=[...members.value];
     };
 
-    const updateOnlineStatus = () => { 
-      isOnline.value = navigator.onLine; 
+    const updateOnlineStatus = () => {
+      isOnline.value = navigator.onLine;
       if (isOnline.value) processSyncQueue();
     };
 
@@ -1715,8 +1920,7 @@ createApp({
       await nextTick();
       attachGestureListeners();
       loadData();
-      
-      // Try processing queue on load if online
+
       if(navigator.onLine) processSyncQueue();
     });
 
@@ -1733,9 +1937,9 @@ createApp({
       todayDate, todayWeekday,
       pullDistance, isPullRefreshing, refreshText,
       tripStatus, tripDates, selDate,
-      itinerary, 
+      itinerary,
       selectDate, getDayInfo, getEvents, getCategoryClass,
-      expenses, rates, members, 
+      expenses, rates, members,
       filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments,
       resetFilters, hasActiveFilters, filteredExpenses,
       formatNumber, getAmountTWD,
@@ -1746,7 +1950,7 @@ createApp({
       showRateModal, showItinModal, showExpModal, isEditing,
       itinForm, newExp, editExpForm, tempRates,
       openRateModal, openAddItin, openEditItin, openEditExp,
-      deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, 
+      deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates,
       confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending,
       handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg,
       imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom
