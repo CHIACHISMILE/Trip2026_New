@@ -403,10 +403,10 @@
                    class="map-btn swipe-protected">地圖</a>
               </div>
 
-              <div v-if="resolveImageSrc(evt)" class="mt-2">
-                  <img :src="resolveImageSrc(evt)" class="itinerary-image" loading="lazy" referrerpolicy="no-referrer" alt="行程圖片"
-                       @error="onImageError($event, evt)"
-                       @click.stop="viewImage(evt)">
+              <div v-if="evt.imgUrl" class="mt-2">
+                  <img :src="evt.imgUrl" class="itinerary-image" loading="lazy" referrerpolicy="no-referrer" alt="行程圖片"
+                       @error="onImageError($event)"
+                       @click.stop="viewImage(evt.imgUrl)">
               </div>
 
               <div
@@ -708,11 +708,11 @@
           <div>
             <label class="text-[10px] font-bold text-slate-400 uppercase">圖片 (點擊上傳)</label>
             <div class="img-upload-btn mt-1">
-                <div v-if="!resolveImageSrc(itinForm)" class="img-preview">
+                <div v-if="!itinForm.imgUrl" class="img-preview">
                     <span>+ 選擇照片</span>
                 </div>
                 <div v-else class="relative">
-                    <img :src="resolveImageSrc(itinForm)" class="itinerary-image w-full h-32 border border-slate-200" loading="lazy" referrerpolicy="no-referrer" @error="onImageError($event, itinForm)">
+                    <img :src="itinForm.imgUrl" class="itinerary-image w-full h-32 border border-slate-200" loading="lazy" referrerpolicy="no-referrer" @error="onImageError($event)">
                     <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md text-xs font-bold px-2">移除</button>
                 </div>
                 <input type="file" accept="image/*" @change="handleImageUpload" v-if="!itinForm.imgUrl || itinForm.newImageBase64">
@@ -1598,53 +1598,16 @@ createApp({
         itinForm.value.deleteImage = true;
     };
 
-    const resolveImageSrc = (item) => {
-      if (!item) return '';
-
-      const imgId = String(item.imgId || '').trim();
-      if (imgId) {
-        return `https://drive.google.com/uc?export=view&id=${imgId}`;
-      }
-
-      const url = String(item.imgUrl || '').trim();
-      if (!url) return '';
-
-      let m = url.match(/\/file\/d\/([a-zA-Z0-9_-]{10,})/);
-      if (m && m[1]) {
-        return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-      }
-
-      m = url.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
-      if (m && m[1]) {
-        return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-      }
-
-      if (url.includes('drive.google.com/uc')) {
-        return url.startsWith('http://') ? url.replace('http://', 'https://') : url;
-      }
-
-      if (url.startsWith('data:') || url.startsWith('blob:')) {
-        return url;
-      }
-
-      return '';
-    };
-
-    const onImageError = (evt, item) => {
+    const onImageError = (evt) => {
       const el = evt && evt.target;
       if (!el) return;
+      // 避免無限 loop；不改寫成 Drive 其他來源
       el.onerror = null;
-
-      if (item && item.imgId) {
-        el.src = `https://drive.google.com/uc?export=view&id=${item.imgId}`;
-        return;
-      }
-
       el.style.display = 'none';
     };
 
-    const viewImage = (item) => {
-        viewingImg.value = resolveImageSrc(item);
+    const viewImage = (url) => {
+        viewingImg.value = String(url || '').trim();
         if (!viewingImg.value) return;
         showImgViewer.value = true;
         imgGesture.value = { startX: 0, startY: 0, currentX: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 };
@@ -1816,7 +1779,7 @@ createApp({
       openRateModal, openAddItin, openEditItin, openEditExp,
       deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, 
       confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending,
-      handleImageUpload, removeImage, resolveImageSrc, onImageError, viewImage, closeImgViewer, showImgViewer, viewingImg,
+      handleImageUpload, removeImage, onImageError, viewImage, closeImgViewer, showImgViewer, viewingImg,
       imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom
     };
   }
