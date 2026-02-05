@@ -712,10 +712,10 @@
                     <span>+ 選擇照片</span>
                 </div>
                 <div v-else class="relative">
-                    <img :src="itinForm.imgUrl" class="itinerary-image w-full h-32 border border-slate-200" loading="lazy" referrerpolicy="no-referrer" @error="onImageError($event)">
+                    <img :src="itinForm.imgUrl" class="itinerary-image w-full h-32 border border-slate-200" loading="lazy" referrerpolicy="no-referrer" @error="onImageError($event, 'form')">
                     <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md text-xs font-bold px-2">移除</button>
                 </div>
-                <input type="file" accept="image/*" @change="handleImageUpload" v-if="!itinForm.imgUrl || itinForm.newImageBase64">
+                <input type="file" accept="image/*" @change="handleImageUpload">
             </div>
           </div>
           <div>
@@ -1598,11 +1598,19 @@ createApp({
         itinForm.value.deleteImage = true;
     };
 
-    const onImageError = (evt) => {
+    const onImageError = (evt, context = 'card') => {
       const el = evt && evt.target;
       if (!el) return;
       // 避免無限 loop；不改寫成 Drive 其他來源
       el.onerror = null;
+
+      // 表單預覽若失敗，回退到「可重新選擇」狀態，避免上傳欄位看起來消失
+      if (context === 'form') {
+        itinForm.value.imgUrl = '';
+        return;
+      }
+
+      // 列表圖片失敗時才隱藏
       el.style.display = 'none';
     };
 
