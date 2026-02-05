@@ -390,7 +390,8 @@
               </div>
 
               <div v-if="evt.imgUrl" class="mt-2">
-                  <img :src="evt.imgUrl" class="itinerary-img" loading="lazy" alt="行程圖片"
+                  <img :src="getRenderableImageUrl(evt.imgUrl)" class="itinerary-img" loading="lazy" alt="行程圖片"
+                       @error="handleImageError($event, evt.imgUrl)"
                        @click.stop="viewImage(evt.imgUrl)">
               </div>
 
@@ -697,7 +698,7 @@
                     <span>+ 選擇照片</span>
                 </div>
                 <div v-else class="relative">
-                    <img :src="itinForm.imgUrl" class="w-full h-32 object-cover rounded-xl border border-slate-200">
+                    <img :src="getRenderableImageUrl(itinForm.imgUrl)" class="w-full h-32 object-cover rounded-xl border border-slate-200" @error="handleImageError($event, itinForm.imgUrl)">
                     <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md text-xs font-bold px-2">移除</button>
                 </div>
                 <input type="file" accept="image/*" @change="handleImageUpload" v-if="!itinForm.imgUrl || itinForm.newImageBase64">
@@ -805,7 +806,7 @@
 </div>
 
 <script>
-const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbz6PZtqLJzlS2a71R-RfZjpJCuqJVPoP7RuNxEe74mS_uvxBejMNGKboFSn2ArNnXAu/exec';
+const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbzWknQDMSv8UhYMxEjdxQgoEbDo78K5PlavnfqSGmiEZ8SrvJ3GJ8enSLDESXicB5FRPQ/exec';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -1583,8 +1584,60 @@ createApp({
         itinForm.value.deleteImage = true;
     };
 
+    const getRenderableImageUrl = (rawUrl) => {
+        if (!rawUrl) return '';
+        const str = String(rawUrl).trim();
+        if (!str) return '';
+
+        if (str.startsWith('data:') || str.startsWith('blob:')) return str;
+
+        const httpsUrl = str.startsWith('http://') ? str.replace('http://', 'https://') : str;
+
+        // iPhone Safari/PWA 下，Drive thumbnail 連結較容易失敗，統一改用 uc?export=view
+        const idPatterns = [
+          /\/file\/d\/([a-zA-Z0-9_-]{10,})/,
+          /[?&]id=([a-zA-Z0-9_-]{10,})/,
+          /^([a-zA-Z0-9_-]{20,})$/
+        ];
+
+        for (const p of idPatterns) {
+          const m = httpsUrl.match(p);
+          if (m && m[1]) {
+            return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+          }
+        }
+
+        if (httpsUrl.includes('drive.google.com/thumbnail')) {
+          const idMatch = httpsUrl.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+          if (idMatch && idMatch[1]) {
+            return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+          }
+        }
+
+        return httpsUrl;
+    };
+
+    const handleImageError = (e, rawUrl) => {
+        const el = e && e.target;
+        if (!el || el.dataset.fallbackTried === '1') return;
+        const str = String(rawUrl || '').trim();
+        const idPatterns = [
+          /\/file\/d\/([a-zA-Z0-9_-]{10,})/,
+          /[?&]id=([a-zA-Z0-9_-]{10,})/,
+          /^([a-zA-Z0-9_-]{20,})$/
+        ];
+        for (const p of idPatterns) {
+          const m = str.match(p);
+          if (m && m[1]) {
+            el.dataset.fallbackTried = '1';
+            el.src = `https://drive.usercontent.google.com/download?id=${m[1]}&export=view&authuser=0`;
+            return;
+          }
+        }
+    };
+
     const viewImage = (url) => {
-        viewingImg.value = url;
+        viewingImg.value = getRenderableImageUrl(url);
         showImgViewer.value = true;
         imgGesture.value = { startX: 0, startY: 0, currentX: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 };
     };
@@ -1748,7 +1801,7 @@ createApp({
       openRateModal, openAddItin, openEditItin, openEditExp,
       deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, 
       confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending,
-      handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg,
+      handleImageUpload, removeImage, getRenderableImageUrl, handleImageError, viewImage, closeImgViewer, showImgViewer, viewingImg,
       imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom
     };
   }
