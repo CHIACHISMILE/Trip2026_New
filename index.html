@@ -23,7 +23,10 @@
   <style>
     /* CSS Setup */
     html, body {
-      height: 100dvh;
+      height: 100%;
+      min-height: 100svh;
+      min-height: 100dvh;
+      min-height: calc(var(--vh, 1vh) * 100);
       width: 100%;
       overflow: hidden;
       font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
@@ -49,11 +52,15 @@
     }
 
     #app {
+      position: fixed;
+      inset: 0;
       height: 100%;
+      min-height: 100svh;
+      min-height: 100dvh;
+      min-height: calc(var(--vh, 1vh) * 100);
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      position: relative;
       -webkit-touch-callout: none;
     }
 
@@ -1747,6 +1754,10 @@ createApp({
       if (isOnline.value) processSyncQueue();
     };
 
+    const setViewportHeightVar = () => {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    };
+
     const isItemPending = (rowId) => {
       return syncQueue.value.some(job => job.data.row === rowId);
     };
@@ -1755,6 +1766,8 @@ createApp({
       initDate();
       window.addEventListener('online', updateOnlineStatus);
       window.addEventListener('offline', updateOnlineStatus);
+      window.addEventListener('resize', setViewportHeightVar);
+      setViewportHeightVar();
       await nextTick();
       attachGestureListeners();
       loadData();
@@ -1767,6 +1780,7 @@ createApp({
       detachGestureListeners();
       window.removeEventListener('online', updateOnlineStatus);
       window.removeEventListener('offline', updateOnlineStatus);
+      window.removeEventListener('resize', setViewportHeightVar);
       if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
     });
 
