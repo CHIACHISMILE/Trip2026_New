@@ -23,7 +23,10 @@
   <style>
     /* CSS Setup */
     html, body {
-      height: 100dvh;
+      height: 100%;
+      min-height: 100svh;
+      min-height: 100dvh;
+      min-height: calc(var(--vh, 1vh) * 100);
       width: 100%;
       overflow: hidden;
       font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
@@ -49,11 +52,15 @@
     }
 
     #app {
+      position: fixed;
+      inset: 0;
       height: 100%;
+      min-height: 100svh;
+      min-height: 100dvh;
+      min-height: calc(var(--vh, 1vh) * 100);
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      position: relative;
       -webkit-touch-callout: none;
     }
 
@@ -235,10 +242,17 @@
         color: #94a3b8; font-size: 12px; font-weight: bold;
         background: #f8fafc;
     }
-    .itinerary-img {
-        width: 100%; max-height: 200px; object-fit: cover;
-        border-radius: 12px; margin-top: 12px;
+    .itinerary-image {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        max-height: 200px;
+        display: block;
+        object-fit: cover;
+        border-radius: 12px;
+        margin-top: 12px;
         border: 1px solid rgba(0,0,0,0.05);
+        background-color: #f1f5f9;
         cursor: zoom-in;
     }
 
@@ -390,7 +404,8 @@
               </div>
 
               <div v-if="evt.imgUrl" class="mt-2">
-                  <img :src="evt.imgUrl" class="itinerary-img" loading="lazy" alt="行程圖片"
+                  <img :src="evt.imgUrl" class="itinerary-image" loading="lazy" referrerpolicy="no-referrer" alt="行程圖片"
+                       @error="onImageError($event)"
                        @click.stop="viewImage(evt.imgUrl)">
               </div>
 
@@ -697,10 +712,10 @@
                     <span>+ 選擇照片</span>
                 </div>
                 <div v-else class="relative">
-                    <img :src="itinForm.imgUrl" class="w-full h-32 object-cover rounded-xl border border-slate-200">
+                    <img :src="itinForm.imgUrl" class="itinerary-image w-full h-32 border border-slate-200" loading="lazy" referrerpolicy="no-referrer" @error="onImageError($event, 'form')">
                     <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md text-xs font-bold px-2">移除</button>
                 </div>
-                <input type="file" accept="image/*" @change="handleImageUpload" v-if="!itinForm.imgUrl || itinForm.newImageBase64">
+                <input type="file" accept="image/*" @change="handleImageUpload">
             </div>
           </div>
           <div>
@@ -805,7 +820,7 @@
 </div>
 
 <script>
-const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbz6PZtqLJzlS2a71R-RfZjpJCuqJVPoP7RuNxEe74mS_uvxBejMNGKboFSn2ArNnXAu/exec';
+const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbzWknQDMSv8UhYMxEjdxQgoEbDo78K5PlavnfqSGmiEZ8SrvJ3GJ8enSLDESXicB5FRPQ/exec';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -1583,8 +1598,25 @@ createApp({
         itinForm.value.deleteImage = true;
     };
 
+    const onImageError = (evt, context = 'card') => {
+      const el = evt && evt.target;
+      if (!el) return;
+      // 避免無限 loop；不改寫成 Drive 其他來源
+      el.onerror = null;
+
+      // 表單預覽若失敗，回退到「可重新選擇」狀態，避免上傳欄位看起來消失
+      if (context === 'form') {
+        itinForm.value.imgUrl = '';
+        return;
+      }
+
+      // 列表圖片失敗時才隱藏
+      el.style.display = 'none';
+    };
+
     const viewImage = (url) => {
-        viewingImg.value = url;
+        viewingImg.value = String(url || '').trim();
+        if (!viewingImg.value) return;
         showImgViewer.value = true;
         imgGesture.value = { startX: 0, startY: 0, currentX: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 };
     };
@@ -1704,6 +1736,10 @@ createApp({
       if (isOnline.value) processSyncQueue();
     };
 
+    const setViewportHeightVar = () => {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    };
+
     const isItemPending = (rowId) => {
       return syncQueue.value.some(job => job.data.row === rowId);
     };
@@ -1712,6 +1748,8 @@ createApp({
       initDate();
       window.addEventListener('online', updateOnlineStatus);
       window.addEventListener('offline', updateOnlineStatus);
+      window.addEventListener('resize', setViewportHeightVar);
+      setViewportHeightVar();
       await nextTick();
       attachGestureListeners();
       loadData();
@@ -1724,6 +1762,7 @@ createApp({
       detachGestureListeners();
       window.removeEventListener('online', updateOnlineStatus);
       window.removeEventListener('offline', updateOnlineStatus);
+      window.removeEventListener('resize', setViewportHeightVar);
       if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
     });
 
@@ -1748,7 +1787,7 @@ createApp({
       openRateModal, openAddItin, openEditItin, openEditExp,
       deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, 
       confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending,
-      handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg,
+      handleImageUpload, removeImage, onImageError, viewImage, closeImgViewer, showImgViewer, viewingImg,
       imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom
     };
   }
