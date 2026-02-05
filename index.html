@@ -242,10 +242,17 @@
         color: #94a3b8; font-size: 12px; font-weight: bold;
         background: #f8fafc;
     }
-    .itinerary-img {
-        width: 100%; max-height: 200px; object-fit: cover;
-        border-radius: 12px; margin-top: 12px;
+    .itinerary-image {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        max-height: 200px;
+        display: block;
+        object-fit: cover;
+        border-radius: 12px;
+        margin-top: 12px;
         border: 1px solid rgba(0,0,0,0.05);
+        background-color: #f1f5f9;
         cursor: zoom-in;
     }
 
@@ -396,10 +403,10 @@
                    class="map-btn swipe-protected">地圖</a>
               </div>
 
-              <div v-if="evt.imgUrl || evt.imgId" class="mt-2">
-                  <img :src="getRenderableImageUrl(evt.imgUrl, evt.imgId)" class="itinerary-img" loading="lazy" alt="行程圖片"
-                       @error="handleImageError($event, evt.imgUrl, evt.imgId)"
-                       @click.stop="viewImage(evt.imgUrl, evt.imgId)">
+              <div v-if="resolveImageSrc(evt)" class="mt-2">
+                  <img :src="resolveImageSrc(evt)" class="itinerary-image" loading="lazy" referrerpolicy="no-referrer" alt="行程圖片"
+                       @error="onImageError($event, evt)"
+                       @click.stop="viewImage(evt)">
               </div>
 
               <div
@@ -701,11 +708,11 @@
           <div>
             <label class="text-[10px] font-bold text-slate-400 uppercase">圖片 (點擊上傳)</label>
             <div class="img-upload-btn mt-1">
-                <div v-if="!itinForm.imgUrl" class="img-preview">
+                <div v-if="!resolveImageSrc(itinForm)" class="img-preview">
                     <span>+ 選擇照片</span>
                 </div>
                 <div v-else class="relative">
-                    <img :src="getRenderableImageUrl(itinForm.imgUrl, itinForm.imgId)" class="w-full h-32 object-cover rounded-xl border border-slate-200" @error="handleImageError($event, itinForm.imgUrl, itinForm.imgId)">
+                    <img :src="resolveImageSrc(itinForm)" class="itinerary-image w-full h-32 border border-slate-200" loading="lazy" referrerpolicy="no-referrer" @error="onImageError($event, itinForm)">
                     <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md text-xs font-bold px-2">移除</button>
                 </div>
                 <input type="file" accept="image/*" @change="handleImageUpload" v-if="!itinForm.imgUrl || itinForm.newImageBase64">
@@ -1591,50 +1598,54 @@ createApp({
         itinForm.value.deleteImage = true;
     };
 
-    const extractDriveId = (rawUrl = '', rawId = '') => {
-        const id = String(rawId || '').trim();
-        if (id) return id;
+    const resolveImageSrc = (item) => {
+      if (!item) return '';
 
-        const str = String(rawUrl || '').trim();
-        if (!str) return '';
+      const imgId = String(item.imgId || '').trim();
+      if (imgId) {
+        return `https://drive.google.com/uc?export=view&id=${imgId}`;
+      }
 
-        const idPatterns = [
-          /\/file\/d\/([a-zA-Z0-9_-]{10,})/,
-          /[?&]id=([a-zA-Z0-9_-]{10,})/,
-          /^([a-zA-Z0-9_-]{20,})$/
-        ];
+      const url = String(item.imgUrl || '').trim();
+      if (!url) return '';
 
-        for (const p of idPatterns) {
-          const m = str.match(p);
-          if (m && m[1]) return m[1];
-        }
-        return '';
+      let m = url.match(/\/file\/d\/([a-zA-Z0-9_-]{10,})/);
+      if (m && m[1]) {
+        return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+      }
+
+      m = url.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+      if (m && m[1]) {
+        return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+      }
+
+      if (url.includes('drive.google.com/uc')) {
+        return url.startsWith('http://') ? url.replace('http://', 'https://') : url;
+      }
+
+      if (url.startsWith('data:') || url.startsWith('blob:')) {
+        return url;
+      }
+
+      return '';
     };
 
-    const getRenderableImageUrl = (rawUrl, rawId = '') => {
-        const str = String(rawUrl || '').trim();
-        if (str.startsWith('data:') || str.startsWith('blob:')) return str;
+    const onImageError = (evt, item) => {
+      const el = evt && evt.target;
+      if (!el) return;
+      el.onerror = null;
 
-        const driveId = extractDriveId(str, rawId);
-        if (driveId) return `https://drive.google.com/uc?export=view&id=${driveId}`;
+      if (item && item.imgId) {
+        el.src = `https://drive.google.com/uc?export=view&id=${item.imgId}`;
+        return;
+      }
 
-        if (!str) return '';
-        return str.startsWith('http://') ? str.replace('http://', 'https://') : str;
+      el.style.display = 'none';
     };
 
-    const handleImageError = (e, rawUrl, rawId = '') => {
-        const el = e && e.target;
-        if (!el || el.dataset.fallbackTried === '1') return;
-
-        const driveId = extractDriveId(rawUrl, rawId);
-        if (!driveId) return;
-
-        el.dataset.fallbackTried = '1';
-        el.src = `https://drive.usercontent.google.com/download?id=${driveId}&export=view&authuser=0`;
-    };
-
-    const viewImage = (url, rawId = '') => {
-        viewingImg.value = getRenderableImageUrl(url, rawId);
+    const viewImage = (item) => {
+        viewingImg.value = resolveImageSrc(item);
+        if (!viewingImg.value) return;
         showImgViewer.value = true;
         imgGesture.value = { startX: 0, startY: 0, currentX: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 };
     };
@@ -1805,7 +1816,7 @@ createApp({
       openRateModal, openAddItin, openEditItin, openEditExp,
       deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, 
       confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending,
-      handleImageUpload, removeImage, getRenderableImageUrl, handleImageError, viewImage, closeImgViewer, showImgViewer, viewingImg,
+      handleImageUpload, removeImage, resolveImageSrc, onImageError, viewImage, closeImgViewer, showImgViewer, viewingImg,
       imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom
     };
   }
