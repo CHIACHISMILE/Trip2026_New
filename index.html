@@ -403,10 +403,10 @@
                    class="map-btn swipe-protected">地圖</a>
               </div>
 
-              <div v-if="evt.imgUrl" class="mt-2">
-                  <img :src="evt.imgUrl" class="itinerary-image" loading="lazy" referrerpolicy="no-referrer" alt="行程圖片"
+              <div v-if="getEventImageSrc(evt)" class="mt-2">
+                  <img :src="getEventImageSrc(evt)" class="itinerary-image" loading="lazy" referrerpolicy="no-referrer" alt="行程圖片"
                        @error="onImageError($event)"
-                       @click.stop="viewImage(evt.imgUrl)">
+                       @click.stop="viewImage(getEventImageSrc(evt))">
               </div>
 
               <div
@@ -708,11 +708,11 @@
           <div>
             <label class="text-[10px] font-bold text-slate-400 uppercase">圖片 (點擊上傳)</label>
             <div class="img-upload-btn mt-1">
-                <div v-if="!itinForm.imgUrl" class="img-preview">
+                <div v-if="!getItinFormImageSrc()" class="img-preview">
                     <span>+ 選擇照片</span>
                 </div>
                 <div v-else class="relative">
-                    <img :src="itinForm.imgUrl" class="itinerary-image w-full h-32 border border-slate-200" loading="lazy" referrerpolicy="no-referrer" @error="onImageError($event, 'form')">
+                    <img :src="getItinFormImageSrc()" class="itinerary-image w-full h-32 border border-slate-200" loading="lazy" referrerpolicy="no-referrer" @error="onImageError($event, 'form')">
                     <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md text-xs font-bold px-2">移除</button>
                 </div>
                 <input type="file" accept="image/*" @change="handleImageUpload">
@@ -1032,7 +1032,7 @@ createApp({
     const showItinModal = ref(false);
     const showExpModal = ref(false);
     const isEditing = ref(false);
-    const itinForm = ref({ row: null, startTime: '09:00', endTime: '', category: '景點', title: '', location: '', link: '', note: '', imgUrl: '', newImageBase64: null, deleteImage: false, imgId: '' });
+    const itinForm = ref({ row: null, startTime: '09:00', endTime: '', category: '景點', title: '', location: '', link: '', note: '', imgUrl: '', previewUrl: '', newImageBase64: null, deleteImage: false, imgId: '' });
     const newExp = ref({ payer: '', location: '', item: '', payment: '', currency: 'NTD', amount: null, involved: [], note: '' });
     const editExpForm = ref({});
     const tempRates = ref({});
@@ -1575,25 +1575,38 @@ createApp({
     watch(expenses, () => { if (tab.value === 'analysis') scheduleRenderChart(); }, { deep: true });
 
     const openRateModal = () => { tempRates.value = { ...rates.value }; showRateModal.value = true; };
-    const openAddItin = () => { itinForm.value = { row: null, startTime: '09:00', endTime: '', category: '景點', title: '', location: '', link: '', note: '', imgUrl: '', newImageBase64: null, deleteImage: false, imgId: '' }; isEditing.value = false; showItinModal.value = true; };
-    const openEditItin = (evt) => { itinForm.value = { ...evt, newImageBase64: null, deleteImage: false }; isEditing.value = true; showItinModal.value = true; };
+    const openAddItin = () => { itinForm.value = { row: null, startTime: '09:00', endTime: '', category: '景點', title: '', location: '', link: '', note: '', imgUrl: '', previewUrl: '', newImageBase64: null, deleteImage: false, imgId: '' }; isEditing.value = false; showItinModal.value = true; };
+    const openEditItin = (evt) => { itinForm.value = { ...evt, previewUrl: '', newImageBase64: null, deleteImage: false }; isEditing.value = true; showItinModal.value = true; };
     const openEditExp = (exp) => { editExpForm.value = JSON.parse(JSON.stringify(exp)); showExpModal.value = true; };
     
     // Image Handling
+    const getImageProxyUrlById = (imgId) => {
+      const id = String(imgId || '').trim();
+      if (!id) return '';
+      return `${YOUR_GAS_URL}?action=getImage&id=${encodeURIComponent(id)}`;
+    };
+
+    const getEventImageSrc = (evt) => String(evt?.imgUrl || '').trim() || getImageProxyUrlById(evt?.imgId);
+    const getItinFormImageSrc = () => String(itinForm.value.previewUrl || '').trim() || String(itinForm.value.imgUrl || '').trim();
+
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (evt) => {
-            itinForm.value.imgUrl = evt.target.result; // Preview
-            itinForm.value.newImageBase64 = evt.target.result; // For upload
+            const base64 = String(evt?.target?.result || '');
+            itinForm.value.previewUrl = base64; // Preview only
+            itinForm.value.newImageBase64 = base64; // For upload
             itinForm.value.deleteImage = false;
         };
         reader.readAsDataURL(file);
+        e.target.value = '';
     };
 
     const removeImage = () => {
         itinForm.value.imgUrl = '';
+        itinForm.value.previewUrl = '';
+        itinForm.value.imgId = '';
         itinForm.value.newImageBase64 = null;
         itinForm.value.deleteImage = true;
     };
@@ -1601,16 +1614,17 @@ createApp({
     const onImageError = (evt, context = 'card') => {
       const el = evt && evt.target;
       if (!el) return;
-      // 避免無限 loop；不改寫成 Drive 其他來源
       el.onerror = null;
 
-      // 表單預覽若失敗，回退到「可重新選擇」狀態，避免上傳欄位看起來消失
       if (context === 'form') {
+        if (itinForm.value.previewUrl) {
+          itinForm.value.previewUrl = '';
+          return;
+        }
         itinForm.value.imgUrl = '';
         return;
       }
 
-      // 列表圖片失敗時才隱藏
       el.style.display = 'none';
     };
 
@@ -1667,7 +1681,8 @@ createApp({
     const submitItin = async () => {
       if(!itinForm.value.title) return alert('請輸入標題');
       const newRow = isEditing.value ? itinForm.value.row : Date.now();
-      const payload = { ...itinForm.value, row: newRow, date: selDate.value };
+      const { previewUrl, ...itinPayload } = itinForm.value;
+      const payload = { ...itinPayload, row: newRow, date: selDate.value };
       
       if(isEditing.value) {
          const idx = itinerary.value.findIndex(x => x.row === newRow);
@@ -1787,7 +1802,7 @@ createApp({
       openRateModal, openAddItin, openEditItin, openEditExp,
       deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, 
       confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending,
-      handleImageUpload, removeImage, onImageError, viewImage, closeImgViewer, showImgViewer, viewingImg,
+      getEventImageSrc, getItinFormImageSrc, handleImageUpload, removeImage, onImageError, viewImage, closeImgViewer, showImgViewer, viewingImg,
       imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom
     };
   }
