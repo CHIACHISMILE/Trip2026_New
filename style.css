@@ -1,11 +1,12 @@
-/* style.css - v3.6 Fix Bottom White Block & Pull Z-Index */
+/* style.css - v3.6 Fix White Bottom & Pull Refresh */
 
 html, body {
   height: 100dvh;
   width: 100%;
   overflow: hidden;
   font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
-  background-color: transparent !important; /* 強制透明，避免瀏覽器白底 */
+  /* 關鍵修正：強制透明，避免瀏覽器預設白底 */
+  background-color: transparent !important;
   color: #334155;
   overscroll-behavior: none;
   user-select: none;
@@ -22,7 +23,7 @@ body { -webkit-touch-callout: default; }
   width: 100%;
   height: 100dvh;
   background: linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%);
-  /* 關鍵修正：改為 0 (原本是 -1 會被白底蓋住) */
+  /* 關鍵修正：改為 0，確保它蓋在瀏覽器白底之上，但仍在內容之下 */
   z-index: 0; 
   pointer-events: none;
 }
@@ -32,9 +33,10 @@ body { -webkit-touch-callout: default; }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* 關鍵修正：讓 App 內容浮在背景之上 */
+  /* 關鍵修正：內容層設為 1，浮在背景之上 */
   position: relative;
   z-index: 1;
+  background-color: transparent !important;
 }
 
 .scrollable-content {
@@ -44,31 +46,44 @@ body { -webkit-touch-callout: default; }
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   position: relative;
-  /* 底部留白，現在應該會正確透出背景漸層 */
   padding-top: 10px;
-  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  /* 這裡的 padding 區域原本變白，現在會因為上方 z-index 修正而透出背景 */
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
   touch-action: pan-y;
-  z-index: 1;
+  background-color: transparent !important;
 }
 
-/* --- 下拉更新指示器 (修復：提高層級以免被遮擋) --- */
+/* --- 下拉更新指示器 (加強顯示) --- */
 .pull-indicator {
   position: absolute;
-  top: env(safe-area-inset-top); /* 避開瀏海 */
+  /* 避開瀏海區域，往下移一點 */
+  top: max(10px, env(safe-area-inset-top)); 
   left: 0; right: 0;
-  width: 100%;
   height: 0;
   display: flex; 
   justify-content: center;
   align-items: flex-end;
   overflow: hidden;
-  color: #64748B;
-  font-weight: 700; font-size: 0.8rem;
-  transition: height 0.12s ease-out;
-  padding-bottom: 8px;
-  z-index: 100; /* 最上層，確保看得到 */
+  /* 確保它在最上層，不會被 Header 擋住 */
+  z-index: 999; 
   pointer-events: none;
-  text-align: center;
+  transition: height 0.1s ease-out;
+}
+
+/* 新增膠囊樣式，讓文字在任何背景都看得到 */
+.pull-pill {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 8px 16px;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    color: #475569;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transform: translateY(-5px);
+    border: 1px solid rgba(0,0,0,0.05);
 }
 
 /* --- 卡片優化 --- */
@@ -88,16 +103,15 @@ body { -webkit-touch-callout: default; }
 .note-content { line-height: 1.6; }
 .note-link {
   color: #2563EB; font-weight: 700; text-decoration: none;
-  border-bottom: 1px solid rgba(37, 99, 235, 0.3);
-  padding-bottom: 0px; transition: all 0.2s; cursor: pointer;
-  pointer-events: auto; display: inline-flex; align-items: center; gap: 2px;
+  border-bottom: 1px solid rgba(37, 99, 235, 0.3); padding-bottom: 0px;
+  transition: all 0.2s; cursor: pointer; pointer-events: auto;
+  display: inline-flex; align-items: center; gap: 2px;
 }
 .note-link:active { background-color: #EFF6FF; border-bottom-color: #2563EB; }
 
 /* --- 輸入框 --- */
 .glass-input {
-  background: #F8FAFC; border: 1px solid #CBD5E1;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+  background: #F8FAFC; border: 1px solid #CBD5E1; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
   color: #334155; transition: all 0.3s;
 }
 .glass-input:focus { background: #fff; border-color: #64748B; box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.1); }
@@ -111,16 +125,11 @@ body { -webkit-touch-callout: default; }
 
 /* --- Tab Bar --- */
 .tab-bar {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(203, 213, 225, 0.5);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(203, 213, 225, 0.5); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   padding: 10px 16px; display: flex; gap: 8px;
 }
-.tab-btn { 
-  color: #64748b; font-weight: 700; border-radius: 999px;
-  padding: 8px 16px; transition: all 0.2s ease-out; background-color: transparent;
-}
+.tab-btn { color: #64748b; font-weight: 700; border-radius: 999px; padding: 8px 16px; transition: all 0.2s ease-out; background-color: transparent; }
 .tab-active { 
   color: #ffffff !important;
   background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
@@ -137,6 +146,9 @@ body { -webkit-touch-callout: default; }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 .pending-sync { opacity: 0.85; border: 2px dashed #F59E0B !important; }
 .filter-chip { display: inline-flex; align-items: center; gap: 4px; background: #E2E8F0; color: #475569; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
 .modal-enter-active, .modal-leave-active { transition: opacity 0.3s ease; }
 .modal-enter-from, .modal-leave-to { opacity: 0; }
 .modal-enter-active .modal-content, .modal-leave-active .modal-content { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
