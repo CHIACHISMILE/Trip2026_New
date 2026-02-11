@@ -1,12 +1,11 @@
-/* style.css - v3.6 Fix White Bottom Baffle */
+/* style.css - v3.6 Fix Bottom White Block & Pull Z-Index */
 
 html, body {
   height: 100dvh;
   width: 100%;
   overflow: hidden;
   font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
-  /* 強制透明，確保不會有瀏覽器預設白底干擾 */
-  background-color: transparent !important;
+  background-color: transparent !important; /* 強制透明，避免瀏覽器白底 */
   color: #334155;
   overscroll-behavior: none;
   user-select: none;
@@ -22,10 +21,8 @@ body { -webkit-touch-callout: default; }
   top: 0; left: 0;
   width: 100%;
   height: 100dvh;
-  /* 背景設定 */
   background: linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%);
-  
-  /* --- 關鍵修正：將層級改為 0，確保它蓋在瀏覽器白底之上 --- */
+  /* 關鍵修正：改為 0 (原本是 -1 會被白底蓋住) */
   z-index: 0; 
   pointer-events: none;
 }
@@ -35,11 +32,9 @@ body { -webkit-touch-callout: default; }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  
-  /* --- 關鍵修正：建立新的堆疊環境，確保內容在背景之上 --- */
+  /* 關鍵修正：讓 App 內容浮在背景之上 */
   position: relative;
   z-index: 1;
-  background-color: transparent !important;
 }
 
 .scrollable-content {
@@ -49,14 +44,34 @@ body { -webkit-touch-callout: default; }
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   position: relative;
+  /* 底部留白，現在應該會正確透出背景漸層 */
   padding-top: 10px;
-  /* 底部 padding 用來避開 safe area，現在透明後會直接透出 fixed-bg */
   padding-bottom: calc(80px + env(safe-area-inset-bottom));
   touch-action: pan-y;
-  background-color: transparent !important;
+  z-index: 1;
 }
 
-/* --- 卡片優化 (維持您原本的設定) --- */
+/* --- 下拉更新指示器 (修復：提高層級以免被遮擋) --- */
+.pull-indicator {
+  position: absolute;
+  top: env(safe-area-inset-top); /* 避開瀏海 */
+  left: 0; right: 0;
+  width: 100%;
+  height: 0;
+  display: flex; 
+  justify-content: center;
+  align-items: flex-end;
+  overflow: hidden;
+  color: #64748B;
+  font-weight: 700; font-size: 0.8rem;
+  transition: height 0.12s ease-out;
+  padding-bottom: 8px;
+  z-index: 100; /* 最上層，確保看得到 */
+  pointer-events: none;
+  text-align: center;
+}
+
+/* --- 卡片優化 --- */
 .glass-card {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(20px);
@@ -69,44 +84,25 @@ body { -webkit-touch-callout: default; }
 }
 .glass-card:active { transform: scale(0.98); }
 
-/* --- 筆記連結優化 --- */
+/* --- 筆記連結 --- */
 .note-content { line-height: 1.6; }
 .note-link {
   color: #2563EB; font-weight: 700; text-decoration: none;
-  border-bottom: 1px solid rgba(37, 99, 235, 0.3); padding-bottom: 0px;
-  transition: all 0.2s; cursor: pointer; pointer-events: auto;
-  display: inline-flex; align-items: center; gap: 2px;
+  border-bottom: 1px solid rgba(37, 99, 235, 0.3);
+  padding-bottom: 0px; transition: all 0.2s; cursor: pointer;
+  pointer-events: auto; display: inline-flex; align-items: center; gap: 2px;
 }
 .note-link:active { background-color: #EFF6FF; border-bottom-color: #2563EB; }
 
-/* --- 下拉更新指示器 --- */
-.pull-indicator {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  width: 100%;
-  height: 0;
-  display: flex; 
-  justify-content: center;
-  align-items: flex-end;
-  padding-bottom: 8px;
-  overflow: hidden;
-  color: #64748B;
-  font-weight: 600; font-size: 0.8rem;
-  transition: height 0.12s ease-out;
-  padding-top: env(safe-area-inset-top);
-  z-index: 5;
-  pointer-events: none;
-  text-align: center;
-}
-
 /* --- 輸入框 --- */
 .glass-input {
-  background: #F8FAFC; border: 1px solid #CBD5E1; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+  background: #F8FAFC; border: 1px solid #CBD5E1;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
   color: #334155; transition: all 0.3s;
 }
 .glass-input:focus { background: #fff; border-color: #64748B; box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.1); }
 
-/* --- 按鈕系統 --- */
+/* --- 按鈕 --- */
 .btn-glacier { background: #475569; color: #fff; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 .btn-glacier:active { background: #334155; }
 .btn-dashed { border: 2px dashed #CBD5E1; color: #64748B; background: rgba(255,255,255,0.8); transition: all 0.2s; }
@@ -116,21 +112,23 @@ body { -webkit-touch-callout: default; }
 /* --- Tab Bar --- */
 .tab-bar {
   background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(203, 213, 225, 0.5);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  padding: 10px 16px;
-  display: flex; gap: 8px;
+  padding: 10px 16px; display: flex; gap: 8px;
 }
-.tab-btn { color: #64748b; font-weight: 700; border-radius: 999px; padding: 8px 16px; transition: all 0.2s ease-out; background-color: transparent; }
-.tab-active { color: #ffffff !important; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3); transform: translateY(-1px); }
+.tab-btn { 
+  color: #64748b; font-weight: 700; border-radius: 999px;
+  padding: 8px 16px; transition: all 0.2s ease-out; background-color: transparent;
+}
+.tab-active { 
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3); transform: translateY(-1px);
+}
 .tab-active::after { display: none; }
 
-/* --- 共用工具 --- */
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-.scrollbar-hide::-webkit-scrollbar { display: none; }
+/* --- 其他 --- */
 .title-link { text-decoration: none; color: #1E293B; font-weight: 700; border-bottom: 1px dashed #cbd5e1; }
 .map-btn { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; background: #F8FAFC; border-radius: 6px; border: 1px solid #CBD5E1; font-size: 10px; font-weight: bold; color: #475569; text-decoration: none; }
 .allow-select { user-select: text !important; -webkit-user-select: text !important; cursor: text; }
