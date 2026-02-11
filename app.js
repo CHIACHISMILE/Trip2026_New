@@ -1,5 +1,6 @@
 const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbz6PZtqLJzlS2a71R-RfZjpJCuqJVPoP7RuNxEe74mS_uvxBejMNGKboFSn2ArNnXAu/exec';
 
+// ... (Service Worker Code keeps same) ...
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
@@ -48,7 +49,7 @@ createApp({
     const todayDate = ref('');
     const todayWeekday = ref('');
 
-    // Image Viewer
+    // Image Viewer logic...
     const showImgViewer = ref(false);
     const viewingImg = ref('');
     const imgViewerEl = ref(null);
@@ -56,56 +57,58 @@ createApp({
 
     const formatNote = (text) => {
         if (!text) return '';
-        let formatted = text
+        return text
             .replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">")
             .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="note-link" onclick="event.stopPropagation()">$1</a>')
             .replace(/(?<!href="|]\()((https?:\/\/[^\s<]+))/g, '<a href="$1" target="_blank" class="note-link" onclick="event.stopPropagation()">🔗</a>')
             .replace(/\n/g, '<br>');
-        return formatted;
     };
 
-    // --- Morandi & Macaron Palette (Main Visual: Glacier Blue) ---
-    const PALETTE = {
-        glacier: '#98B4C9', // 交通/主色 - 冰川藍
-        yellow:  '#EEDD82', // 住宿 - 馬卡龍奶油黃
-        pink:    '#E6B3B3', // 飲食 - 莫蘭迪柔粉
-        lavender:'#B8B0D6', // 景點 - 薰衣草紫
-        mint:    '#A3C9A8', // 紀念品 - 莫蘭迪薄荷
-        slate:   '#CBD5E1'
+    // --- 莫蘭迪馬卡龍配色系統 (Morandi Macaron Palette) ---
+    // 定義顏色代碼，用於圖表與背景
+    const COLORS = {
+        blue:   { border: 'border-[#9DB6CC]', bg: 'bg-[#E4EEF5]', text: 'text-[#5A748A]' }, // 冰河灰藍
+        sand:   { border: 'border-[#DBCFB0]', bg: 'bg-[#F7F3E8]', text: 'text-[#8C7B50]' }, // 燕麥杏
+        rose:   { border: 'border-[#D4A5A5]', bg: 'bg-[#F9EBEB]', text: 'text-[#9E6B6B]' }, // 馬卡龍粉
+        violet: { border: 'border-[#B5A8BF]', bg: 'bg-[#F2EFF5]', text: 'text-[#7E7492]' }, // 薰衣草紫
+        green:  { border: 'border-[#99A799]', bg: 'bg-[#EDF2EC]', text: 'text-[#5F7359]' }, // 鼠尾草綠
+        gray:   { border: 'border-[#C4C4C4]', bg: 'bg-[#F3F4F6]', text: 'text-[#71717A]' }  // 迷霧灰
     };
 
-    // 返回 CSS Class 名稱，用於 border-left
-    const getCategoryClass = (cat) => {
-      const s = String(cat || '');
-      if (s.includes('交通') || s.includes('機票') || s.includes('租車') || s.includes('油')) return 'border-glacier';
-      if (s.includes('住宿') || s.includes('飯店')) return 'border-macaron-yellow';
-      if (['早餐','午餐','晚餐','零食','飲料','超市','飲食'].some(k => s.includes(k))) return 'border-macaron-pink';
-      if (['門票','景點','遊玩','極光'].some(k => s.includes(k))) return 'border-lavender';
-      if (['紀念品'].some(k => s.includes(k))) return 'border-mint';
-      return 'border-slate';
+    // 取得卡片「邊框顏色」Class (用於行程卡片的 border-left)
+    const getCategoryBorderClass = (cat) => {
+        switch(cat) {
+            case '交通': return COLORS.blue.border;
+            case '住宿': return COLORS.sand.border;
+            case '景點': return COLORS.violet.border;
+            case '飲食': return COLORS.rose.border;
+            default: return COLORS.gray.border;
+        }
     };
 
-    // 返回 Hex 顏色，用於 Chart
-    const getCategoryColorHex = (item) => {
+    // 取得記帳卡片「邊框顏色」Class
+    const getExpenseBorderClass = (item) => {
         const s = String(item || '');
-        if (s.includes('交通') || s.includes('機票')) return PALETTE.glacier;
-        if (s.includes('住宿')) return PALETTE.yellow;
-        if (['早餐','午餐','晚餐','零食'].some(k => s.includes(k))) return PALETTE.pink;
-        if (['門票','景點'].some(k => s.includes(k))) return PALETTE.lavender;
-        if (s.includes('紀念品')) return PALETTE.mint;
-        return PALETTE.slate;
+        if (s.includes('交通') || s.includes('機票') || s.includes('租車')) return COLORS.blue.border;
+        if (s.includes('住宿')) return COLORS.sand.border;
+        if (['早餐','午餐','晚餐','零食','飲料'].some(k => s.includes(k))) return COLORS.rose.border;
+        if (['門票','景點','遊玩'].some(k => s.includes(k))) return COLORS.violet.border;
+        if (s.includes('紀念品')) return COLORS.green.border;
+        return COLORS.gray.border;
     };
     
+    // 標籤顏色 (背景與文字)
     const getItemTagClass = (item) => {
-      const s = String(item || '');
-      if (s.includes('交通')) return 'bg-[#EBF3F7] text-[#7DA3B8]'; // 淡冰川藍
-      if (s.includes('住宿')) return 'bg-[#FEF9E6] text-[#C4B25C]'; // 淡黃
-      if (['早餐','午餐','晚餐','零食'].some(k => s.includes(k))) return 'bg-[#F9EBEB] text-[#BF8C8C]'; // 淡粉
-      if (['紀念品'].some(k => s.includes(k))) return 'bg-[#ECF5ED] text-[#7A9E80]'; // 淡綠
-      return 'bg-slate-100 text-slate-500';
+        const s = String(item || '');
+        let c = COLORS.gray;
+        if (s.includes('交通') || s.includes('機票')) c = COLORS.blue;
+        else if (s.includes('住宿')) c = COLORS.sand;
+        else if (['早餐','午餐','晚餐','零食'].some(k => s.includes(k))) c = COLORS.rose;
+        else if (s.includes('紀念品')) c = COLORS.green;
+        return `${c.bg} ${c.text}`;
     };
 
-    // --- Image Gesture (Kept same) ---
+    // --- Image Gesture logic (Same as before) ---
     const getDistance = (touches) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
     const handleImgTouchStart = (e) => {
         if (e.touches.length === 2) { imgGesture.value.isZooming = true; imgGesture.value.startDistance = getDistance(e.touches); } 
@@ -124,7 +127,7 @@ createApp({
             if (imgGesture.value.scale === 1 && dy > 0) {
                 imgGesture.value.isPulling = true; imgGesture.value.currentY = dy;
                 if (imgViewerEl.value) imgViewerEl.value.style.transform = `translateY(${dy}px) scale(${1 - dy/1000})`;
-                document.querySelector('.img-viewer-overlay').style.backgroundColor = `rgba(220, 230, 235, ${Math.max(0, 0.95 - dy/600)})`;
+                document.querySelector('.img-viewer-overlay').style.backgroundColor = `rgba(220, 226, 233, ${Math.max(0, 0.95 - dy/600)})`;
             } else if (imgGesture.value.scale > 1) {
                 const dx = e.touches[0].clientX - imgGesture.value.startX;
                 if (imgViewerEl.value) imgViewerEl.value.style.transform = `scale(${imgGesture.value.scale}) translate(${dx/imgGesture.value.scale}px, ${dy/imgGesture.value.scale}px)`;
@@ -164,7 +167,7 @@ createApp({
     const newExp = ref({ payer: '', location: '', item: '', payment: '', currency: 'NTD', amount: null, involved: [], note: '' });
     const editExpForm = ref({}); const tempRates = ref({});
     watch(() => newExp.value.payer, (v) => { if (v) newExp.value.involved = [v]; });
-    const pullDistance = ref(0); const refreshText = computed(() => isPullRefreshing.value ? '更新中...' : '下拉更新');
+    const pullDistance = ref(0); const refreshText = computed(() => isPullRefreshing.value ? '同步中...' : '下拉同步');
 
     const initDate = () => {
       const now = new Date();
@@ -173,7 +176,7 @@ createApp({
       todayWeekday.value = days[now.getDay()];
     };
 
-    // --- SCROLL & GESTURE (Fixed for Better Pull Trigger) ---
+    // --- SCROLL & GESTURE (修復版) ---
     const gesture = { active:false, mode:null, startX:0, startY:0, dx:0, dy:0, startedAtLeftEdge:false, startedAtRightEdge:false, inSelectable:false, selectIntent:false, longPressTimer:null, allowPull: false };
     const hasTextSelection = () => { const sel = window.getSelection(); return !!(sel && sel.toString && sel.toString().length > 0); };
     const isBlockedTarget = (target) => {
@@ -192,9 +195,15 @@ createApp({
         gesture.active = true; gesture.mode = null; gesture.dx = 0; gesture.dy = 0; gesture.startX = t.clientX; gesture.startY = t.clientY;
         const w = window.innerWidth; gesture.startedAtLeftEdge = (gesture.startX <= w * 0.15); gesture.startedAtRightEdge = (gesture.startX >= w * 0.85);
         
-        // FIX: Removed the strict clientY < 140 check. 
-        // Allow pull if we are at the top of the scroll container
-        gesture.allowPull = (el.scrollTop <= 5); // Give 5px tolerance
+        // --- 修正下拉邏輯 ---
+        // 1. 確保目前捲軸在最頂端 (scrollTop <= 0)
+        // 2. 確保觸摸目標不是「橫向捲動」的元素 (如日期條)
+        const isScrollTop = el.scrollTop <= 0;
+        const target = e.target;
+        const horizontalScrollable = target.closest('.overflow-x-auto');
+        
+        // 只有當「在頂部」且「不在橫向捲動區」時才允許下拉
+        gesture.allowPull = isScrollTop && !horizontalScrollable;
 
         gesture.inSelectable = !!e.target.closest('.allow-select'); gesture.selectIntent = false; clearLongPress();
         if (gesture.inSelectable) gesture.longPressTimer = setTimeout(() => { gesture.selectIntent = true; }, 220);
@@ -215,11 +224,10 @@ createApp({
             if ((gesture.startedAtLeftEdge || gesture.startedAtRightEdge) && e.cancelable) e.preventDefault(); 
         } 
         else if (gesture.mode === 'v') {
-          // Pull Refresh Logic
+          // 下拉判定：必須 allowPull 且 dy > 0 (向下拉)
           if (gesture.allowPull && dy > 0) { 
-             if (e.cancelable) e.preventDefault(); 
-             // Smoother resistance curve
-             pullDistance.value = Math.min(80, Math.pow(dy, 0.75)); 
+             if (e.cancelable) e.preventDefault(); // 阻止原生捲動
+             pullDistance.value = Math.min(80, Math.pow(dy, 0.75)); // 增加阻尼感與最大距離
           } else { 
              pullDistance.value = 0; 
           }
@@ -228,15 +236,16 @@ createApp({
 
       const onTouchEnd = () => {
         if (!gesture.active) return; gesture.active = false; clearLongPress();
+        
+        // 觸發更新
         if (pullDistance.value > 65) { 
             pullDistance.value = 65; 
             isPullRefreshing.value = true; 
-            loadData(); // Trigger load
+            loadData(); // 呼叫更新
         } else { 
             pullDistance.value = 0; 
         }
-        
-        // Horizontal Swipes
+
         if (gesture.mode === 'h' && Math.abs(gesture.dx) > 60) {
            if (!gesture.inSelectable || (!gesture.selectIntent && !hasTextSelection())) {
                if (gesture.startedAtLeftEdge && gesture.dx > 0) { if (tab.value === 'expense') tab.value = 'itinerary'; else if (tab.value === 'analysis') tab.value = 'expense'; }
@@ -276,7 +285,18 @@ createApp({
       if (!isPullRefreshing.value) isLoading.value = true;
       if (loadLocal()) { if (isFirstLoad.value) { nextTick(() => checkAndScrollToToday()); isFirstLoad.value = false; } if (tab.value === 'analysis') scheduleRenderChart(); setTimeout(() => { if (!isPullRefreshing.value) isLoading.value = false; }, 150); }
       if (!navigator.onLine) { isLoading.value = false; isPullRefreshing.value = false; pullDistance.value = 0; return; }
-      try { const res = await callApi('getData'); updateLocalData(res); } catch(e) { } finally { isLoading.value = false; isPullRefreshing.value = false; pullDistance.value = 0; }
+      try { 
+          const res = await callApi('getData'); 
+          updateLocalData(res); 
+      } catch(e) { 
+      } finally { 
+          isLoading.value = false; 
+          // 確保動畫結束後重置
+          setTimeout(() => {
+             isPullRefreshing.value = false; 
+             pullDistance.value = 0; 
+          }, 300);
+      }
     };
     const selectDate = (date) => { selDate.value = date; scrollToDateBtn(date); if(scrollContainer.value) scrollContainer.value.scrollTop = 0; };
     const scrollToDateBtn = (date) => { nextTick(() => { const btn = document.getElementById('date-btn-' + date); if (btn && dateContainer.value) { const centerPos = (btn.offsetLeft - dateContainer.value.offsetLeft) - (dateContainer.value.clientWidth / 2) + (btn.clientWidth / 2); dateContainer.value.scrollTo({ left: centerPos, behavior: 'smooth' }); } }); };
@@ -297,16 +317,16 @@ createApp({
     const momSpent = computed(() => { return expenses.value.reduce((sum, e) => { const amt = getAmountTWD(e); if (e.involved && e.involved.includes('媽媽')) return sum + (amt / e.involved.length); return sum; }, 0); });
     const debts = computed(() => { if (members.value.length === 0) return []; const bal = {}; members.value.forEach(m => bal[m] = 0); expenses.value.forEach(e => { const amt = getAmountTWD(e); const split = e.involved || []; if (split.length > 0) { bal[e.payer] += amt; const share = amt / split.length; split.forEach(p => { if (bal[p] !== undefined) bal[p] -= share; }); } }); let debtors=[], creditors=[]; for (const m in bal) { if (bal[m] < -1) debtors.push({p:m, a:bal[m]}); if (bal[m] > 1) creditors.push({p:m, a:bal[m]}); } debtors.sort((a,b)=>a.a-b.a); creditors.sort((a,b)=>b.a-a.a); const res=[]; let i=0, j=0; while(i<debtors.length && j<creditors.length){ const d=debtors[i], c=creditors[j]; const amt=Math.min(Math.abs(d.a), c.a); res.push({from:d.p, to:c.p, amount:Math.round(amt)}); d.a += amt; c.a -= amt; if (Math.abs(d.a)<1) i++; if (c.a<1) j++; } return res; });
 
-    /* Chart Logic (Glacier & Macaron) */
+    /* Chart Logic (Morandi Macaron) */
     let chartInstance = null; const chartBusy = ref(false); let chartTimer = null;
     const buildStats = () => { const stats = {}; const list = filteredExpenses.value; for (let i=0;i<list.length;i++){ const e = list[i]; const key = e.item || '其他'; stats[key] = (stats[key] || 0) + getAmountTWD(e); } return stats; };
     const renderChart = () => {
       const canvas = document.getElementById('expenseChart'); if (!canvas) return;
       const stats = buildStats(); const labels = Object.keys(stats); const data = Object.values(stats);
-      // Colors: Glacier, Yellow, Pink, Lavender, Mint, Slate
-      const nordicColors = [PALETTE.glacier, PALETTE.yellow, PALETTE.pink, PALETTE.lavender, PALETTE.mint, PALETTE.slate];
+      // Morandi Macaron Colors
+      const nordicColors = ['#9DB6CC', '#DBCFB0', '#B5A8BF', '#D4A5A5', '#99A799', '#C4C4C4', '#89A8B2'];
       if (chartInstance) { chartInstance.data.labels = labels; chartInstance.data.datasets[0].data = data; chartInstance.data.datasets[0].backgroundColor = labels.map((_,i)=>nordicColors[i % nordicColors.length]); chartInstance.update('none'); } 
-      else { chartInstance = new Chart(canvas, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: labels.map((_,i)=>nordicColors[i % nordicColors.length]), borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', animation: { duration: 800 }, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11, weight: 'bold' }, color: '#708796', usePointStyle: true, padding: 12, boxWidth: 8 } } } } }); }
+      else { chartInstance = new Chart(canvas, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: labels.map((_,i)=>nordicColors[i % nordicColors.length]), borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', animation: { duration: 800 }, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11, weight: 'bold' }, color: '#64748b', usePointStyle: true, padding: 12, boxWidth: 8 } } } } }); }
       chartBusy.value = false;
     };
     const scheduleRenderChart = async () => { if (tab.value !== 'analysis') return; chartBusy.value = true; if (chartTimer) clearTimeout(chartTimer); chartTimer = setTimeout(() => { nextTick(() => { renderChart(); }); }, 300); };
@@ -338,7 +358,7 @@ createApp({
     onBeforeUnmount(() => { detachGestureListeners(); window.removeEventListener('online', updateOnlineStatus); window.removeEventListener('offline', updateOnlineStatus); if (chartInstance) { chartInstance.destroy(); chartInstance = null; } });
     
     return {
-      tab, isLoading, isOnline, isSyncing, syncQueue, dateContainer, scrollContainer, todayDate, todayWeekday, pullDistance, isPullRefreshing, refreshText, tripStatus, tripDates, selDate, itinerary, selectDate, getDayInfo, getEvents, getCategoryClass, getCategoryColorHex, expenses, rates, members, filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments, resetFilters, hasActiveFilters, filteredExpenses, formatNumber, getAmountTWD, publicSpent, momSpent, debts, getItemTagClass, chartBusy, changeTabToAnalysis, showRateModal, showItinModal, showExpModal, isEditing, itinForm, newExp, editExpForm, tempRates, openRateModal, openAddItin, openEditItin, openEditExp, deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending, handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg, imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom, formatNote
+      tab, isLoading, isOnline, isSyncing, syncQueue, dateContainer, scrollContainer, todayDate, todayWeekday, pullDistance, isPullRefreshing, refreshText, tripStatus, tripDates, selDate, itinerary, selectDate, getDayInfo, getEvents, getCategoryBorderClass, getExpenseBorderClass, expenses, rates, members, filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments, resetFilters, hasActiveFilters, filteredExpenses, formatNumber, getAmountTWD, publicSpent, momSpent, debts, getItemTagClass, chartBusy, changeTabToAnalysis, showRateModal, showItinModal, showExpModal, isEditing, itinForm, newExp, editExpForm, tempRates, openRateModal, openAddItin, openEditItin, openEditExp, deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending, handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg, imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom, formatNote
     };
   }
 }).mount('#app');
