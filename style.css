@@ -23,7 +23,7 @@ body { -webkit-touch-callout: default; }
 }
 
 #app {
-  height: 100%; display: flex; flex-direction: column; overflow: hidden; position: relative;
+  height: 100dvh; display: flex; flex-direction: column; overflow: hidden; position: relative;
 }
 
 .scrollable-content {
