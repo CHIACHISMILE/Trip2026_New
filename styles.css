@@ -1,4 +1,4 @@
-/* style.css - v3.2 Morandi & Nordic Style */
+/* style.css - v3.3 Morandi Glacier Blue & Pull-Refresh Fix */
 
 html, body {
   height: 100dvh;
@@ -6,7 +6,7 @@ html, body {
   overflow: hidden;
   font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
   background-color: transparent;
-  color: #475569; /* Slate-600: 較柔和的深灰色 */
+  color: #546E7A; /* Blue Grey 600 - 深灰藍字體 */
   overscroll-behavior: none;
   user-select: none;
   -webkit-user-select: none;
@@ -21,8 +21,8 @@ body { -webkit-touch-callout: default; }
   top: 0; left: 0;
   width: 100%;
   height: 100dvh;
-  /* 莫蘭迪北歐漸層：霧霾藍 -> 暖灰白 */
-  background: linear-gradient(180deg, #E6E9EF 0%, #DFE4EA 100%);
+  /* 莫蘭迪冰川藍漸層：冰霧白 -> 冰川灰藍 */
+  background: linear-gradient(180deg, #EEF5F9 0%, #CFD8DC 100%);
   z-index: -1;
   pointer-events: none;
 }
@@ -49,36 +49,33 @@ body { -webkit-touch-callout: default; }
   z-index: 1;
 }
 
-/* --- 卡片優化 (北歐極簡風) --- */
+/* --- 卡片優化 (冰川透光感) --- */
 .glass-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  /* 邊框改為極淡的灰藍色 */
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 24px; /* 更圓潤 */
-  /* 陰影更擴散、柔和 */
-  box-shadow: 0 8px 32px rgba(100, 116, 139, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  /* 邊框：極淡的冰藍色 */
+  border: 1px solid rgba(220, 230, 240, 0.8);
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(84, 110, 122, 0.08); /* 深藍灰陰影 */
   transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
   margin-bottom: 16px;
 }
 
 .glass-card:active { transform: scale(0.98); }
 
-/* --- 筆記連結優化 (核心需求) --- */
+/* --- 筆記連結 --- */
 .note-content {
-  line-height: 1.7; /* 增加行距，閱讀更舒適 */
-  color: #64748B; /* Slate-500 */
+  line-height: 1.7;
+  color: #607D8B; /* Blue Grey 500 */
 }
-/* 超連結樣式：莫蘭迪藍，帶底線 */
 .note-link {
-  color: #6B8E9B; /* 莫蘭迪湖水藍 */
+  color: #455A64; /* 深冰川藍 */
   font-weight: 600;
   text-decoration: underline;
-  text-decoration-color: rgba(107, 142, 155, 0.4); /* 淡化底線 */
+  text-decoration-color: rgba(69, 90, 100, 0.3);
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
-  padding-bottom: 0px;
   transition: all 0.2s;
   cursor: pointer;
   pointer-events: auto;
@@ -87,142 +84,134 @@ body { -webkit-touch-callout: default; }
   gap: 2px;
 }
 .note-link:active {
-  color: #4A6572;
-  text-decoration-color: #4A6572;
-  background-color: rgba(107, 142, 155, 0.1);
-  border-radius: 4px;
+  background-color: rgba(69, 90, 100, 0.1);
 }
 
-/* --- 下拉更新指示器 --- */
+/* --- 下拉更新指示器 (修復消失問題) --- */
 .pull-indicator {
-  position: absolute;
-  top: 0; left: 0; right: 0;
+  /* 關鍵修改：改為 relative，這樣下拉時會把 Header 推下來，視覺更明顯 */
+  position: relative; 
   width: 100%;
   height: 0;
   display: flex; 
   justify-content: center;
   align-items: flex-end;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   overflow: hidden;
-  color: #94A3B8;
-  font-weight: 600; font-size: 0.8rem;
-  transition: height 0.12s ease-out;
-  padding-top: env(safe-area-inset-top);
-  z-index: 5;
+  /* 顏色加深，確保在冰川背景上看得到 */
+  color: #546E7A; 
+  font-weight: 700; 
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  transition: height 0.1s ease-out;
+  z-index: 50; /* 確保層級夠高 */
   pointer-events: none;
-  text-align: center;
 }
 
-/* --- 輸入框 (更扁平) --- */
+/* --- 輸入框 --- */
 .glass-input {
-  background: #F1F5F9;
-  border: 1px solid transparent; 
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-  color: #475569;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid #CFD8DC; 
+  color: #455A64;
   transition: all 0.3s;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
 }
 .glass-input:focus {
   background: #fff;
-  border-color: #CBD5E1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: #90A4AE;
+  box-shadow: 0 4px 12px rgba(144, 164, 174, 0.15);
 }
 
-/* --- 按鈕系統 (莫蘭迪色系) --- */
-/* 主按鈕：深岩石灰 */
+/* --- 按鈕系統 (冰川藍系) --- */
 .btn-glacier {
-  background: #64748B; 
+  background: #607D8B; /* 經典莫蘭迪藍灰 */
   color: #fff;
   border: none;
-  box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+  box-shadow: 0 4px 12px rgba(96, 125, 139, 0.3);
 }
-.btn-glacier:active { background: #475569; }
+.btn-glacier:active { background: #455A64; }
 
 .btn-dashed {
-  border: 2px dashed #CBD5E1;
-  color: #94A3B8;
-  background: rgba(255,255,255,0.6);
+  border: 2px dashed #B0BEC5;
+  color: #78909C;
+  background: rgba(255,255,255,0.5);
   transition: all 0.2s;
 }
-.btn-dashed:active { background: #fff; border-color: #64748B; color: #64748B; }
+.btn-dashed:active { background: #fff; border-color: #607D8B; color: #607D8B; }
 
 .btn-cancel {
-  background: #F8FAFC;
-  color: #94A3B8;
-  border: 1px solid #E2E8F0;
+  background: #ECEFF1;
+  color: #78909C;
+  border: 1px solid #CFD8DC;
 }
 
 /* --- Tab Bar --- */
 .tab-bar {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 -4px 20px rgba(84, 110, 122, 0.05);
   padding: 12px 20px;
   display: flex;
   gap: 12px;
 }
 
-/* --- 分頁按鈕 --- */
 .tab-btn { 
-  color: #94A3B8; /* 淺灰色 */
+  color: #90A4AE; 
   font-weight: 600;
   border-radius: 20px;
   padding: 10px 16px;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   background-color: transparent;
-  letter-spacing: 0.05em;
 }
 
-/* --- 分頁按鈕 (莫蘭迪漸層) --- */
+/* --- 分頁按鈕 (冰川藍漸層) --- */
 .tab-active { 
   color: #ffffff !important;
-  /* 莫蘭迪藍灰漸層 */
-  background: linear-gradient(135deg, #8E9EAB 0%, #6E7D8A 100%);
-  box-shadow: 0 4px 12px rgba(110, 125, 138, 0.4);
+  /* 冰川漸層 */
+  background: linear-gradient(135deg, #90A4AE 0%, #607D8B 100%);
+  box-shadow: 0 4px 12px rgba(96, 125, 139, 0.35);
   transform: translateY(-1px);
 }
 
 .tab-active::after { display: none; }
 
-/* --- 共用工具 --- */
+/* --- 其他 --- */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-/* 標題連結 (針對行程標題) */
 .title-link { 
     text-decoration: none; 
-    color: #475569; 
+    color: #455A64; 
     font-weight: 700; 
-    border-bottom: 1.5px solid #CBD5E1;
-    transition: border-color 0.2s;
+    border-bottom: 1.5px solid #B0BEC5;
 }
-.title-link:active { border-color: #64748B; }
 
 .map-btn {
   display: inline-flex; align-items: center; justify-content: center;
-  padding: 4px 10px; background: #F1F5F9; border-radius: 8px;
+  padding: 4px 10px; background: #ECEFF1; border-radius: 8px;
   border: 1px solid transparent; font-size: 10px; font-weight: bold;
-  color: #64748B; text-decoration: none;
+  color: #546E7A; text-decoration: none;
 }
 
 .allow-select { user-select: text !important; -webkit-user-select: text !important; cursor: text; }
 .break-anywhere { overflow-wrap: anywhere; word-break: break-all; }
 .skeleton {
-  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background: linear-gradient(90deg, #ECEFF1 25%, #CFD8DC 50%, #ECEFF1 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 16px;
 }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-.pending-sync { opacity: 0.85; border: 2px dashed #EAB308 !important; }
+.pending-sync { opacity: 0.85; border: 2px dashed #FFB74D !important; }
 
-/* Filter Chips (莫蘭迪配色) */
+/* Filter Chips (冰川配色) */
 .filter-chip {
     display: inline-flex; align-items: center; gap: 4px;
-    background: #E2E8F0; color: #64748B;
+    background: #CFD8DC; color: #455A64;
     padding: 6px 14px; border-radius: 99px;
     font-size: 11px; font-weight: 600;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -235,13 +224,13 @@ body { -webkit-touch-callout: default; }
 .modal-enter-from .modal-content, .modal-leave-to .modal-content { transform: scale(0.95) translateY(10px); }
 .modal-content { margin-bottom: env(safe-area-inset-bottom); border-radius: 28px; }
 
-/* Image Viewer & Upload */
+/* Image Viewer */
 .img-upload-btn { position: relative; overflow: hidden; }
 .img-upload-btn input[type=file] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-.img-preview { width: 100%; height: 120px; object-fit: cover; border-radius: 16px; border: 2px dashed #CBD5E1; display: flex; justify-content: center; align-items: center; color: #94A3B8; font-size: 12px; font-weight: bold; background: #F8FAFC; }
+.img-preview { width: 100%; height: 120px; object-fit: cover; border-radius: 16px; border: 2px dashed #B0BEC5; display: flex; justify-content: center; align-items: center; color: #78909C; font-size: 12px; font-weight: bold; background: #ECEFF1; }
 .itinerary-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 16px; margin-top: 12px; border: 1px solid rgba(0,0,0,0.05); cursor: zoom-in; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-.img-viewer-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(240, 242, 245, 0.95); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; flex-direction: column; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); transition: background 0.2s; touch-action: none; overflow: hidden; }
+.img-viewer-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(236, 239, 241, 0.95); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; flex-direction: column; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); transition: background 0.2s; touch-action: none; overflow: hidden; }
 .img-viewer-img { max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: center center; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
-.img-viewer-close { position: absolute; top: max(20px, env(safe-area-inset-top) + 20px); right: 20px; width: 44px; height: 44px; background: #fff; color: #64748B; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: 800; z-index: 10000; cursor: pointer; border: 1px solid #E2E8F0; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-.pull-hint { position: absolute; top: max(80px, env(safe-area-inset-top) + 80px); color: #94A3B8; font-size: 13px; font-weight: bold; pointer-events: none; opacity: 0; transition: opacity 0.3s; background: #fff; padding: 6px 16px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.img-viewer-close { position: absolute; top: max(20px, env(safe-area-inset-top) + 20px); right: 20px; width: 44px; height: 44px; background: #fff; color: #546E7A; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: 800; z-index: 10000; cursor: pointer; border: 1px solid #CFD8DC; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+.pull-hint { position: absolute; top: max(80px, env(safe-area-inset-top) + 80px); color: #78909C; font-size: 13px; font-weight: bold; pointer-events: none; opacity: 0; transition: opacity 0.3s; background: #fff; padding: 6px 16px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 .show-hint .pull-hint { opacity: 1; }
