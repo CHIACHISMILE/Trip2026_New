@@ -1,0 +1,8 @@
+{
+  "name": "2026冰島挪威之旅",
+  "short_name": "2026冰島挪威",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#102033",
+  "theme_color": "#bfe9ff"
+}
