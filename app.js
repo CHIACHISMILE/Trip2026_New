@@ -1,6 +1,5 @@
 const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbz6PZtqLJzlS2a71R-RfZjpJCuqJVPoP7RuNxEe74mS_uvxBejMNGKboFSn2ArNnXAu/exec';
 
-// ... (Service Worker Code keeps same) ...
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
@@ -49,7 +48,7 @@ createApp({
     const todayDate = ref('');
     const todayWeekday = ref('');
 
-    // Image Viewer logic...
+    // Image Viewer logic
     const showImgViewer = ref(false);
     const viewingImg = ref('');
     const imgViewerEl = ref(null);
@@ -64,18 +63,16 @@ createApp({
             .replace(/\n/g, '<br>');
     };
 
-    // --- 莫蘭迪馬卡龍配色系統 (Morandi Macaron Palette) ---
-    // 定義顏色代碼，用於圖表與背景
+    // --- Morandi Macaron Palette ---
     const COLORS = {
-        blue:   { border: 'border-[#9DB6CC]', bg: 'bg-[#E4EEF5]', text: 'text-[#5A748A]' }, // 冰河灰藍
-        sand:   { border: 'border-[#DBCFB0]', bg: 'bg-[#F7F3E8]', text: 'text-[#8C7B50]' }, // 燕麥杏
-        rose:   { border: 'border-[#D4A5A5]', bg: 'bg-[#F9EBEB]', text: 'text-[#9E6B6B]' }, // 馬卡龍粉
-        violet: { border: 'border-[#B5A8BF]', bg: 'bg-[#F2EFF5]', text: 'text-[#7E7492]' }, // 薰衣草紫
-        green:  { border: 'border-[#99A799]', bg: 'bg-[#EDF2EC]', text: 'text-[#5F7359]' }, // 鼠尾草綠
-        gray:   { border: 'border-[#C4C4C4]', bg: 'bg-[#F3F4F6]', text: 'text-[#71717A]' }  // 迷霧灰
+        blue:   { border: 'border-[#9DB6CC]', bg: 'bg-[#E4EEF5]', text: 'text-[#5A748A]' },
+        sand:   { border: 'border-[#DBCFB0]', bg: 'bg-[#F7F3E8]', text: 'text-[#8C7B50]' },
+        rose:   { border: 'border-[#D4A5A5]', bg: 'bg-[#F9EBEB]', text: 'text-[#9E6B6B]' },
+        violet: { border: 'border-[#B5A8BF]', bg: 'bg-[#F2EFF5]', text: 'text-[#7E7492]' },
+        green:  { border: 'border-[#99A799]', bg: 'bg-[#EDF2EC]', text: 'text-[#5F7359]' },
+        gray:   { border: 'border-[#C4C4C4]', bg: 'bg-[#F3F4F6]', text: 'text-[#71717A]' }
     };
 
-    // 取得卡片「邊框顏色」Class (用於行程卡片的 border-left)
     const getCategoryBorderClass = (cat) => {
         switch(cat) {
             case '交通': return COLORS.blue.border;
@@ -86,7 +83,6 @@ createApp({
         }
     };
 
-    // 取得記帳卡片「邊框顏色」Class
     const getExpenseBorderClass = (item) => {
         const s = String(item || '');
         if (s.includes('交通') || s.includes('機票') || s.includes('租車')) return COLORS.blue.border;
@@ -97,7 +93,6 @@ createApp({
         return COLORS.gray.border;
     };
     
-    // 標籤顏色 (背景與文字)
     const getItemTagClass = (item) => {
         const s = String(item || '');
         let c = COLORS.gray;
@@ -108,7 +103,7 @@ createApp({
         return `${c.bg} ${c.text}`;
     };
 
-    // --- Image Gesture logic (Same as before) ---
+    // --- Image Gesture ---
     const getDistance = (touches) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
     const handleImgTouchStart = (e) => {
         if (e.touches.length === 2) { imgGesture.value.isZooming = true; imgGesture.value.startDistance = getDistance(e.touches); } 
@@ -146,7 +141,7 @@ createApp({
     const resetImgTransform = () => { if (imgViewerEl.value) imgViewerEl.value.style.transform = `scale(${imgGesture.value.scale})`; };
     const toggleZoom = () => { imgGesture.value.scale = imgGesture.value.scale > 1 ? 1 : 2.5; resetImgTransform(); };
 
-    // --- Basic Trip Logic ---
+    // --- Trip Logic ---
     const tripStatus = computed(() => {
       const now = new Date(); const start = new Date('2026-08-30'); const end = new Date('2026-09-26');
       now.setHours(0,0,0,0); start.setHours(0,0,0,0); end.setHours(0,0,0,0);
@@ -176,7 +171,7 @@ createApp({
       todayWeekday.value = days[now.getDay()];
     };
 
-    // --- SCROLL & GESTURE (修復版) ---
+    // --- SCROLL & GESTURE (Fixed for reliability) ---
     const gesture = { active:false, mode:null, startX:0, startY:0, dx:0, dy:0, startedAtLeftEdge:false, startedAtRightEdge:false, inSelectable:false, selectIntent:false, longPressTimer:null, allowPull: false };
     const hasTextSelection = () => { const sel = window.getSelection(); return !!(sel && sel.toString && sel.toString().length > 0); };
     const isBlockedTarget = (target) => {
@@ -195,14 +190,12 @@ createApp({
         gesture.active = true; gesture.mode = null; gesture.dx = 0; gesture.dy = 0; gesture.startX = t.clientX; gesture.startY = t.clientY;
         const w = window.innerWidth; gesture.startedAtLeftEdge = (gesture.startX <= w * 0.15); gesture.startedAtRightEdge = (gesture.startX >= w * 0.85);
         
-        // --- 修正下拉邏輯 ---
-        // 1. 確保目前捲軸在最頂端 (scrollTop <= 0)
-        // 2. 確保觸摸目標不是「橫向捲動」的元素 (如日期條)
-        const isScrollTop = el.scrollTop <= 0;
+        // --- 修正：放寬下拉判定條件 ---
+        // 允許 5px 內的誤差，讓使用者更容易觸發下拉
+        const isScrollTop = el.scrollTop <= 5; 
         const target = e.target;
         const horizontalScrollable = target.closest('.overflow-x-auto');
         
-        // 只有當「在頂部」且「不在橫向捲動區」時才允許下拉
         gesture.allowPull = isScrollTop && !horizontalScrollable;
 
         gesture.inSelectable = !!e.target.closest('.allow-select'); gesture.selectIntent = false; clearLongPress();
@@ -224,10 +217,10 @@ createApp({
             if ((gesture.startedAtLeftEdge || gesture.startedAtRightEdge) && e.cancelable) e.preventDefault(); 
         } 
         else if (gesture.mode === 'v') {
-          // 下拉判定：必須 allowPull 且 dy > 0 (向下拉)
           if (gesture.allowPull && dy > 0) { 
-             if (e.cancelable) e.preventDefault(); // 阻止原生捲動
-             pullDistance.value = Math.min(80, Math.pow(dy, 0.75)); // 增加阻尼感與最大距離
+             if (e.cancelable) e.preventDefault(); 
+             // 增加一點阻尼感，但距離上限設為 80px，足以觸發
+             pullDistance.value = Math.min(80, Math.pow(dy, 0.75)); 
           } else { 
              pullDistance.value = 0; 
           }
@@ -237,11 +230,11 @@ createApp({
       const onTouchEnd = () => {
         if (!gesture.active) return; gesture.active = false; clearLongPress();
         
-        // 觸發更新
+        // 觸發條件：拉動超過 65px
         if (pullDistance.value > 65) { 
             pullDistance.value = 65; 
             isPullRefreshing.value = true; 
-            loadData(); // 呼叫更新
+            loadData(); 
         } else { 
             pullDistance.value = 0; 
         }
@@ -317,13 +310,12 @@ createApp({
     const momSpent = computed(() => { return expenses.value.reduce((sum, e) => { const amt = getAmountTWD(e); if (e.involved && e.involved.includes('媽媽')) return sum + (amt / e.involved.length); return sum; }, 0); });
     const debts = computed(() => { if (members.value.length === 0) return []; const bal = {}; members.value.forEach(m => bal[m] = 0); expenses.value.forEach(e => { const amt = getAmountTWD(e); const split = e.involved || []; if (split.length > 0) { bal[e.payer] += amt; const share = amt / split.length; split.forEach(p => { if (bal[p] !== undefined) bal[p] -= share; }); } }); let debtors=[], creditors=[]; for (const m in bal) { if (bal[m] < -1) debtors.push({p:m, a:bal[m]}); if (bal[m] > 1) creditors.push({p:m, a:bal[m]}); } debtors.sort((a,b)=>a.a-b.a); creditors.sort((a,b)=>b.a-a.a); const res=[]; let i=0, j=0; while(i<debtors.length && j<creditors.length){ const d=debtors[i], c=creditors[j]; const amt=Math.min(Math.abs(d.a), c.a); res.push({from:d.p, to:c.p, amount:Math.round(amt)}); d.a += amt; c.a -= amt; if (Math.abs(d.a)<1) i++; if (c.a<1) j++; } return res; });
 
-    /* Chart Logic (Morandi Macaron) */
+    /* Chart Logic */
     let chartInstance = null; const chartBusy = ref(false); let chartTimer = null;
     const buildStats = () => { const stats = {}; const list = filteredExpenses.value; for (let i=0;i<list.length;i++){ const e = list[i]; const key = e.item || '其他'; stats[key] = (stats[key] || 0) + getAmountTWD(e); } return stats; };
     const renderChart = () => {
       const canvas = document.getElementById('expenseChart'); if (!canvas) return;
       const stats = buildStats(); const labels = Object.keys(stats); const data = Object.values(stats);
-      // Morandi Macaron Colors
       const nordicColors = ['#9DB6CC', '#DBCFB0', '#B5A8BF', '#D4A5A5', '#99A799', '#C4C4C4', '#89A8B2'];
       if (chartInstance) { chartInstance.data.labels = labels; chartInstance.data.datasets[0].data = data; chartInstance.data.datasets[0].backgroundColor = labels.map((_,i)=>nordicColors[i % nordicColors.length]); chartInstance.update('none'); } 
       else { chartInstance = new Chart(canvas, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: labels.map((_,i)=>nordicColors[i % nordicColors.length]), borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', animation: { duration: 800 }, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11, weight: 'bold' }, color: '#64748b', usePointStyle: true, padding: 12, boxWidth: 8 } } } } }); }
