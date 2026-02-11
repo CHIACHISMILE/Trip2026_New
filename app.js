@@ -48,6 +48,7 @@ createApp({
     const todayDate = ref('');
     const todayWeekday = ref('');
 
+    // Image Viewer
     const showImgViewer = ref(false);
     const viewingImg = ref('');
     const imgViewerEl = ref(null);
@@ -63,52 +64,71 @@ createApp({
         return formatted;
     };
 
-    // --- Morandi Glacier Palette (Hex Codes) ---
-    // 這些顏色將直接用於 inline-style 的 border-color
-    const GLACIER = {
-        blue:   '#90A4AE', // 冰川藍灰 (交通)
-        sand:   '#D7CCC8', // 暖沙色 (住宿)
-        rose:   '#CFD8DC', // 迷霧灰白 (飲食 - 故意調冷一點)
-        violet: '#B0BEC5', // 淺鋼藍 (景點)
-        green:  '#AED581', // 苔蘚綠 (紀念品 - 點綴)
-        gray:   '#CFD8DC'  // 預設
+    // --- 繽紛典雅配色 (Macaron & Lavender Palette) ---
+    // 用於 border-color 和 圖表
+    const PALETTE = {
+        transport: '#A2D2FF', // 馬卡龍藍 (Macaron Blue)
+        stay:      '#FDE2E4', // 櫻花粉白 (Sakura / Warm Cream) - 改為稍微深一點的奶油色以免太亮
+        stay_border:'#FCD5CE', // 住宿邊框色 (Peachy)
+        food:      '#FFC8DD', // 馬卡龍粉 (Macaron Pink)
+        play:      '#CDB4DB', // 薰衣草紫 (Lavender)
+        shop:      '#BDE0FE', // 粉藍 (Baby Blue)
+        other:     '#D8E2DC'  // 鼠尾草灰 (Sage)
     };
     
-    // 為了視覺區分，稍微調整飲食為暖色系
-    const ACCENT = {
-        food: '#D3Aac3', // 莫蘭迪粉
-        play: '#9FA8DA'  // 莫蘭迪紫
-    }
+    // 為了讓文字在淺色背景上清楚，定義對應的文字深色
+    const TEXT_PALETTE = {
+        transport: '#5C7C99',
+        stay:      '#8C706B',
+        food:      '#996B7D',
+        play:      '#7A6B8C',
+        shop:      '#6B8599',
+        other:     '#707A75'
+    };
 
-    // 回傳 Hex 碼給 border-color 使用
-    const getCategoryColorCode = (cat) => {
+    // 回傳 Hex Code 供 style 綁定使用
+    const getCategoryColor = (cat) => {
       switch(cat) {
-        case '交通': return GLACIER.blue;
-        case '住宿': return GLACIER.sand;
-        case '景點': return ACCENT.play;
-        case '飲食': return ACCENT.food;
-        default: return GLACIER.gray;
+        case '交通': return PALETTE.transport;
+        case '住宿': return PALETTE.stay_border; // 住宿用深一點的邊框
+        case '景點': return PALETTE.play;
+        case '飲食': return PALETTE.food;
+        default: return PALETTE.other;
       }
     };
     
-    const getExpenseColorCode = (item) => {
+    // 記帳條顏色 (Hex)
+    const getExpenseColor = (item) => {
       const s = String(item || '');
-      if (s.includes('交通') || s.includes('機票') || s.includes('租車') || s.includes('油')) return GLACIER.blue;
-      if (s.includes('住宿') || s.includes('飯店')) return GLACIER.sand;
-      if (['早餐','午餐','晚餐','零食','飲料','超市'].some(k => s.includes(k))) return ACCENT.food;
-      if (['門票','景點','遊玩','極光'].some(k => s.includes(k))) return ACCENT.play;
-      if (s.includes('紀念品')) return GLACIER.green;
-      return GLACIER.gray;
+      if (s.includes('交通') || s.includes('機票') || s.includes('租車') || s.includes('油')) return PALETTE.transport;
+      if (s.includes('住宿') || s.includes('飯店')) return PALETTE.stay_border;
+      if (['早餐','午餐','晚餐','零食','飲料','超市'].some(k => s.includes(k))) return PALETTE.food;
+      if (['門票','景點','遊玩','極光'].some(k => s.includes(k))) return PALETTE.play;
+      if (s.includes('紀念品')) return PALETTE.shop;
+      return PALETTE.other;
     };
     
+    // 標籤樣式 (背景淡色 + 文字深色)
     const getItemTagClass = (item) => {
-      // 這裡僅用背景色與文字色
-      const s = String(item || '');
-      if (s.includes('交通')) return 'bg-[#ECEFF1] text-[#546E7A]';
-      if (s.includes('住宿')) return 'bg-[#EFEBE9] text-[#8D6E63]';
-      if (['早餐','午餐','晚餐'].some(k => s.includes(k))) return 'bg-[#FCE4EC] text-[#880E4F]';
-      return 'bg-[#F5F5F5] text-[#757575]';
+      // 這裡回傳 Tailwind class 或 style object，為求簡便使用 style binding 在 html
+      return ''; 
     };
+    // 輔助函式：取得標籤背景色
+    const getItemBg = (item) => {
+        const color = getExpenseColor(item);
+        // 簡單將 Hex 轉淡 (這裡簡單用原有色，HTML設定透明度)
+        return color;
+    }
+    // 輔助函式：取得標籤文字色
+    const getItemText = (item) => {
+        const s = String(item || '');
+        if (s.includes('交通')) return TEXT_PALETTE.transport;
+        if (s.includes('住宿')) return TEXT_PALETTE.stay;
+        if (['早餐','午餐','晚餐'].some(k => s.includes(k))) return TEXT_PALETTE.food;
+        if (['門票','景點'].some(k => s.includes(k))) return TEXT_PALETTE.play;
+        if (s.includes('紀念品')) return TEXT_PALETTE.shop;
+        return TEXT_PALETTE.other;
+    }
 
     // --- Image Gesture ---
     const getDistance = (touches) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
@@ -129,7 +149,7 @@ createApp({
             if (imgGesture.value.scale === 1 && dy > 0) {
                 imgGesture.value.isPulling = true; imgGesture.value.currentY = dy;
                 if (imgViewerEl.value) imgViewerEl.value.style.transform = `translateY(${dy}px) scale(${1 - dy/1000})`;
-                document.querySelector('.img-viewer-overlay').style.backgroundColor = `rgba(236, 239, 241, ${Math.max(0, 0.95 - dy/600)})`;
+                document.querySelector('.img-viewer-overlay').style.backgroundColor = `rgba(237, 242, 247, ${Math.max(0, 0.9 - dy/600)})`;
             } else if (imgGesture.value.scale > 1) {
                 const dx = e.touches[0].clientX - imgGesture.value.startX;
                 if (imgViewerEl.value) imgViewerEl.value.style.transform = `scale(${imgGesture.value.scale}) translate(${dx/imgGesture.value.scale}px, ${dy/imgGesture.value.scale}px)`;
@@ -169,13 +189,7 @@ createApp({
     const newExp = ref({ payer: '', location: '', item: '', payment: '', currency: 'NTD', amount: null, involved: [], note: '' });
     const editExpForm = ref({}); const tempRates = ref({});
     watch(() => newExp.value.payer, (v) => { if (v) newExp.value.involved = [v]; });
-    
-    // 下拉文字動態變更
-    const pullDistance = ref(0); 
-    const refreshText = computed(() => {
-        if (isPullRefreshing.value) return '同步中...';
-        return pullDistance.value > 50 ? '放開同步更新' : '下拉同步';
-    });
+    const pullDistance = ref(0); const refreshText = computed(() => isPullRefreshing.value ? '更新中...' : '下拉更新');
 
     const initDate = () => {
       const now = new Date();
@@ -184,76 +198,61 @@ createApp({
       todayWeekday.value = days[now.getDay()];
     };
 
-    // --- SCROLL & GESTURE (Pull to Refresh) ---
-    const gesture = { active:false, mode:null, startX:0, startY:0, dx:0, dy:0, startedAtLeftEdge:false, startedAtRightEdge:false, inSelectable:false, selectIntent:false, longPressTimer:null, allowPull: false };
-    const hasTextSelection = () => { const sel = window.getSelection(); return !!(sel && sel.toString && sel.toString().length > 0); };
-    const isBlockedTarget = (target) => {
-      if (target.closest('.swipe-protected')) return true;
-      const tag = (target.tagName || '').toLowerCase();
-      if (['input','textarea','select','button','a','label'].includes(tag)) return true;
-      return false;
-    };
-    const clearLongPress = () => { if (gesture.longPressTimer) { clearTimeout(gesture.longPressTimer); gesture.longPressTimer = null; } };
+    // --- SCROLL & GESTURE (修復版：更靈敏的下拉) ---
+    const gesture = { active:false, startX:0, startY:0, isScrolling: undefined };
     
     const attachGestureListeners = () => {
       const el = scrollContainer.value; if (!el) return;
       
       const onTouchStart = (e) => {
-        const t = e.touches[0]; 
-        gesture.active = true; gesture.mode = null; gesture.dx = 0; gesture.dy = 0; gesture.startX = t.clientX; gesture.startY = t.clientY;
-        const w = window.innerWidth; gesture.startedAtLeftEdge = (gesture.startX <= w * 0.15); gesture.startedAtRightEdge = (gesture.startX >= w * 0.85);
-        const isHeaderPull = t.clientY < 140; 
-        gesture.allowPull = isHeaderPull && (el.scrollTop <= 0);
-        gesture.inSelectable = !!e.target.closest('.allow-select'); gesture.selectIntent = false; clearLongPress();
-        if (gesture.inSelectable) gesture.longPressTimer = setTimeout(() => { gesture.selectIntent = true; }, 220);
-        gesture.blocked = isBlockedTarget(e.target);
+        if (el.scrollTop > 5) return; // 只有在頂部時才監聽
+        const t = e.touches[0];
+        gesture.active = true;
+        gesture.startX = t.clientX;
+        gesture.startY = t.clientY;
+        gesture.isScrolling = undefined; // 重置方向判斷
       };
 
       const onTouchMove = (e) => {
-        if (!gesture.active || gesture.blocked) return;
-        const t = e.touches[0]; const dx = t.clientX - gesture.startX; const dy = t.clientY - gesture.startY;
-        gesture.dx = dx; gesture.dy = dy;
-        if (gesture.inSelectable) { if (Math.abs(dx) > 10 || Math.abs(dy) > 10) clearLongPress(); }
-        if (gesture.inSelectable && (gesture.selectIntent || hasTextSelection())) return;
-        if (!gesture.mode) { if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return; gesture.mode = (Math.abs(dx) > Math.abs(dy)) ? 'h' : 'v'; }
-        
-        if (gesture.mode === 'h') { 
-            if ((gesture.startedAtLeftEdge || gesture.startedAtRightEdge) && e.cancelable) e.preventDefault(); 
-        } 
-        else if (gesture.mode === 'v') {
-          if (gesture.allowPull && dy > 0) { 
-             if (e.cancelable) e.preventDefault(); 
-             pullDistance.value = Math.min(80, Math.pow(dy, 0.7)); // 增加下拉阻尼感與距離
-          } else { 
-             pullDistance.value = 0; 
-          }
+        if (!gesture.active) return;
+        const t = e.touches[0];
+        const dy = t.clientY - gesture.startY;
+        const dx = t.clientX - gesture.startX;
+
+        // 判斷是垂直滾動還是水平滑動
+        if (typeof gesture.isScrolling === 'undefined') {
+            gesture.isScrolling = Math.abs(dy) > Math.abs(dx);
+        }
+
+        // 只有當垂直滑動，且往下拉(dy>0)，且目前在頂部(scrollTop<=0)
+        if (gesture.isScrolling && dy > 0 && el.scrollTop <= 0) {
+             if (e.cancelable) e.preventDefault(); // 阻止原生滾動
+             // 增加阻尼感
+             pullDistance.value = Math.min(80, Math.pow(dy, 0.75)); 
+        } else {
+             pullDistance.value = 0;
         }
       };
 
       const onTouchEnd = () => {
-        if (!gesture.active) return; gesture.active = false; clearLongPress();
-        // 觸發同步的門檻
-        if (pullDistance.value > 50) { 
-            pullDistance.value = 50; 
-            isPullRefreshing.value = true; 
-            loadData(); // 這裡觸發資料更新
+        gesture.active = false;
+        if (pullDistance.value > 50) { // 觸發門檻
+             pullDistance.value = 50; 
+             isPullRefreshing.value = true; 
+             loadData(); 
         } else { 
-            pullDistance.value = 0; 
+             pullDistance.value = 0; 
         }
-        
-        // 左右滑動切換 Tab 的邏輯保持不變
-        if (gesture.mode === 'h' && Math.abs(gesture.dx) > 60) {
-           if (!gesture.inSelectable || (!gesture.selectIntent && !hasTextSelection())) {
-               if (gesture.startedAtLeftEdge && gesture.dx > 0) { if (tab.value === 'expense') tab.value = 'itinerary'; else if (tab.value === 'analysis') tab.value = 'expense'; }
-               else if (gesture.startedAtRightEdge && gesture.dx < 0) { if (tab.value === 'itinerary') tab.value = 'expense'; else if (tab.value === 'expense') changeTabToAnalysis(); }
-               else if (tab.value === 'itinerary' && !gesture.startedAtLeftEdge && !gesture.startedAtRightEdge) { if (gesture.dx < 0) switchDay('next'); else switchDay('prev'); }
-           }
-        }
-        gesture.mode = null; gesture.inSelectable = false; gesture.selectIntent = false; gesture.allowPull = false;
       };
+
+      // 使用 passive: false 以便能 preventDefault
+      el.addEventListener('touchstart', onTouchStart, { passive: true });
+      el.addEventListener('touchmove',  onTouchMove,  { passive: false });
+      el.addEventListener('touchend',   onTouchEnd,   { passive: true });
+      
       attachGestureListeners._handlers = { onTouchStart, onTouchMove, onTouchEnd };
-      el.addEventListener('touchstart', onTouchStart, { passive: true }); el.addEventListener('touchmove',  onTouchMove,  { passive: false }); el.addEventListener('touchend',   onTouchEnd,   { passive: true });
     };
+
     const detachGestureListeners = () => {
       const el = scrollContainer.value; const h = attachGestureListeners._handlers; if (!el || !h) return;
       el.removeEventListener('touchstart', h.onTouchStart); el.removeEventListener('touchmove', h.onTouchMove); el.removeEventListener('touchend', h.onTouchEnd); attachGestureListeners._handlers = null;
@@ -279,18 +278,9 @@ createApp({
     };
     const loadData = async () => {
       if (!isPullRefreshing.value) isLoading.value = true;
-      // 先載入本地
       if (loadLocal()) { if (isFirstLoad.value) { nextTick(() => checkAndScrollToToday()); isFirstLoad.value = false; } if (tab.value === 'analysis') scheduleRenderChart(); setTimeout(() => { if (!isPullRefreshing.value) isLoading.value = false; }, 150); }
-      
-      // 離線就不嘗試網路
       if (!navigator.onLine) { isLoading.value = false; isPullRefreshing.value = false; pullDistance.value = 0; return; }
-      
-      // 嘗試同步與下載
-      try { 
-          if(syncQueue.value.length > 0) await processSyncQueue(); // 先把待辦的上傳
-          const res = await callApi('getData'); 
-          updateLocalData(res); 
-      } catch(e) { } finally { isLoading.value = false; isPullRefreshing.value = false; pullDistance.value = 0; }
+      try { const res = await callApi('getData'); updateLocalData(res); } catch(e) { } finally { isLoading.value = false; isPullRefreshing.value = false; pullDistance.value = 0; }
     };
     const selectDate = (date) => { selDate.value = date; scrollToDateBtn(date); if(scrollContainer.value) scrollContainer.value.scrollTop = 0; };
     const scrollToDateBtn = (date) => { nextTick(() => { const btn = document.getElementById('date-btn-' + date); if (btn && dateContainer.value) { const centerPos = (btn.offsetLeft - dateContainer.value.offsetLeft) - (dateContainer.value.clientWidth / 2) + (btn.clientWidth / 2); dateContainer.value.scrollTo({ left: centerPos, behavior: 'smooth' }); } }); };
@@ -311,16 +301,16 @@ createApp({
     const momSpent = computed(() => { return expenses.value.reduce((sum, e) => { const amt = getAmountTWD(e); if (e.involved && e.involved.includes('媽媽')) return sum + (amt / e.involved.length); return sum; }, 0); });
     const debts = computed(() => { if (members.value.length === 0) return []; const bal = {}; members.value.forEach(m => bal[m] = 0); expenses.value.forEach(e => { const amt = getAmountTWD(e); const split = e.involved || []; if (split.length > 0) { bal[e.payer] += amt; const share = amt / split.length; split.forEach(p => { if (bal[p] !== undefined) bal[p] -= share; }); } }); let debtors=[], creditors=[]; for (const m in bal) { if (bal[m] < -1) debtors.push({p:m, a:bal[m]}); if (bal[m] > 1) creditors.push({p:m, a:bal[m]}); } debtors.sort((a,b)=>a.a-b.a); creditors.sort((a,b)=>b.a-a.a); const res=[]; let i=0, j=0; while(i<debtors.length && j<creditors.length){ const d=debtors[i], c=creditors[j]; const amt=Math.min(Math.abs(d.a), c.a); res.push({from:d.p, to:c.p, amount:Math.round(amt)}); d.a += amt; c.a -= amt; if (Math.abs(d.a)<1) i++; if (c.a<1) j++; } return res; });
 
-    /* Chart Logic */
+    /* Chart Logic (Updated Palette) */
     let chartInstance = null; const chartBusy = ref(false); let chartTimer = null;
     const buildStats = () => { const stats = {}; const list = filteredExpenses.value; for (let i=0;i<list.length;i++){ const e = list[i]; const key = e.item || '其他'; stats[key] = (stats[key] || 0) + getAmountTWD(e); } return stats; };
     const renderChart = () => {
       const canvas = document.getElementById('expenseChart'); if (!canvas) return;
       const stats = buildStats(); const labels = Object.keys(stats); const data = Object.values(stats);
-      // Glacier Chart Colors
-      const glacierColors = ['#90A4AE', '#D7CCC8', '#B0BEC5', '#D3AAC3', '#AED581', '#CFD8DC', '#78909C'];
-      if (chartInstance) { chartInstance.data.labels = labels; chartInstance.data.datasets[0].data = data; chartInstance.data.datasets[0].backgroundColor = labels.map((_,i)=>glacierColors[i % glacierColors.length]); chartInstance.update('none'); } 
-      else { chartInstance = new Chart(canvas, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: labels.map((_,i)=>glacierColors[i % glacierColors.length]), borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', animation: { duration: 800 }, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11, weight: 'bold' }, color: '#546E7A', usePointStyle: true, padding: 12, boxWidth: 8 } } } } }); }
+      // Colors correspond to PALETTE
+      const palette = [PALETTE.food, PALETTE.transport, PALETTE.stay, PALETTE.play, PALETTE.shop, PALETTE.other];
+      if (chartInstance) { chartInstance.data.labels = labels; chartInstance.data.datasets[0].data = data; chartInstance.data.datasets[0].backgroundColor = labels.map((_,i)=>palette[i % palette.length]); chartInstance.update('none'); } 
+      else { chartInstance = new Chart(canvas, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: labels.map((_,i)=>palette[i % palette.length]), borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', animation: { duration: 800 }, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11, weight: 'bold' }, color: '#64748b', usePointStyle: true, padding: 12, boxWidth: 8 } } } } }); }
       chartBusy.value = false;
     };
     const scheduleRenderChart = async () => { if (tab.value !== 'analysis') return; chartBusy.value = true; if (chartTimer) clearTimeout(chartTimer); chartTimer = setTimeout(() => { nextTick(() => { renderChart(); }); }, 300); };
@@ -352,7 +342,7 @@ createApp({
     onBeforeUnmount(() => { detachGestureListeners(); window.removeEventListener('online', updateOnlineStatus); window.removeEventListener('offline', updateOnlineStatus); if (chartInstance) { chartInstance.destroy(); chartInstance = null; } });
     
     return {
-      tab, isLoading, isOnline, isSyncing, syncQueue, dateContainer, scrollContainer, todayDate, todayWeekday, pullDistance, isPullRefreshing, refreshText, tripStatus, tripDates, selDate, itinerary, selectDate, getDayInfo, getEvents, getCategoryColorCode, getExpenseColorCode, expenses, rates, members, filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments, resetFilters, hasActiveFilters, filteredExpenses, formatNumber, getAmountTWD, publicSpent, momSpent, debts, getItemTagClass, chartBusy, changeTabToAnalysis, showRateModal, showItinModal, showExpModal, isEditing, itinForm, newExp, editExpForm, tempRates, openRateModal, openAddItin, openEditItin, openEditExp, deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending, handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg, imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom, formatNote
+      tab, isLoading, isOnline, isSyncing, syncQueue, dateContainer, scrollContainer, todayDate, todayWeekday, pullDistance, isPullRefreshing, refreshText, tripStatus, tripDates, selDate, itinerary, selectDate, getDayInfo, getEvents, getCategoryColor, getExpenseColor, expenses, rates, members, filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments, resetFilters, hasActiveFilters, filteredExpenses, formatNumber, getAmountTWD, publicSpent, momSpent, debts, getItemTagClass, getItemBg, getItemText, chartBusy, changeTabToAnalysis, showRateModal, showItinModal, showExpModal, isEditing, itinForm, newExp, editExpForm, tempRates, openRateModal, openAddItin, openEditItin, openEditExp, deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending, handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg, imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom, formatNote
     };
   }
 }).mount('#app');
