@@ -54,59 +54,54 @@ createApp({
     const imgViewerEl = ref(null);
     const imgGesture = ref({ startX: 0, startY: 0, currentX: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 });
 
-    // --- Note Formatting Logic (支援 [文字](url) 顯示為底線連結) ---
     const formatNote = (text) => {
         if (!text) return '';
         let formatted = text
-            // 1. Basic Sanitization
             .replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">")
-            // 2. Markdown Links [Text](URL) -> Show "Text" with underline
             .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="note-link" onclick="event.stopPropagation()">$1</a>')
-            // 3. Raw URLs (NOT inside href) -> Show "Link Icon"
             .replace(/(?<!href="|]\()((https?:\/\/[^\s<]+))/g, '<a href="$1" target="_blank" class="note-link" onclick="event.stopPropagation()">🔗</a>')
-            // 4. Newlines
             .replace(/\n/g, '<br>');
         return formatted;
     };
 
-    // --- Morandi/Nordic Color Logic ---
-    // 定義莫蘭迪色系背景 (使用 Tailwind arbitrary values)
-    const MORANDI = {
-        blue:   'bg-[#A4B5C4]', // 霧藍
-        sand:   'bg-[#DBCFB0]', // 暖沙
-        rose:   'bg-[#D4A5A5]', // 乾燥玫瑰
-        violet: 'bg-[#B5A8BF]', // 薰衣草灰
-        green:  'bg-[#99A799]', // 鼠尾草綠
-        gray:   'bg-[#C4C4C4]'  // 淺灰
+    // --- Morandi Glacier Color Palette ---
+    // 定義冰川色系背景
+    const GLACIER = {
+        deep:   'bg-[#90A4AE]', // 冰川深藍灰 (交通)
+        sand:   'bg-[#D7CCC8]', // 冷調沙色 (住宿)
+        rose:   'bg-[#CFD8DC]', // 冰川淺灰 (飲食 - 改為更冷調)
+        violet: 'bg-[#B0BEC5]', // 藍灰 (景點)
+        green:  'bg-[#80CBC4]', // 冰湖綠 (紀念品)
+        default:'bg-[#ECEFF1]'  // 預設灰
     };
 
     const getExpenseColor = (item) => {
       const s = String(item || '');
-      if (s.includes('交通') || s.includes('機票') || s.includes('租車') || s.includes('油')) return MORANDI.blue;
-      if (s.includes('住宿') || s.includes('飯店')) return MORANDI.sand;
-      if (['早餐','午餐','晚餐','零食','飲料','超市'].some(k => s.includes(k))) return MORANDI.rose;
-      if (['門票','景點','遊玩','極光'].some(k => s.includes(k))) return MORANDI.violet;
-      if (s.includes('紀念品')) return MORANDI.green;
-      return MORANDI.gray;
+      if (s.includes('交通') || s.includes('機票') || s.includes('租車') || s.includes('油')) return GLACIER.deep;
+      if (s.includes('住宿') || s.includes('飯店')) return GLACIER.sand;
+      if (['早餐','午餐','晚餐','零食','飲料','超市'].some(k => s.includes(k))) return 'bg-[#D3A6A6]'; // 莫蘭迪粉 (保留一點暖色對比)
+      if (['門票','景點','遊玩','極光'].some(k => s.includes(k))) return 'bg-[#9FA8DA]'; // 莫蘭迪紫
+      if (s.includes('紀念品')) return GLACIER.green;
+      return GLACIER.default;
     };
 
     const getCategoryColor = (cat) => {
       switch(cat) {
-        case '交通': return MORANDI.blue;
-        case '住宿': return MORANDI.sand;
-        case '景點': return MORANDI.violet;
-        case '飲食': return MORANDI.rose;
-        default: return MORANDI.gray;
+        case '交通': return GLACIER.deep;
+        case '住宿': return GLACIER.sand;
+        case '景點': return 'bg-[#9FA8DA]';
+        case '飲食': return 'bg-[#D3A6A6]';
+        default: return GLACIER.default;
       }
     };
     
-    // 標籤顏色：文字與背景色調和
+    // 標籤顏色：文字與背景色調和 (冰川冷調)
     const getItemTagClass = (item) => {
       const s = String(item || '');
-      if (s.includes('交通') || s.includes('機票')) return 'bg-[#EBF1F5] text-[#5D7285]'; // 淡藍底/深灰藍字
-      if (s.includes('住宿')) return 'bg-[#F5F0E6] text-[#8C7B60]'; // 淡米底/深棕字
-      if (['早餐','午餐','晚餐','零食'].some(k => s.includes(k))) return 'bg-[#FCEEEE] text-[#9E6B6B]'; // 淡粉底/深玫瑰字
-      if (['紀念品'].some(k => s.includes(k))) return 'bg-[#EDF2ED] text-[#5C6B5C]'; // 淡綠底/深綠字
+      if (s.includes('交通') || s.includes('機票')) return 'bg-[#ECEFF1] text-[#546E7A]';
+      if (s.includes('住宿')) return 'bg-[#EFEBE9] text-[#8D6E63]';
+      if (['早餐','午餐','晚餐','零食'].some(k => s.includes(k))) return 'bg-[#FBE9E7] text-[#A1887F]';
+      if (['紀念品'].some(k => s.includes(k))) return 'bg-[#E0F2F1] text-[#00897B]';
       return 'bg-slate-100 text-slate-500';
     };
 
@@ -129,7 +124,7 @@ createApp({
             if (imgGesture.value.scale === 1 && dy > 0) {
                 imgGesture.value.isPulling = true; imgGesture.value.currentY = dy;
                 if (imgViewerEl.value) imgViewerEl.value.style.transform = `translateY(${dy}px) scale(${1 - dy/1000})`;
-                document.querySelector('.img-viewer-overlay').style.backgroundColor = `rgba(240, 242, 245, ${Math.max(0, 0.95 - dy/600)})`; // Adjusted backdrop color
+                document.querySelector('.img-viewer-overlay').style.backgroundColor = `rgba(236, 239, 241, ${Math.max(0, 0.95 - dy/600)})`;
             } else if (imgGesture.value.scale > 1) {
                 const dx = e.touches[0].clientX - imgGesture.value.startX;
                 if (imgViewerEl.value) imgViewerEl.value.style.transform = `scale(${imgGesture.value.scale}) translate(${dx/imgGesture.value.scale}px, ${dy/imgGesture.value.scale}px)`;
@@ -196,7 +191,7 @@ createApp({
         const t = e.touches[0]; 
         gesture.active = true; gesture.mode = null; gesture.dx = 0; gesture.dy = 0; gesture.startX = t.clientX; gesture.startY = t.clientY;
         const w = window.innerWidth; gesture.startedAtLeftEdge = (gesture.startX <= w * 0.15); gesture.startedAtRightEdge = (gesture.startX >= w * 0.85);
-        const isHeaderPull = t.clientY < 140; 
+        const isHeaderPull = t.clientY < 180; // 稍微放寬 Header 下拉感應區
         gesture.allowPull = isHeaderPull && (el.scrollTop <= 0);
         gesture.inSelectable = !!e.target.closest('.allow-select'); gesture.selectIntent = false; clearLongPress();
         if (gesture.inSelectable) gesture.longPressTimer = setTimeout(() => { gesture.selectIntent = true; }, 220);
@@ -287,16 +282,16 @@ createApp({
     const momSpent = computed(() => { return expenses.value.reduce((sum, e) => { const amt = getAmountTWD(e); if (e.involved && e.involved.includes('媽媽')) return sum + (amt / e.involved.length); return sum; }, 0); });
     const debts = computed(() => { if (members.value.length === 0) return []; const bal = {}; members.value.forEach(m => bal[m] = 0); expenses.value.forEach(e => { const amt = getAmountTWD(e); const split = e.involved || []; if (split.length > 0) { bal[e.payer] += amt; const share = amt / split.length; split.forEach(p => { if (bal[p] !== undefined) bal[p] -= share; }); } }); let debtors=[], creditors=[]; for (const m in bal) { if (bal[m] < -1) debtors.push({p:m, a:bal[m]}); if (bal[m] > 1) creditors.push({p:m, a:bal[m]}); } debtors.sort((a,b)=>a.a-b.a); creditors.sort((a,b)=>b.a-a.a); const res=[]; let i=0, j=0; while(i<debtors.length && j<creditors.length){ const d=debtors[i], c=creditors[j]; const amt=Math.min(Math.abs(d.a), c.a); res.push({from:d.p, to:c.p, amount:Math.round(amt)}); d.a += amt; c.a -= amt; if (Math.abs(d.a)<1) i++; if (c.a<1) j++; } return res; });
 
-    /* Chart Logic (Morandi Palette) */
+    /* Chart Logic (Glacier Palette) */
     let chartInstance = null; const chartBusy = ref(false); let chartTimer = null;
     const buildStats = () => { const stats = {}; const list = filteredExpenses.value; for (let i=0;i<list.length;i++){ const e = list[i]; const key = e.item || '其他'; stats[key] = (stats[key] || 0) + getAmountTWD(e); } return stats; };
     const renderChart = () => {
       const canvas = document.getElementById('expenseChart'); if (!canvas) return;
       const stats = buildStats(); const labels = Object.keys(stats); const data = Object.values(stats);
-      // Morandi Colors: Blue, Sand, Violet, Rose, Green, Gray, Slate
-      const nordicColors = ['#A4B5C4', '#DBCFB0', '#B5A8BF', '#D4A5A5', '#99A799', '#C4C4C4', '#8E9EAB'];
+      // Glacier Colors: Deep, Violet, Sand, Rose, Green, BlueGrey, LightGrey
+      const nordicColors = ['#90A4AE', '#9FA8DA', '#D7CCC8', '#D3A6A6', '#80CBC4', '#607D8B', '#CFD8DC'];
       if (chartInstance) { chartInstance.data.labels = labels; chartInstance.data.datasets[0].data = data; chartInstance.data.datasets[0].backgroundColor = labels.map((_,i)=>nordicColors[i % nordicColors.length]); chartInstance.update('none'); } 
-      else { chartInstance = new Chart(canvas, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: labels.map((_,i)=>nordicColors[i % nordicColors.length]), borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', animation: { duration: 800 }, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11, weight: 'bold' }, color: '#64748b', usePointStyle: true, padding: 12, boxWidth: 8 } } } } }); }
+      else { chartInstance = new Chart(canvas, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: labels.map((_,i)=>nordicColors[i % nordicColors.length]), borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', animation: { duration: 800 }, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11, weight: 'bold' }, color: '#546E7A', usePointStyle: true, padding: 12, boxWidth: 8 } } } } }); }
       chartBusy.value = false;
     };
     const scheduleRenderChart = async () => { if (tab.value !== 'analysis') return; chartBusy.value = true; if (chartTimer) clearTimeout(chartTimer); chartTimer = setTimeout(() => { nextTick(() => { renderChart(); }); }, 300); };
