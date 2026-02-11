@@ -36,7 +36,7 @@ body { -webkit-touch-callout: default; }
   /* 關鍵修正：內容層設為 1，浮在背景之上 */
   position: relative;
   z-index: 1;
-  background-color: transparent !important;
+  /* background-color: transparent !important; */
 }
 
 .scrollable-content {
