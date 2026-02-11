@@ -48,7 +48,6 @@ createApp({
     const todayDate = ref('');
     const todayWeekday = ref('');
 
-    // Image Viewer
     const showImgViewer = ref(false);
     const viewingImg = ref('');
     const imgViewerEl = ref(null);
@@ -64,45 +63,51 @@ createApp({
         return formatted;
     };
 
-    // --- Morandi Glacier Color Palette ---
-    // 定義冰川色系背景
+    // --- Morandi Glacier Palette (Hex Codes) ---
+    // 這些顏色將直接用於 inline-style 的 border-color
     const GLACIER = {
-        deep:   'bg-[#90A4AE]', // 冰川深藍灰 (交通)
-        sand:   'bg-[#D7CCC8]', // 冷調沙色 (住宿)
-        rose:   'bg-[#CFD8DC]', // 冰川淺灰 (飲食 - 改為更冷調)
-        violet: 'bg-[#B0BEC5]', // 藍灰 (景點)
-        green:  'bg-[#80CBC4]', // 冰湖綠 (紀念品)
-        default:'bg-[#ECEFF1]'  // 預設灰
+        blue:   '#90A4AE', // 冰川藍灰 (交通)
+        sand:   '#D7CCC8', // 暖沙色 (住宿)
+        rose:   '#CFD8DC', // 迷霧灰白 (飲食 - 故意調冷一點)
+        violet: '#B0BEC5', // 淺鋼藍 (景點)
+        green:  '#AED581', // 苔蘚綠 (紀念品 - 點綴)
+        gray:   '#CFD8DC'  // 預設
     };
+    
+    // 為了視覺區分，稍微調整飲食為暖色系
+    const ACCENT = {
+        food: '#D3Aac3', // 莫蘭迪粉
+        play: '#9FA8DA'  // 莫蘭迪紫
+    }
 
-    const getExpenseColor = (item) => {
-      const s = String(item || '');
-      if (s.includes('交通') || s.includes('機票') || s.includes('租車') || s.includes('油')) return GLACIER.deep;
-      if (s.includes('住宿') || s.includes('飯店')) return GLACIER.sand;
-      if (['早餐','午餐','晚餐','零食','飲料','超市'].some(k => s.includes(k))) return 'bg-[#D3A6A6]'; // 莫蘭迪粉 (保留一點暖色對比)
-      if (['門票','景點','遊玩','極光'].some(k => s.includes(k))) return 'bg-[#9FA8DA]'; // 莫蘭迪紫
-      if (s.includes('紀念品')) return GLACIER.green;
-      return GLACIER.default;
-    };
-
-    const getCategoryColor = (cat) => {
+    // 回傳 Hex 碼給 border-color 使用
+    const getCategoryColorCode = (cat) => {
       switch(cat) {
-        case '交通': return GLACIER.deep;
+        case '交通': return GLACIER.blue;
         case '住宿': return GLACIER.sand;
-        case '景點': return 'bg-[#9FA8DA]';
-        case '飲食': return 'bg-[#D3A6A6]';
-        default: return GLACIER.default;
+        case '景點': return ACCENT.play;
+        case '飲食': return ACCENT.food;
+        default: return GLACIER.gray;
       }
     };
     
-    // 標籤顏色：文字與背景色調和 (冰川冷調)
-    const getItemTagClass = (item) => {
+    const getExpenseColorCode = (item) => {
       const s = String(item || '');
-      if (s.includes('交通') || s.includes('機票')) return 'bg-[#ECEFF1] text-[#546E7A]';
+      if (s.includes('交通') || s.includes('機票') || s.includes('租車') || s.includes('油')) return GLACIER.blue;
+      if (s.includes('住宿') || s.includes('飯店')) return GLACIER.sand;
+      if (['早餐','午餐','晚餐','零食','飲料','超市'].some(k => s.includes(k))) return ACCENT.food;
+      if (['門票','景點','遊玩','極光'].some(k => s.includes(k))) return ACCENT.play;
+      if (s.includes('紀念品')) return GLACIER.green;
+      return GLACIER.gray;
+    };
+    
+    const getItemTagClass = (item) => {
+      // 這裡僅用背景色與文字色
+      const s = String(item || '');
+      if (s.includes('交通')) return 'bg-[#ECEFF1] text-[#546E7A]';
       if (s.includes('住宿')) return 'bg-[#EFEBE9] text-[#8D6E63]';
-      if (['早餐','午餐','晚餐','零食'].some(k => s.includes(k))) return 'bg-[#FBE9E7] text-[#A1887F]';
-      if (['紀念品'].some(k => s.includes(k))) return 'bg-[#E0F2F1] text-[#00897B]';
-      return 'bg-slate-100 text-slate-500';
+      if (['早餐','午餐','晚餐'].some(k => s.includes(k))) return 'bg-[#FCE4EC] text-[#880E4F]';
+      return 'bg-[#F5F5F5] text-[#757575]';
     };
 
     // --- Image Gesture ---
@@ -164,7 +169,13 @@ createApp({
     const newExp = ref({ payer: '', location: '', item: '', payment: '', currency: 'NTD', amount: null, involved: [], note: '' });
     const editExpForm = ref({}); const tempRates = ref({});
     watch(() => newExp.value.payer, (v) => { if (v) newExp.value.involved = [v]; });
-    const pullDistance = ref(0); const refreshText = computed(() => isPullRefreshing.value ? '更新中...' : '下拉更新');
+    
+    // 下拉文字動態變更
+    const pullDistance = ref(0); 
+    const refreshText = computed(() => {
+        if (isPullRefreshing.value) return '同步中...';
+        return pullDistance.value > 50 ? '放開同步更新' : '下拉同步';
+    });
 
     const initDate = () => {
       const now = new Date();
@@ -173,7 +184,7 @@ createApp({
       todayWeekday.value = days[now.getDay()];
     };
 
-    // --- SCROLL & GESTURE ---
+    // --- SCROLL & GESTURE (Pull to Refresh) ---
     const gesture = { active:false, mode:null, startX:0, startY:0, dx:0, dy:0, startedAtLeftEdge:false, startedAtRightEdge:false, inSelectable:false, selectIntent:false, longPressTimer:null, allowPull: false };
     const hasTextSelection = () => { const sel = window.getSelection(); return !!(sel && sel.toString && sel.toString().length > 0); };
     const isBlockedTarget = (target) => {
@@ -191,7 +202,7 @@ createApp({
         const t = e.touches[0]; 
         gesture.active = true; gesture.mode = null; gesture.dx = 0; gesture.dy = 0; gesture.startX = t.clientX; gesture.startY = t.clientY;
         const w = window.innerWidth; gesture.startedAtLeftEdge = (gesture.startX <= w * 0.15); gesture.startedAtRightEdge = (gesture.startX >= w * 0.85);
-        const isHeaderPull = t.clientY < 180; // 稍微放寬 Header 下拉感應區
+        const isHeaderPull = t.clientY < 140; 
         gesture.allowPull = isHeaderPull && (el.scrollTop <= 0);
         gesture.inSelectable = !!e.target.closest('.allow-select'); gesture.selectIntent = false; clearLongPress();
         if (gesture.inSelectable) gesture.longPressTimer = setTimeout(() => { gesture.selectIntent = true; }, 220);
@@ -212,7 +223,7 @@ createApp({
         else if (gesture.mode === 'v') {
           if (gesture.allowPull && dy > 0) { 
              if (e.cancelable) e.preventDefault(); 
-             pullDistance.value = Math.min(72, Math.pow(dy, 0.7)); 
+             pullDistance.value = Math.min(80, Math.pow(dy, 0.7)); // 增加下拉阻尼感與距離
           } else { 
              pullDistance.value = 0; 
           }
@@ -221,7 +232,16 @@ createApp({
 
       const onTouchEnd = () => {
         if (!gesture.active) return; gesture.active = false; clearLongPress();
-        if (pullDistance.value > 60) { pullDistance.value = 60; isPullRefreshing.value = true; loadData(); } else { pullDistance.value = 0; }
+        // 觸發同步的門檻
+        if (pullDistance.value > 50) { 
+            pullDistance.value = 50; 
+            isPullRefreshing.value = true; 
+            loadData(); // 這裡觸發資料更新
+        } else { 
+            pullDistance.value = 0; 
+        }
+        
+        // 左右滑動切換 Tab 的邏輯保持不變
         if (gesture.mode === 'h' && Math.abs(gesture.dx) > 60) {
            if (!gesture.inSelectable || (!gesture.selectIntent && !hasTextSelection())) {
                if (gesture.startedAtLeftEdge && gesture.dx > 0) { if (tab.value === 'expense') tab.value = 'itinerary'; else if (tab.value === 'analysis') tab.value = 'expense'; }
@@ -259,9 +279,18 @@ createApp({
     };
     const loadData = async () => {
       if (!isPullRefreshing.value) isLoading.value = true;
+      // 先載入本地
       if (loadLocal()) { if (isFirstLoad.value) { nextTick(() => checkAndScrollToToday()); isFirstLoad.value = false; } if (tab.value === 'analysis') scheduleRenderChart(); setTimeout(() => { if (!isPullRefreshing.value) isLoading.value = false; }, 150); }
+      
+      // 離線就不嘗試網路
       if (!navigator.onLine) { isLoading.value = false; isPullRefreshing.value = false; pullDistance.value = 0; return; }
-      try { const res = await callApi('getData'); updateLocalData(res); } catch(e) { } finally { isLoading.value = false; isPullRefreshing.value = false; pullDistance.value = 0; }
+      
+      // 嘗試同步與下載
+      try { 
+          if(syncQueue.value.length > 0) await processSyncQueue(); // 先把待辦的上傳
+          const res = await callApi('getData'); 
+          updateLocalData(res); 
+      } catch(e) { } finally { isLoading.value = false; isPullRefreshing.value = false; pullDistance.value = 0; }
     };
     const selectDate = (date) => { selDate.value = date; scrollToDateBtn(date); if(scrollContainer.value) scrollContainer.value.scrollTop = 0; };
     const scrollToDateBtn = (date) => { nextTick(() => { const btn = document.getElementById('date-btn-' + date); if (btn && dateContainer.value) { const centerPos = (btn.offsetLeft - dateContainer.value.offsetLeft) - (dateContainer.value.clientWidth / 2) + (btn.clientWidth / 2); dateContainer.value.scrollTo({ left: centerPos, behavior: 'smooth' }); } }); };
@@ -282,16 +311,16 @@ createApp({
     const momSpent = computed(() => { return expenses.value.reduce((sum, e) => { const amt = getAmountTWD(e); if (e.involved && e.involved.includes('媽媽')) return sum + (amt / e.involved.length); return sum; }, 0); });
     const debts = computed(() => { if (members.value.length === 0) return []; const bal = {}; members.value.forEach(m => bal[m] = 0); expenses.value.forEach(e => { const amt = getAmountTWD(e); const split = e.involved || []; if (split.length > 0) { bal[e.payer] += amt; const share = amt / split.length; split.forEach(p => { if (bal[p] !== undefined) bal[p] -= share; }); } }); let debtors=[], creditors=[]; for (const m in bal) { if (bal[m] < -1) debtors.push({p:m, a:bal[m]}); if (bal[m] > 1) creditors.push({p:m, a:bal[m]}); } debtors.sort((a,b)=>a.a-b.a); creditors.sort((a,b)=>b.a-a.a); const res=[]; let i=0, j=0; while(i<debtors.length && j<creditors.length){ const d=debtors[i], c=creditors[j]; const amt=Math.min(Math.abs(d.a), c.a); res.push({from:d.p, to:c.p, amount:Math.round(amt)}); d.a += amt; c.a -= amt; if (Math.abs(d.a)<1) i++; if (c.a<1) j++; } return res; });
 
-    /* Chart Logic (Glacier Palette) */
+    /* Chart Logic */
     let chartInstance = null; const chartBusy = ref(false); let chartTimer = null;
     const buildStats = () => { const stats = {}; const list = filteredExpenses.value; for (let i=0;i<list.length;i++){ const e = list[i]; const key = e.item || '其他'; stats[key] = (stats[key] || 0) + getAmountTWD(e); } return stats; };
     const renderChart = () => {
       const canvas = document.getElementById('expenseChart'); if (!canvas) return;
       const stats = buildStats(); const labels = Object.keys(stats); const data = Object.values(stats);
-      // Glacier Colors: Deep, Violet, Sand, Rose, Green, BlueGrey, LightGrey
-      const nordicColors = ['#90A4AE', '#9FA8DA', '#D7CCC8', '#D3A6A6', '#80CBC4', '#607D8B', '#CFD8DC'];
-      if (chartInstance) { chartInstance.data.labels = labels; chartInstance.data.datasets[0].data = data; chartInstance.data.datasets[0].backgroundColor = labels.map((_,i)=>nordicColors[i % nordicColors.length]); chartInstance.update('none'); } 
-      else { chartInstance = new Chart(canvas, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: labels.map((_,i)=>nordicColors[i % nordicColors.length]), borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', animation: { duration: 800 }, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11, weight: 'bold' }, color: '#546E7A', usePointStyle: true, padding: 12, boxWidth: 8 } } } } }); }
+      // Glacier Chart Colors
+      const glacierColors = ['#90A4AE', '#D7CCC8', '#B0BEC5', '#D3AAC3', '#AED581', '#CFD8DC', '#78909C'];
+      if (chartInstance) { chartInstance.data.labels = labels; chartInstance.data.datasets[0].data = data; chartInstance.data.datasets[0].backgroundColor = labels.map((_,i)=>glacierColors[i % glacierColors.length]); chartInstance.update('none'); } 
+      else { chartInstance = new Chart(canvas, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: labels.map((_,i)=>glacierColors[i % glacierColors.length]), borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', animation: { duration: 800 }, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11, weight: 'bold' }, color: '#546E7A', usePointStyle: true, padding: 12, boxWidth: 8 } } } } }); }
       chartBusy.value = false;
     };
     const scheduleRenderChart = async () => { if (tab.value !== 'analysis') return; chartBusy.value = true; if (chartTimer) clearTimeout(chartTimer); chartTimer = setTimeout(() => { nextTick(() => { renderChart(); }); }, 300); };
@@ -323,7 +352,7 @@ createApp({
     onBeforeUnmount(() => { detachGestureListeners(); window.removeEventListener('online', updateOnlineStatus); window.removeEventListener('offline', updateOnlineStatus); if (chartInstance) { chartInstance.destroy(); chartInstance = null; } });
     
     return {
-      tab, isLoading, isOnline, isSyncing, syncQueue, dateContainer, scrollContainer, todayDate, todayWeekday, pullDistance, isPullRefreshing, refreshText, tripStatus, tripDates, selDate, itinerary, selectDate, getDayInfo, getEvents, getCategoryColor, getExpenseColor, expenses, rates, members, filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments, resetFilters, hasActiveFilters, filteredExpenses, formatNumber, getAmountTWD, publicSpent, momSpent, debts, getItemTagClass, chartBusy, changeTabToAnalysis, showRateModal, showItinModal, showExpModal, isEditing, itinForm, newExp, editExpForm, tempRates, openRateModal, openAddItin, openEditItin, openEditExp, deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending, handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg, imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom, formatNote
+      tab, isLoading, isOnline, isSyncing, syncQueue, dateContainer, scrollContainer, todayDate, todayWeekday, pullDistance, isPullRefreshing, refreshText, tripStatus, tripDates, selDate, itinerary, selectDate, getDayInfo, getEvents, getCategoryColorCode, getExpenseColorCode, expenses, rates, members, filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments, resetFilters, hasActiveFilters, filteredExpenses, formatNumber, getAmountTWD, publicSpent, momSpent, debts, getItemTagClass, chartBusy, changeTabToAnalysis, showRateModal, showItinModal, showExpModal, isEditing, itinForm, newExp, editExpForm, tempRates, openRateModal, openAddItin, openEditItin, openEditExp, deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending, handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg, imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom, formatNote
     };
   }
 }).mount('#app');
