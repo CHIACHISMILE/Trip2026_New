@@ -1,12 +1,12 @@
-/* style.css - v3.3 Glacier Blue & Macaron */
+/* style.css - v3.4 Fix Bottom White & Pull Refresh */
 
 html, body {
   height: 100dvh;
   width: 100%;
   overflow: hidden;
   font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
-  background-color: transparent; /* 關鍵：讓 body 透明，顯示 fixed-bg */
-  color: #55697B; /* 冰川灰藍色文字，比純黑柔和 */
+  background-color: transparent !important; /* 強制透明，避免瀏覽器預設白底 */
+  color: #55697B;
   overscroll-behavior: none;
   user-select: none;
   -webkit-user-select: none;
@@ -21,7 +21,6 @@ body { -webkit-touch-callout: default; }
   top: 0; left: 0;
   width: 100%;
   height: 100dvh;
-  /* 莫蘭迪冰川藍漸層：冷調白 -> 冰川藍 -> 迷霧灰 */
   background: linear-gradient(180deg, #F0F4F8 0%, #D7E1EC 60%, #C4D2DE 100%);
   z-index: -1;
   pointer-events: none;
@@ -33,6 +32,7 @@ body { -webkit-touch-callout: default; }
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  background-color: transparent !important; /* 確保 App 容器也是透明 */
   -webkit-touch-callout: none;
 }
 
@@ -43,66 +43,64 @@ body { -webkit-touch-callout: default; }
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   position: relative;
-  /* 確保底部留白夠大，且因為 body 透明，這裡會直接透出背景 */
+  /* 底部留白區域，這區塊原先可能是白色的，現在會因為上方設定而變透明 */
   padding-top: 10px;
   padding-bottom: calc(100px + env(safe-area-inset-bottom)); 
   touch-action: pan-y;
   z-index: 1;
+  background-color: transparent !important; /* 確保內容捲動層透明 */
 }
 
-/* --- 卡片優化 (彩色邊條整合) --- */
-.glass-card {
-  background: rgba(255, 255, 255, 0.82); /* 稍微調降透明度增加通透感 */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 20px;
-  box-shadow: 0 8px 24px rgba(166, 180, 200, 0.15); /* 陰影帶一點藍色調 */
-  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-  margin-bottom: 16px;
-  
-  /* 關鍵：隱藏溢出，確保 border-left 貼合圓角 */
-  overflow: hidden;
-  /* 預設左邊框寬度，顏色由 inline-style 或 class 控制 */
-  border-left-width: 6px; 
-  border-left-style: solid;
-}
-
-.glass-card:active { transform: scale(0.98); }
-
-/* --- 筆記連結優化 --- */
-.note-content {
-  line-height: 1.7;
-  color: #6B7C8E; 
-}
-.note-link {
-  color: #6C9BB5; /* 冰湖藍 */
-  font-weight: 600;
-  text-decoration: underline;
-  text-decoration-color: rgba(108, 155, 181, 0.3);
-  text-underline-offset: 3px;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-/* --- 下拉更新指示器 --- */
+/* --- 下拉更新指示器 (修復：提高層級與可視性) --- */
 .pull-indicator {
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0; 
+  left: 0; 
+  right: 0;
   width: 100%;
   height: 0;
   display: flex; 
   justify-content: center;
   align-items: flex-end;
-  padding-bottom: 8px;
+  padding-bottom: 12px; /* 增加底部距離 */
   overflow: hidden;
-  color: #8DA3B5;
-  font-weight: 600; font-size: 0.8rem;
-  transition: height 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* 更滑順的動畫 */
+  color: #6B8E9B; /* 加深顏色 */
+  font-weight: 700; 
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  transition: height 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   padding-top: env(safe-area-inset-top);
-  z-index: 5;
+  
+  /* 關鍵修正：原本 z-index: 5 被 Header (z-20) 擋住，改為 50 浮在最上層 */
+  z-index: 50; 
   pointer-events: none;
+  
+  /* 選項：加一點文字陰影讓它在任何背景都清楚 */
+  text-shadow: 0 2px 4px rgba(255,255,255,0.8);
+}
+
+/* --- 卡片優化 --- */
+.glass-card {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(166, 180, 200, 0.15);
+  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  margin-bottom: 16px;
+  overflow: hidden;
+  border-left-width: 6px; 
+  border-left-style: solid;
+}
+.glass-card:active { transform: scale(0.98); }
+
+/* --- 筆記連結 --- */
+.note-content { line-height: 1.7; color: #6B7C8E; }
+.note-link {
+  color: #6C9BB5; font-weight: 600; text-decoration: underline;
+  text-decoration-color: rgba(108, 155, 181, 0.3); text-underline-offset: 3px;
+  display: inline-flex; align-items: center; gap: 2px;
 }
 
 /* --- 輸入框 --- */
@@ -113,32 +111,13 @@ body { -webkit-touch-callout: default; }
   color: #55697B;
   transition: all 0.3s;
 }
-.glass-input:focus {
-  background: #fff;
-  border-color: #B0C4DE;
-  box-shadow: 0 4px 12px rgba(176, 196, 222, 0.2);
-}
+.glass-input:focus { background: #fff; border-color: #B0C4DE; box-shadow: 0 4px 12px rgba(176, 196, 222, 0.2); }
 
-/* --- 按鈕系統 --- */
-.btn-glacier {
-  background: #7B99B0; /* 冰川深藍 */
-  color: #fff;
-  border: none;
-  box-shadow: 0 4px 12px rgba(123, 153, 176, 0.3);
-}
+/* --- 按鈕 --- */
+.btn-glacier { background: #7B99B0; color: #fff; border: none; box-shadow: 0 4px 12px rgba(123, 153, 176, 0.3); }
 .btn-glacier:active { background: #627D92; }
-
-.btn-dashed {
-  border: 2px dashed #CBD5E1;
-  color: #8DA3B5;
-  background: rgba(255,255,255,0.5);
-}
-
-.btn-cancel {
-  background: #F0F4F8;
-  color: #8DA3B5;
-  border: 1px solid #DEE2E6;
-}
+.btn-dashed { border: 2px dashed #CBD5E1; color: #8DA3B5; background: rgba(255,255,255,0.5); }
+.btn-cancel { background: #F0F4F8; color: #8DA3B5; border: 1px solid #DEE2E6; }
 
 /* --- Tab Bar --- */
 .tab-bar {
@@ -147,48 +126,20 @@ body { -webkit-touch-callout: default; }
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid rgba(255, 255, 255, 0.5);
   padding: 12px 20px;
-  display: flex;
-  gap: 12px;
+  display: flex; gap: 12px;
 }
-
-.tab-btn { 
-  color: #94A3B8; 
-  font-weight: 600;
-  border-radius: 20px;
-  padding: 10px 16px;
-  transition: all 0.3s;
-}
-
-/* 選中狀態：莫蘭迪馬卡龍漸層 */
+.tab-btn { color: #94A3B8; font-weight: 600; border-radius: 20px; padding: 10px 16px; transition: all 0.3s; }
 .tab-active { 
   color: #ffffff !important;
-  /* 冰川藍 -> 薰衣草紫 漸層，典雅繽紛 */
   background: linear-gradient(135deg, #89A8B2 0%, #B3C2D3 100%);
   box-shadow: 0 4px 12px rgba(137, 168, 178, 0.3);
   transform: translateY(-1px);
 }
 
-/* --- 標題連結 --- */
-.title-link { 
-    text-decoration: none; 
-    color: #4A5E70; 
-    font-weight: 700; 
-    border-bottom: 1.5px solid #CBD5E1;
-}
-
-/* --- Filter Chips (馬卡龍色調) --- */
-.filter-chip {
-    display: inline-flex; align-items: center; gap: 4px;
-    background: #EBF1F5; color: #6B8E9B;
-    padding: 6px 14px; border-radius: 99px;
-    font-size: 11px; font-weight: 600;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-}
-
-/* Modal */
+/* --- 其他 --- */
+.title-link { text-decoration: none; color: #4A5E70; font-weight: 700; border-bottom: 1.5px solid #CBD5E1; }
+.filter-chip { display: inline-flex; align-items: center; gap: 4px; background: #EBF1F5; color: #6B8E9B; padding: 6px 14px; border-radius: 99px; font-size: 11px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
 .modal-content { margin-bottom: env(safe-area-inset-bottom); border-radius: 28px; }
-
-/* 其他輔助樣式保持不變... */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -197,7 +148,7 @@ body { -webkit-touch-callout: default; }
 .break-anywhere { overflow-wrap: anywhere; word-break: break-all; }
 .skeleton { background: linear-gradient(90deg, #F0F4F8 25%, #E2E8F0 50%, #F0F4F8 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 16px; }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-.pending-sync { opacity: 0.85; border: 2px dashed #EAB308 !important; border-left-style: solid !important; } /* 修正：保持左邊框實線 */
+.pending-sync { opacity: 0.85; border: 2px dashed #EAB308 !important; border-left-style: solid !important; }
 .img-upload-btn { position: relative; overflow: hidden; }
 .img-upload-btn input[type=file] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .img-preview { width: 100%; height: 120px; object-fit: cover; border-radius: 16px; border: 2px dashed #CBD5E1; display: flex; justify-content: center; align-items: center; color: #94A3B8; font-size: 12px; font-weight: bold; background: #F8FAFC; }
