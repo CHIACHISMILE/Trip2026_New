@@ -30,8 +30,8 @@
     <span v-if="pullDistance > 20">{{ refreshText }}</span>
   </div>
 
-  <div class="px-6 pb-4 rounded-b-[2rem] swipe-protected relative z-20 bg-white/70 backdrop-blur-xl border-b border-white/50"
-       style="padding-top: max(20px, env(safe-area-inset-top) + 12px);">
+  <div class="px-6 pb-4 swipe-protected relative z-20 bg-white/70 backdrop-blur-xl border-b border-white/50"
+     style="padding-top: max(20px, env(safe-area-inset-top) + 12px);">
     <div class="flex justify-between items-center">
       <h1 class="text-xl font-black tracking-tight text-[#40576A]">2026 挪威冰島之旅</h1>
       <div class="text-right">
@@ -128,7 +128,7 @@
 
           <button @click="openAddItin"
         class="w-full py-4 mt-4 border-2 border-dashed border-[#AFC6D6] text-[#7E9AAF] bg-white/50 rounded-2xl font-bold hover:bg-[#F3F5F6] transition swipe-protected shadow-sm"> + 新增行程</button>
-          <div class="h-10"></div>
+          <!-- <div class="h-10"></div> -->
         </div>
       </div>
 
