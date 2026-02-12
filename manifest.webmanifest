@@ -3,6 +3,7 @@
   "short_name": "2026🇳🇴🇮🇸",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f2f8ff",
-  "theme_color": "#bfe9ff"
+  "background_color": "#EAF1F4",
+  "theme_color": "#8FB3C4",
+  "orientation": "portrait"
 }

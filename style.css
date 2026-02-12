@@ -1,12 +1,35 @@
-/* style.css - v3.5 Fixed White Bottom & Pull Trigger */
+/* style.css - v3.6 Morandi Glacier + iOS Fullscreen */
+:root{
+  /* Morandi Glacier theme */
+  --c-bg-top:#EAF1F4;
+  --c-bg-bot:#F7F6F4;
+
+  --c-text-strong:#40576A;
+  --c-text:#4B6376;
+  --c-text-muted:#7E9AAF;
+
+  --c-primary:#8FB3C4;          /* glacier blue */
+  --c-primary-deep:#6E8A9B;
+  --c-accent-lav:#B9B3C8;       /* lavender */
+  --c-accent-sage:#A6B8AE;      /* sage */
+  --c-accent-blush:#D6A8B0;     /* blush */
+  --c-accent-sand:#D6C9B6;      /* sand */
+  --c-surface:rgba(255,255,255,.82);
+  --c-surface-strong:rgba(255,255,255,.90);
+  --c-stroke:rgba(255,255,255,.6);
+  --c-ring:#AFC6D6;
+}
+
 
 html, body {
-  height: 100dvh;
   width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: -webkit-fill-available; /* iOS PWA */
   overflow: hidden;
   font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
   background-color: transparent !important;
-  color: #55697B;
+  color: var(--c-text);
   overscroll-behavior: none;
   user-select: none;
   -webkit-user-select: none;
@@ -17,26 +40,33 @@ html, body {
 body { -webkit-touch-callout: default; }
 
 #fixed-bg {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  height: -webkit-fill-available;
   background: linear-gradient(180deg, var(--c-bg-top) 0%, var(--c-bg-bot) 100%);
-  z-index: 0; pointer-events: none;
+  z-index: 0;
+  pointer-events: none;
 }
 
 #app {
-  height: 100%;
+  height: 100vh;
+  height: 100dvh;
+  height: -webkit-fill-available;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative; 
-  /* 關鍵修正：將內容層設為 1，確保它浮在背景之上 */
-  z-index: 1; 
+  position: relative;
+  z-index: 1;
   background-color: transparent !important;
 }
 
 .scrollable-content {
   flex: 1; overflow-y: auto; overflow-x: hidden;
   -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;
-  position: relative; padding-top: 10px; padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  position: relative; padding-top: 10px; padding-bottom: calc(120px + env(safe-area-inset-bottom));
   z-index: 1; background-color: transparent !important; touch-action: pan-y;
 }
 
@@ -61,7 +91,7 @@ body { -webkit-touch-callout: default; }
     padding: 6px 16px;
     border-radius: 20px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    color: #55697B;
+    color: var(--c-text);
     font-weight: 700;
     font-size: 0.8rem;
     display: flex;
@@ -87,26 +117,26 @@ body { -webkit-touch-callout: default; }
 .glass-card:active { transform: scale(0.98); }
 
 /* --- 筆記連結 --- */
-.note-content { line-height: 1.7; color: #6B7C8E; }
+.note-content { line-height: 1.7; color: color-mix(in srgb, var(--c-text) 78%, white); }
 .note-link {
-  color: #6C9BB5; font-weight: 600; text-decoration: underline;
+  color: var(--c-primary); font-weight: 600; text-decoration: underline;
   text-decoration-color: rgba(108, 155, 181, 0.3); text-underline-offset: 3px;
   display: inline-flex; align-items: center; gap: 2px;
 }
 
 /* --- 輸入框 --- */
 .glass-input {
-  background: rgba(240, 244, 248, 0.8);
+  background: rgba(234, 241, 244, 0.82);
   border: 1px solid transparent; 
   box-shadow: inset 0 2px 4px rgba(166, 180, 200, 0.05);
-  color: #55697B;
+  color: var(--c-text);
   transition: all 0.3s;
 }
-.glass-input:focus { background: #fff; border-color: #B0C4DE; box-shadow: 0 4px 12px rgba(176, 196, 222, 0.2); }
+.glass-input:focus { background: #fff; border-color: var(--c-ring); box-shadow: 0 4px 12px rgba(175, 198, 214, 0.25); }
 
 /* --- 按鈕 --- */
-.btn-glacier { background: #7B99B0; color: #fff; border: none; box-shadow: 0 4px 12px rgba(123, 153, 176, 0.3); }
-.btn-glacier:active { background: #627D92; }
+.btn-glacier { background: var(--c-primary); color: #fff; border: none; box-shadow: 0 4px 12px rgba(143, 179, 196, 0.30); }
+.btn-glacier:active { background: var(--c-primary-deep); }
 .btn-dashed { border: 2px dashed #CBD5E1; color: #8DA3B5; background: rgba(255,255,255,0.5); }
 .btn-cancel { background: #F0F4F8; color: #8DA3B5; border: 1px solid #DEE2E6; }
 
