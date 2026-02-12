@@ -65,13 +65,14 @@ createApp({
 
     // --- Morandi Macaron Palette ---
     const COLORS = {
-        blue:   { border: 'border-[#9DB6CC]', bg: 'bg-[#E4EEF5]', text: 'text-[#5A748A]' },
-        sand:   { border: 'border-[#DBCFB0]', bg: 'bg-[#F7F3E8]', text: 'text-[#8C7B50]' },
-        rose:   { border: 'border-[#D4A5A5]', bg: 'bg-[#F9EBEB]', text: 'text-[#9E6B6B]' },
-        violet: { border: 'border-[#B5A8BF]', bg: 'bg-[#F2EFF5]', text: 'text-[#7E7492]' },
-        green:  { border: 'border-[#99A799]', bg: 'bg-[#EDF2EC]', text: 'text-[#5F7359]' },
-        gray:   { border: 'border-[#C4C4C4]', bg: 'bg-[#F3F4F6]', text: 'text-[#71717A]' }
+      blue:   { border: 'border-[#4FA7D8]', bg: 'bg-[#E4EEF5]', text: 'text-[#5A748A]' }, // 交通
+      sand:   { border: 'border-[#E3B062]', bg: 'bg-[#F7F3E8]', text: 'text-[#8C7B50]' }, // 住宿
+      rose:   { border: 'border-[#F07F95]', bg: 'bg-[#F9EBEB]', text: 'text-[#9E6B6B]' }, // 飲食
+      violet: { border: 'border-[#8F7FE6]', bg: 'bg-[#F2EFF5]', text: 'text-[#7E7492]' }, // 景點
+      green:  { border: 'border-[#43B58F]', bg: 'bg-[#EDF2EC]', text: 'text-[#5F7359]' },
+      gray:   { border: 'border-[#9AA4B2]', bg: 'bg-[#F3F4F6]', text: 'text-[#71717A]' }
     };
+
 
     const getCategoryBorderClass = (cat) => {
         switch(cat) {
