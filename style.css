@@ -8,16 +8,17 @@
   --c-text:#4B6376;
   --c-text-muted:#7E9AAF;
 
-  --c-primary:#8FB3C4;          /* glacier blue */
-  --c-primary-deep:#6E8A9B;
-  --c-accent-lav:#B9B3C8;       /* lavender */
-  --c-accent-sage:#A6B8AE;      /* sage */
-  --c-accent-blush:#D6A8B0;     /* blush */
-  --c-accent-sand:#D6C9B6;      /* sand */
+  --c-primary:#5FAFD6;        /* 冰河淺藍：更亮更飽和 */
+  --c-primary-deep:#2F86B8;   /* 深一階用於按下/強調 */
+  --c-accent-lav:#9D8FE6;     /* 薰衣草 */
+  --c-accent-sage:#5FB99A;    /* 鼠尾草綠 */
+  --c-accent-blush:#F08FA1;   /* 馬卡龍粉 */
+  --c-accent-sand:#F2C58A;    /* 奶油杏桃 */
+  --c-ring:#7EC5EA;           /* focus ring 更亮一點 */
   --c-surface:rgba(255,255,255,.82);
   --c-surface-strong:rgba(255,255,255,.90);
   --c-stroke:rgba(255,255,255,.6);
-  --c-ring:#AFC6D6;
+  /* --c-ring:#AFC6D6; */
 }
 
 
@@ -43,8 +44,8 @@ body { -webkit-touch-callout: default; }
   position: fixed;
   top: 0; left: 0;
   width: 100%;
-  height: 100vh;
-  height: 100dvh;
+  height: calc(100dvh - env(safe-area-inset-bottom));
+  height: calc(-webkit-fill-available - env(safe-area-inset-bottom));
   height: -webkit-fill-available;
   background: linear-gradient(180deg, var(--c-bg-top) 0%, var(--c-bg-bot) 100%);
   z-index: 0;
@@ -66,7 +67,7 @@ body { -webkit-touch-callout: default; }
 .scrollable-content {
   flex: 1; overflow-y: auto; overflow-x: hidden;
   -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;
-  position: relative; padding-top: 10px; padding-bottom: calc(120px + env(safe-area-inset-bottom));
+  position: relative; padding-top: 10px; padding-bottom: calc(20px + env(safe-area-inset-bottom));
   z-index: 1; background-color: transparent !important; touch-action: pan-y;
 }
 
