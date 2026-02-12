@@ -199,19 +199,4 @@ body { -webkit-touch-callout: default; }
   .itin-time-row > div { width: 100%; }
 }
 
-/* --- iPhone 動態島 / 安全區：避免 Modal 被切到頂部 --- */
-.swipe-protected{
-  /* 原本 HTML 有 p-4，這裡再補安全區，確保不吃到動態島 */
-  padding-top: calc(env(safe-area-inset-top) + 12px) !important;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 12px) !important;
-  align-items: flex-start !important; /* 不要垂直置中到動態島附近 */
-}
-
-/* Modal 本體在安全區內可完整顯示 */
-.modal-content{
-  margin-top: 0 !important;
-  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px) !important;
-  overflow: hidden;
-}
-
 
