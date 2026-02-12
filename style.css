@@ -1,41 +1,18 @@
-/* style.css - v3.6 Morandi Glacier + iOS Fullscreen */
-:root{
-  /* Morandi Glacier theme */
-  --c-bg-top:#EAF1F4;
-  --c-bg-bot:#F7F6F4;
-
-  --c-text-strong:#40576A;
-  --c-text:#4B6376;
-  --c-text-muted:#7E9AAF;
-
-  --c-primary:#5FAFD6;        /* 冰河淺藍：更亮更飽和 */
-  --c-primary-deep:#2F86B8;   /* 深一階用於按下/強調 */
-  --c-accent-lav:#9D8FE6;     /* 薰衣草 */
-  --c-accent-sage:#5FB99A;    /* 鼠尾草綠 */
-  --c-accent-blush:#F08FA1;   /* 馬卡龍粉 */
-  --c-accent-sand:#F2C58A;    /* 奶油杏桃 */
-  --c-ring:#7EC5EA;           /* focus ring 更亮一點 */
-  --c-surface:rgba(255,255,255,.82);
-  --c-surface-strong:rgba(255,255,255,.90);
-  --c-stroke:rgba(255,255,255,.6);
-  /* --c-ring:#AFC6D6; */
-}
-
+/* style.css - v3.5 Fixed White Bottom & Pull Trigger */
 
 html, body {
-  width: 100%;
   height: 100%;
   min-height: 100vh;
-  min-height: -webkit-fill-available; /* iOS PWA */
+  width: 100%;
   overflow: hidden;
   font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
   background-color: var(--c-bg-bot) !important;
-  color: var(--c-text);
+  color: #55697B;
   overscroll-behavior: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
-  touch-action: none;
+  touch-action: pan-y;
 }
 
 body { -webkit-touch-callout: default; }
@@ -64,25 +41,42 @@ body { -webkit-touch-callout: default; }
   background-color: transparent !important;
 }
 
+
+#app-shell{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom); /* 讓內容永遠不會被 iOS 底部手勢區「切掉」 */
+  will-change: transform;
+}
+
 .scrollable-content {
-  flex: 1; overflow-y: auto; overflow-x: hidden;
-  -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;
-  position: relative; padding-top: 10px; padding-bottom: calc(16px + env(safe-area-inset-bottom));
-  z-index: 1; background-color: transparent !important; touch-action: pan-y;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  position: relative;
+  padding-top: 10px;
+  padding-bottom: 16px; /* 不再用超大 padding 去「預留」底部 */
+  z-index: 1;
+  background-color: transparent !important;
+  touch-action: pan-y;
 }
 
 /* --- 下拉更新指示器 (優化可視性) --- */
 .pull-indicator {
-  position: absolute;
-  top: env(safe-area-inset-top); /* 避開瀏海 */
-  left: 0; 
+  position: fixed; /* 固定在最上方，讓整個頁面下拉時是「內容往下」，指示器露出 */
+  top: env(safe-area-inset-top);
+  left: 0;
   right: 0;
   height: 0;
-  display: flex; 
+  display: flex;
   justify-content: center;
-  align-items: flex-end; /* 文字靠下 */
+  align-items: flex-end;
   overflow: hidden;
-  z-index: 100; /* 最上層 */
+  z-index: 200;
   pointer-events: none;
   transition: height 0.1s ease-out;
 }
@@ -92,7 +86,7 @@ body { -webkit-touch-callout: default; }
     padding: 6px 16px;
     border-radius: 20px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    color: var(--c-text);
+    color: #55697B;
     font-weight: 700;
     font-size: 0.8rem;
     display: flex;
@@ -118,26 +112,26 @@ body { -webkit-touch-callout: default; }
 .glass-card:active { transform: scale(0.98); }
 
 /* --- 筆記連結 --- */
-.note-content { line-height: 1.7; color: color-mix(in srgb, var(--c-text) 78%, white); }
+.note-content { line-height: 1.7; color: #6B7C8E; }
 .note-link {
-  color: var(--c-primary); font-weight: 600; text-decoration: underline;
+  color: #6C9BB5; font-weight: 600; text-decoration: underline;
   text-decoration-color: rgba(108, 155, 181, 0.3); text-underline-offset: 3px;
   display: inline-flex; align-items: center; gap: 2px;
 }
 
 /* --- 輸入框 --- */
 .glass-input {
-  background: rgba(234, 241, 244, 0.82);
+  background: rgba(240, 244, 248, 0.8);
   border: 1px solid transparent; 
   box-shadow: inset 0 2px 4px rgba(166, 180, 200, 0.05);
-  color: var(--c-text);
+  color: #55697B;
   transition: all 0.3s;
 }
-.glass-input:focus { background: #fff; border-color: var(--c-ring); box-shadow: 0 4px 12px rgba(175, 198, 214, 0.25); }
+.glass-input:focus { background: #fff; border-color: #B0C4DE; box-shadow: 0 4px 12px rgba(176, 196, 222, 0.2); }
 
 /* --- 按鈕 --- */
-.btn-glacier { background: var(--c-primary); color: #fff; border: none; box-shadow: 0 4px 12px rgba(143, 179, 196, 0.30); }
-.btn-glacier:active { background: var(--c-primary-deep); }
+.btn-glacier { background: #2F86B8; color: #fff; border: none; box-shadow: 0 4px 12px rgba(123, 153, 176, 0.3); }
+.btn-glacier:active { background: #246A8E; }
 .btn-dashed { border: 2px dashed #CBD5E1; color: #8DA3B5; background: rgba(255,255,255,0.5); }
 .btn-cancel { background: #F0F4F8; color: #8DA3B5; border: 1px solid #DEE2E6; }
 
@@ -153,8 +147,8 @@ body { -webkit-touch-callout: default; }
 .tab-btn { color: #94A3B8; font-weight: 600; border-radius: 20px; padding: 10px 16px; transition: all 0.3s; }
 .tab-active { 
   color: #ffffff !important;
-  background: linear-gradient(135deg, #89A8B2 0%, #B3C2D3 100%);
-  box-shadow: 0 4px 12px rgba(137, 168, 178, 0.3);
+  background: linear-gradient(135deg, #2F86B8 0%, #66B7E6 100%);
+  box-shadow: 0 4px 12px rgba(47, 134, 184, 0.28);
   transform: translateY(-1px);
 }
 
