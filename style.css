@@ -179,3 +179,23 @@ body { -webkit-touch-callout: default; }
 .img-viewer-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(220, 226, 233, 0.95); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; flex-direction: column; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); transition: background 0.2s; touch-action: none; overflow: hidden; }
 .img-viewer-img { max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: center center; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
 .img-viewer-close { position: absolute; top: max(20px, env(safe-area-inset-top) + 20px); right: 20px; width: 44px; height: 44px; background: #fff; color: #64748B; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: 800; z-index: 10000; cursor: pointer; border: 1px solid #E2E8F0; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+
+/* --- Itinerary modal time inputs: prevent overlap on iOS (shrinkable) --- */
+.itin-time-row > div { flex: 1 1 0%; min-width: 0; }
+
+.time-input{
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  font-size: 14px;
+  padding: 10px 10px;
+}
+
+.time-input::-webkit-date-and-time-value { text-align: left; }
+
+@media (max-width: 360px) {
+  .itin-time-row { flex-direction: column; }
+  .itin-time-row > div { width: 100%; }
+}
+
