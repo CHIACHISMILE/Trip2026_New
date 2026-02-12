@@ -73,6 +73,27 @@ createApp({
         gray:   { border: 'border-[#9AA4B2]', bg: 'bg-[#F3F4F6]', text: 'text-[#71717A]' }
     };
 
+    // ✅ 永遠用 imgId 組出穩定圖片網址（2048px）
+    const stableImgUrl = (itemOrIdOrUrl) => {
+      // 允許你傳：整個 event、imgId、或舊 imgUrl
+      if (!itemOrIdOrUrl) return '';
+    
+      // 情況 A：傳整個物件（event）
+      if (typeof itemOrIdOrUrl === 'object') {
+        const id = itemOrIdOrUrl.imgId;
+        if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w2048`;
+        return itemOrIdOrUrl.imgUrl || '';
+      }
+    
+      // 情況 B：只傳 id
+      if (typeof itemOrIdOrUrl === 'string' && /^[a-zA-Z0-9_-]{10,}$/.test(itemOrIdOrUrl) && !itemOrIdOrUrl.startsWith('http')) {
+        return `https://drive.google.com/thumbnail?id=${itemOrIdOrUrl}&sz=w2048`;
+      }
+    
+      // 情況 C：傳舊 url（相容舊資料）
+      return String(itemOrIdOrUrl);
+    };
+
     const getCategoryBorderClass = (cat) => {
         switch(cat) {
             case '交通': return COLORS.blue.border;
@@ -333,7 +354,11 @@ createApp({
     const openEditExp = (exp) => { editExpForm.value = JSON.parse(JSON.stringify(exp)); showExpModal.value = true; };
     const handleImageUpload = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (evt) => { itinForm.value.imgUrl = evt.target.result; itinForm.value.newImageBase64 = evt.target.result; itinForm.value.deleteImage = false; }; reader.readAsDataURL(file); };
     const removeImage = () => { itinForm.value.imgUrl = ''; itinForm.value.newImageBase64 = null; itinForm.value.deleteImage = true; };
-    const viewImage = (url) => { viewingImg.value = url; showImgViewer.value = true; imgGesture.value = { startX: 0, startY: 0, currentX: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 }; };
+    const viewImage = (itemOrIdOrUrl) => { 
+      viewingImg.value = stableImgUrl(itemOrIdOrUrl);
+      showImgViewer.value = true; 
+      imgGesture.value = { startX: 0, startY: 0, currentX: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 };
+    };
     const closeImgViewer = () => { if (imgViewerEl.value) imgViewerEl.value.style.transform = ''; document.querySelector('.img-viewer-overlay').style.backgroundColor = ''; showImgViewer.value = false; };
     const deleteItin = async (evt) => { if(!confirm('確定刪除?')) return; itinerary.value = itinerary.value.filter(x => x.row !== evt.row); const pendingIdx = syncQueue.value.findIndex(job => job.type === 'itin' && job.action === 'add' && job.data.row === evt.row); if (pendingIdx !== -1) { syncQueue.value.splice(pendingIdx, 1); saveLocal({}); } else { handleCRUD('itin', 'delete', { row: evt.row, sheetName: 'Itinerary' }); } };
     const deleteExp = async (exp) => { if(!confirm('確定刪除?')) return; expenses.value = expenses.value.filter(x => x.row !== exp.row); const pendingIdx = syncQueue.value.findIndex(job => job.type === 'exp' && job.action === 'add' && job.data.row === exp.row); if (pendingIdx !== -1) { syncQueue.value.splice(pendingIdx, 1); saveLocal({}); } else { handleCRUD('exp', 'delete', { row: exp.row, sheetName: 'Expenses' }); } };
@@ -350,7 +375,7 @@ createApp({
     onBeforeUnmount(() => { detachGestureListeners(); window.removeEventListener('online', updateOnlineStatus); window.removeEventListener('offline', updateOnlineStatus); if (chartInstance) { chartInstance.destroy(); chartInstance = null; } });
     
     return {
-      tab, isLoading, isOnline, isSyncing, syncQueue, dateContainer, scrollContainer, todayDate, todayWeekday, pullDistance, isPullRefreshing, refreshText, tripStatus, tripDates, selDate, itinerary, selectDate, getDayInfo, getEvents, getCategoryBorderClass, getExpenseBorderClass, expenses, rates, members, filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments, resetFilters, hasActiveFilters, filteredExpenses, formatNumber, getAmountTWD, publicSpent, momSpent, debts, getItemTagClass, chartBusy, changeTabToAnalysis, showRateModal, showItinModal, showExpModal, isEditing, itinForm, newExp, editExpForm, tempRates, openRateModal, openAddItin, openEditItin, openEditExp, deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending, handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg, imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom, formatNote
+      tab, isLoading, isOnline, isSyncing, syncQueue, dateContainer, scrollContainer, todayDate, todayWeekday, pullDistance, isPullRefreshing, refreshText, tripStatus, tripDates, selDate, itinerary, selectDate, getDayInfo, getEvents, getCategoryBorderClass, getExpenseBorderClass, expenses, rates, members, filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments, resetFilters, hasActiveFilters, filteredExpenses, formatNumber, getAmountTWD, publicSpent, momSpent, debts, getItemTagClass, chartBusy, changeTabToAnalysis, showRateModal, showItinModal, showExpModal, isEditing, itinForm, newExp, editExpForm, tempRates, openRateModal, openAddItin, openEditItin, openEditExp, deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending, handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg, imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom, formatNote, stableImgUrl
     };
   }
 }).mount('#app');
