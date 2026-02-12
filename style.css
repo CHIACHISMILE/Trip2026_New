@@ -29,7 +29,7 @@ html, body {
   min-height: -webkit-fill-available; /* iOS PWA */
   overflow: hidden;
   font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
-  background-color: transparent !important;
+  background-color: var(--c-bg-bot) !important;
   color: var(--c-text);
   overscroll-behavior: none;
   user-select: none;
@@ -44,8 +44,8 @@ body { -webkit-touch-callout: default; }
   position: fixed;
   top: 0; left: 0;
   width: 100%;
-  height: calc(100dvh - env(safe-area-inset-bottom));
-  height: calc(-webkit-fill-available - env(safe-area-inset-bottom));
+  height: 100vh;
+  height: 100dvh;
   height: -webkit-fill-available;
   background: linear-gradient(180deg, var(--c-bg-top) 0%, var(--c-bg-bot) 100%);
   z-index: 0;
@@ -67,7 +67,7 @@ body { -webkit-touch-callout: default; }
 .scrollable-content {
   flex: 1; overflow-y: auto; overflow-x: hidden;
   -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;
-  position: relative; padding-top: 10px; padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  position: relative; padding-top: 10px; padding-bottom: calc(16px + env(safe-area-inset-bottom));
   z-index: 1; background-color: transparent !important; touch-action: pan-y;
 }
 
