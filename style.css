@@ -47,7 +47,7 @@ body { -webkit-touch-callout: default; }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-bottom: env(safe-area-inset-bottom); /* 讓內容永遠不會被 iOS 底部手勢區「切掉」 */
+  padding-bottom: 0; /* 讓內容永遠不會被 iOS 底部手勢區「切掉」 */
   will-change: transform;
 }
 
@@ -59,10 +59,17 @@ body { -webkit-touch-callout: default; }
   overscroll-behavior-y: contain;
   position: relative;
   padding-top: 10px;
-  padding-bottom: 16px; /* 不再用超大 padding 去「預留」底部 */
+  padding-bottom: 1px; /* 不再用超大 padding 去「預留」底部 */
   z-index: 1;
   background-color: transparent !important;
   touch-action: pan-y;
+}
+
+.scrollable-content::after{
+  content: "";
+  display: block;
+  height: max(6px, env(safe-area-inset-bottom) * 0.35); /* ✅ 只在最底部補安全區高度 */
+  background: transparent;             /* ✅ 透明，不是擋板 */
 }
 
 /* --- 下拉更新指示器 (優化可視性) --- */
