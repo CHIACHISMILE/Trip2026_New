@@ -1,4 +1,4 @@
-const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbz6PZtqLJzlS2a71R-RfZjpJCuqJVPoP7RuNxEe74mS_uvxBejMNGKboFSn2ArNnXAu/exec';
+const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbz72ipqA1wrHEeCPv4tKEGhOUce5JjQRPZWsNY5jEA_lyxVpWyU6qImgPLNXakrcqGj/exec';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
