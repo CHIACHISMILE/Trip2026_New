@@ -1,4 +1,4 @@
-const CACHE = "tripapp-v1.6"; // ✅ 記得 bump 版本，讓舊快取失效
+const CACHE = "tripapp-v1.5.0"; // ✅ 記得 bump 版本，讓舊快取失效
 const ASSETS = ["./", "./index.html", "./style.css", "./app.js", "./manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
