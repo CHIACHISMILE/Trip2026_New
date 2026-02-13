@@ -2,7 +2,10 @@ const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbz72ipqA1wrHEeCPv4
 
 // --- ✅ 修正 1: 補上缺失的輔助函式 (IndexedDB 與 URL 釋放) ---
 const revokeObjectUrl = (url) => { if (url) URL.revokeObjectURL(url); };
-
+// ✅ 新增：簡單的 UUID 產生器
+const generateUUID = () => {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+};
 const DB_NAME = 'TripApp_IMG_DB';
 const STORE_NAME = 'keyval';
 
@@ -501,32 +504,101 @@ createApp({
       if (blob) evt.localImgUrl = URL.createObjectURL(blob);
     };
 
-    // ✅ 修正 3: 此處不再報錯 ReferenceError
+    // ✅ 修改：deleteItin
     const deleteItin = async (evt) => { 
         if(!confirm('確定刪除?')) return; 
-        
-        // --- Try-catch 保護，避免清理快取失敗時阻止刪除流程 ---
         try {
             revokeObjectUrl(evt.localImgUrl); 
             if (evt.imgId) await idbDel('drive:' + evt.imgId); 
             if (evt._localImgKey) await idbDel(evt._localImgKey);
         } catch(e) { console.warn('Clear cache fail', e); }
 
-        itinerary.value = itinerary.value.filter(x => x.row !== evt.row); 
+        // 前端刪除依賴 row (因為這是 array index 概念)，但後端同步需要 id
+        itinerary.value = itinerary.value.filter(x => x.id !== evt.id); // 改用 id 過濾更安全
+
+        // 檢查是否有 pending job (用 ID 檢查)
+        const pendingIdx = syncQueue.value.findIndex(job => job.type === 'itin' && job.data.id === evt.id); 
         
-        const pendingIdx = syncQueue.value.findIndex(job => job.type === 'itin' && job.action === 'add' && job.data.row === evt.row); 
         if (pendingIdx !== -1) { 
             syncQueue.value.splice(pendingIdx, 1); 
             saveLocal({}); 
         } else { 
-            handleCRUD('itin', 'delete', { row: evt.row, sheetName: 'Itinerary' }); 
+            // 傳送 id 給後端
+            handleCRUD('itin', 'delete', { id: evt.id, sheetName: 'Itinerary' }); 
         } 
     };
+    
 
-    const deleteExp = async (exp) => { if(!confirm('確定刪除?')) return; expenses.value = expenses.value.filter(x => x.row !== exp.row); const pendingIdx = syncQueue.value.findIndex(job => job.type === 'exp' && job.action === 'add' && job.data.row === exp.row); if (pendingIdx !== -1) { syncQueue.value.splice(pendingIdx, 1); saveLocal({}); } else { handleCRUD('exp', 'delete', { row: exp.row, sheetName: 'Expenses' }); } };
-    const submitItin = async () => { if(!itinForm.value.title) return alert('請輸入標題'); const newRow = isEditing.value ? itinForm.value.row : Date.now(); const payload = { ...itinForm.value, row: newRow, date: selDate.value, _localImgKey: itinForm.value._localImgKey || itinForm.value._localImgKey }; if(isEditing.value) { const idx = itinerary.value.findIndex(x => x.row === newRow); if(idx !== -1) itinerary.value[idx] = payload; handleCRUD('itin', 'edit', payload); } else { itinerary.value.push(payload); handleCRUD('itin', 'add', payload); } showItinModal.value = false; };
-    const submitExp = async () => { if(!newExp.value.amount || !newExp.value.item) return alert('請輸入金額與項目'); const payload = { ...newExp.value, row: Date.now(), date: new Date().toISOString().split('T')[0], time: new Date().toTimeString().slice(0,5), amountTWD: Math.round(newExp.value.amount * (rates.value[newExp.value.currency] || 1)) }; expenses.value.unshift(payload); handleCRUD('exp', 'add', payload); newExp.value.amount = null; newExp.value.item = ''; newExp.value.note = ''; newExp.value.involved = []; alert('記帳成功'); };
-    const submitEditExp = async () => { const idx = expenses.value.findIndex(e => e.row === editExpForm.value.row); if(idx === -1) return; const updated = { ...editExpForm.value }; updated.amountTWD = Math.round(updated.amount * (rates.value[updated.currency] || 1)); expenses.value[idx] = updated; showExpModal.value = false; handleCRUD('exp', 'edit', updated); };
+// ✅ 修改：deleteExp
+    const deleteExp = async (exp) => { 
+        if(!confirm('確定刪除?')) return; 
+        expenses.value = expenses.value.filter(x => x.id !== exp.id); 
+        
+        const pendingIdx = syncQueue.value.findIndex(job => job.type === 'exp' && job.data.id === exp.id); 
+        if (pendingIdx !== -1) { 
+            syncQueue.value.splice(pendingIdx, 1); 
+            saveLocal({}); 
+        } else { 
+            handleCRUD('exp', 'delete', { id: exp.id, sheetName: 'Expenses' }); 
+        } 
+    };
+// ✅ 修改：submitItin
+    const submitItin = async () => { 
+        if(!itinForm.value.title) return alert('請輸入標題'); 
+        
+        // 編輯模式用既有 ID，新增模式產生新 ID
+        const id = isEditing.value ? itinForm.value.id : generateUUID();
+        
+        const payload = { 
+            ...itinForm.value, 
+            id: id, // 確保有 ID
+            date: selDate.value, 
+            _localImgKey: itinForm.value._localImgKey || itinForm.value._localImgKey 
+        }; 
+
+        if(isEditing.value) { 
+            const idx = itinerary.value.findIndex(x => x.id === id); // 用 ID 找
+            if(idx !== -1) itinerary.value[idx] = payload; 
+            handleCRUD('itin', 'edit', payload); 
+        } else { 
+            itinerary.value.push(payload); 
+            handleCRUD('itin', 'add', payload); 
+        } 
+        showItinModal.value = false; 
+    };
+// ✅ 修改：submitExp
+    const submitExp = async () => { 
+        if(!newExp.value.amount || !newExp.value.item) return alert('請輸入金額與項目'); 
+        
+        const id = generateUUID(); // 產生 ID
+        
+        const payload = { 
+            ...newExp.value, 
+            id: id,
+            date: new Date().toISOString().split('T')[0], 
+            time: new Date().toTimeString().slice(0,5), 
+            amountTWD: Math.round(newExp.value.amount * (rates.value[newExp.value.currency] || 1)) 
+        }; 
+        
+        expenses.value.unshift(payload); 
+        handleCRUD('exp', 'add', payload); 
+        
+        // 重置表單
+        newExp.value.amount = null; newExp.value.item = ''; newExp.value.note = ''; newExp.value.involved = []; 
+        alert('記帳成功'); 
+    };
+// ✅ 修改：submitEditExp
+    const submitEditExp = async () => { 
+        const idx = expenses.value.findIndex(e => e.id === editExpForm.value.id); // 用 ID 找
+        if(idx === -1) return; 
+        
+        const updated = { ...editExpForm.value }; 
+        updated.amountTWD = Math.round(updated.amount * (rates.value[updated.currency] || 1)); 
+        
+        expenses.value[idx] = updated; 
+        showExpModal.value = false; 
+        handleCRUD('exp', 'edit', updated); 
+    };
     const saveRates = () => { rates.value = { ...tempRates.value }; saveLocal({}); showRateModal.value = false; callApi('updateRates', rates.value, 'POST'); };
     const confirmClearSync = () => { if(confirm('確定要強制清空所有待上傳資料嗎？\n注意：這會導致離線新增的資料無法同步到伺服器。')) { syncQueue.value = []; saveLocal({}); } };
     const toggleSelectAll = () => { if(newExp.value.involved.length === members.value.length) newExp.value.involved=[]; else newExp.value.involved=[...members.value]; };
