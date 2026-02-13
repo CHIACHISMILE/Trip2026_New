@@ -75,14 +75,3 @@ self.addEventListener("fetch", (e) => {
   );
 });
 
-.analysis-version-footer{
-  text-align: center;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #94A3B8;
-  padding: 10px 0 calc(env(safe-area-inset-bottom) + 10px);
-  margin-top: 8px;
-  user-select: none;
-  -webkit-user-select: none;
-}
