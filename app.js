@@ -611,7 +611,7 @@ createApp({
     const confirmClearSync = () => { if(confirm('確定要強制清空所有待上傳資料嗎？\n注意：這會導致離線新增的資料無法同步到伺服器。')) { syncQueue.value = []; saveLocal({}); } };
     const toggleSelectAll = () => { if(newExp.value.involved.length === members.value.length) newExp.value.involved=[]; else newExp.value.involved=[...members.value]; };
     const toggleSelectAllEdit = () => { if(!editExpForm.value.involved) editExpForm.value.involved = []; if(editExpForm.value.involved.length === members.value.length) editExpForm.value.involved=[]; else editExpForm.value.involved=[...members.value]; };
-    const updateOnlineStatus = () => { isOnline.value = navigator.onLine; if (isOnline.value) setTimeout(() => {processSyncQueue();}, 2000); };
+    const updateOnlineStatus = () => { isOnline.value = navigator.onLine; if (isOnline.value) {setTimeout(() => {processSyncQueue();}, 2000); } };
     const isItemPending = (rowId) => { return syncQueue.value.some(job => job.data.row === rowId); };
     onMounted(async () => { initDate(); window.addEventListener('online', updateOnlineStatus); window.addEventListener('offline', updateOnlineStatus); await nextTick(); attachGestureListeners(); loadData(); if(navigator.onLine) processSyncQueue(); });
     onBeforeUnmount(() => { detachGestureListeners(); window.removeEventListener('online', updateOnlineStatus); window.removeEventListener('offline', updateOnlineStatus); if (chartInstance) { chartInstance.destroy(); chartInstance = null; } });
