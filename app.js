@@ -4,7 +4,15 @@ const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbz72ipqA1wrHEeCPv4
 const revokeObjectUrl = (url) => { if (url) URL.revokeObjectURL(url); };
 // ✅ 新增：簡單的 UUID 產生器
 const generateUUID = () => {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+    // 大多數現代手機/瀏覽器都支援這個原生 API
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    // 萬一舊手機不支援，用這個 fallback 產生標準 UUID 格式
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 };
 const DB_NAME = 'TripApp_IMG_DB';
 const STORE_NAME = 'keyval';
