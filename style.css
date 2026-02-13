@@ -186,6 +186,7 @@ body { -webkit-touch-callout: default; }
   /* push down a bit on iPhone with notch/dynamic island, using viewport ratio */
   margin-top: clamp(8px, 3.5vh, 42px);
   max-height: min(78dvh, 78vh);
+  overflow: hidden;
 }
 
 /* --- Itinerary modal time inputs: prevent overlap & keep consistent across iPhone 15/16/17 --- */
