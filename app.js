@@ -1,5 +1,57 @@
 const YOUR_GAS_URL = 'https://script.google.com/macros/s/AKfycbz72ipqA1wrHEeCPv4tKEGhOUce5JjQRPZWsNY5jEA_lyxVpWyU6qImgPLNXakrcqGj/exec';
 
+// --- ✅ 修正 1: 補上缺失的輔助函式 (IndexedDB 與 URL 釋放) ---
+const revokeObjectUrl = (url) => { if (url) URL.revokeObjectURL(url); };
+
+const DB_NAME = 'TripApp_IMG_DB';
+const STORE_NAME = 'keyval';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+const idbGet = async (key) => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+};
+
+const idbSet = async (key, val) => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const req = tx.objectStore(STORE_NAME).put(val, key);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+};
+
+const idbDel = async (key) => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const req = tx.objectStore(STORE_NAME).delete(key);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+};
+// -----------------------------------------------------------
+
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
@@ -57,7 +109,7 @@ createApp({
     const formatNote = (text) => {
         if (!text) return '';
         return text
-            .replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">")
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") // 修正 HTML 跳脫
             .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="note-link" onclick="event.stopPropagation()">$1</a>')
             .replace(/(?<!href="|]\()((https?:\/\/[^\s<]+))/g, '<a href="$1" target="_blank" class="note-link" onclick="event.stopPropagation()">🔗</a>')
             .replace(/\n/g, '<br>');
@@ -75,22 +127,15 @@ createApp({
 
     // ✅ 永遠用 imgId 組出穩定圖片網址（2048px）
     const stableImgUrl = (itemOrIdOrUrl) => {
-      // 允許你傳：整個 event、imgId、或舊 imgUrl
       if (!itemOrIdOrUrl) return '';
-    
-      // 情況 A：傳整個物件（event）
       if (typeof itemOrIdOrUrl === 'object') {
         const id = itemOrIdOrUrl.imgId;
         if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w2048`;
         return itemOrIdOrUrl.imgUrl || '';
       }
-    
-      // 情況 B：只傳 id
       if (typeof itemOrIdOrUrl === 'string' && /^[a-zA-Z0-9_-]{10,}$/.test(itemOrIdOrUrl) && !itemOrIdOrUrl.startsWith('http')) {
         return `https://drive.google.com/thumbnail?id=${itemOrIdOrUrl}&sz=w2048`;
       }
-    
-      // 情況 C：傳舊 url（相容舊資料）
       return String(itemOrIdOrUrl);
     };
 
@@ -211,8 +256,6 @@ createApp({
         gesture.active = true; gesture.mode = null; gesture.dx = 0; gesture.dy = 0; gesture.startX = t.clientX; gesture.startY = t.clientY;
         const w = window.innerWidth; gesture.startedAtLeftEdge = (gesture.startX <= w * 0.15); gesture.startedAtRightEdge = (gesture.startX >= w * 0.85);
         
-        // --- 修正：放寬下拉判定條件 ---
-        // 允許 5px 內的誤差，讓使用者更容易觸發下拉
         const isScrollTop = el.scrollTop <= 5; 
         const target = e.target;
         const horizontalScrollable = target.closest('.overflow-x-auto');
@@ -240,7 +283,6 @@ createApp({
         else if (gesture.mode === 'v') {
           if (gesture.allowPull && dy > 0) { 
              if (e.cancelable) e.preventDefault(); 
-             // 增加一點阻尼感，但距離上限設為 80px，足以觸發
              pullDistance.value = Math.min(80, Math.pow(dy, 0.75)); 
           } else { 
              pullDistance.value = 0; 
@@ -251,7 +293,6 @@ createApp({
       const onTouchEnd = () => {
         if (!gesture.active) return; gesture.active = false; clearLongPress();
         
-        // 觸發條件：拉動超過 65px
         if (pullDistance.value > 65) { 
             pullDistance.value = 65; 
             isPullRefreshing.value = true; 
@@ -292,7 +333,6 @@ createApp({
         members.value = res.members;
         rates.value = res.rates;
         saveLocal({});
-        // hydrate offline images (non-blocking)
         hydrateItineraryLocalImages();
         if (tab.value === 'analysis') scheduleRenderChart();
       }
@@ -332,7 +372,6 @@ createApp({
       } catch(e) { 
       } finally { 
           isLoading.value = false; 
-          // 確保動畫結束後重置
           setTimeout(() => {
              isPullRefreshing.value = false; 
              pullDistance.value = 0; 
@@ -381,6 +420,8 @@ createApp({
     const openEditItin = (evt) => { itinForm.value = { ...evt, newImageBase64: null, deleteImage: false }; isEditing.value = true; showItinModal.value = true; };
     const openEditExp = (exp) => { editExpForm.value = JSON.parse(JSON.stringify(exp)); showExpModal.value = true; };
     const handleImageUpload = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (evt) => { itinForm.value.imgUrl = evt.target.result; itinForm.value.newImageBase64 = evt.target.result; itinForm.value.deleteImage = false; }; reader.readAsDataURL(file); };
+    
+    // ✅ 修正 2: 呼叫時會使用到上面補齊的輔助函式
     const removeImage = async () => { 
       revokeObjectUrl(itinForm.value.imgUrl);
       if (itinForm.value._localImgKey) { await idbDel(itinForm.value._localImgKey); itinForm.value._localImgKey = null; }
@@ -460,7 +501,28 @@ createApp({
       if (blob) evt.localImgUrl = URL.createObjectURL(blob);
     };
 
-    const deleteItin = async (evt) => { if(!confirm('確定刪除?')) return; revokeObjectUrl(evt.localImgUrl); if (evt.imgId) await idbDel('drive:' + evt.imgId); if (evt._localImgKey) await idbDel(evt._localImgKey); itinerary.value = itinerary.value.filter(x => x.row !== evt.row); const pendingIdx = syncQueue.value.findIndex(job => job.type === 'itin' && job.action === 'add' && job.data.row === evt.row); if (pendingIdx !== -1) { syncQueue.value.splice(pendingIdx, 1); saveLocal({}); } else { handleCRUD('itin', 'delete', { row: evt.row, sheetName: 'Itinerary' }); } };
+    // ✅ 修正 3: 此處不再報錯 ReferenceError
+    const deleteItin = async (evt) => { 
+        if(!confirm('確定刪除?')) return; 
+        
+        // --- Try-catch 保護，避免清理快取失敗時阻止刪除流程 ---
+        try {
+            revokeObjectUrl(evt.localImgUrl); 
+            if (evt.imgId) await idbDel('drive:' + evt.imgId); 
+            if (evt._localImgKey) await idbDel(evt._localImgKey);
+        } catch(e) { console.warn('Clear cache fail', e); }
+
+        itinerary.value = itinerary.value.filter(x => x.row !== evt.row); 
+        
+        const pendingIdx = syncQueue.value.findIndex(job => job.type === 'itin' && job.action === 'add' && job.data.row === evt.row); 
+        if (pendingIdx !== -1) { 
+            syncQueue.value.splice(pendingIdx, 1); 
+            saveLocal({}); 
+        } else { 
+            handleCRUD('itin', 'delete', { row: evt.row, sheetName: 'Itinerary' }); 
+        } 
+    };
+
     const deleteExp = async (exp) => { if(!confirm('確定刪除?')) return; expenses.value = expenses.value.filter(x => x.row !== exp.row); const pendingIdx = syncQueue.value.findIndex(job => job.type === 'exp' && job.action === 'add' && job.data.row === exp.row); if (pendingIdx !== -1) { syncQueue.value.splice(pendingIdx, 1); saveLocal({}); } else { handleCRUD('exp', 'delete', { row: exp.row, sheetName: 'Expenses' }); } };
     const submitItin = async () => { if(!itinForm.value.title) return alert('請輸入標題'); const newRow = isEditing.value ? itinForm.value.row : Date.now(); const payload = { ...itinForm.value, row: newRow, date: selDate.value, _localImgKey: itinForm.value._localImgKey || itinForm.value._localImgKey }; if(isEditing.value) { const idx = itinerary.value.findIndex(x => x.row === newRow); if(idx !== -1) itinerary.value[idx] = payload; handleCRUD('itin', 'edit', payload); } else { itinerary.value.push(payload); handleCRUD('itin', 'add', payload); } showItinModal.value = false; };
     const submitExp = async () => { if(!newExp.value.amount || !newExp.value.item) return alert('請輸入金額與項目'); const payload = { ...newExp.value, row: Date.now(), date: new Date().toISOString().split('T')[0], time: new Date().toTimeString().slice(0,5), amountTWD: Math.round(newExp.value.amount * (rates.value[newExp.value.currency] || 1)) }; expenses.value.unshift(payload); handleCRUD('exp', 'add', payload); newExp.value.amount = null; newExp.value.item = ''; newExp.value.note = ''; newExp.value.involved = []; alert('記帳成功'); };
@@ -477,7 +539,7 @@ createApp({
     
     
     return {
-      appVersion: '1.5.0', tab, isLoading, isOnline, isSyncing, syncQueue, dateContainer, scrollContainer, todayDate, todayWeekday, pullDistance, isPullRefreshing, refreshText, tripStatus, tripDates, selDate, itinerary, selectDate, getDayInfo, getEvents, getCategoryBorderClass, getExpenseBorderClass, expenses, rates, members, filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments, resetFilters, hasActiveFilters, filteredExpenses, formatNumber, getAmountTWD, publicSpent, momSpent, yiruSpent, debts, getItemTagClass, chartBusy, changeTabToAnalysis, showRateModal, showItinModal, showExpModal, isEditing, itinForm, newExp, editExpForm, tempRates, openRateModal, openAddItin, openEditItin, openEditExp, deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending, handleImageUpload, removeImage, viewImage, onItinImgError, closeImgViewer, showImgViewer, viewingImg, imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom, formatNote, stableImgUrl
+      appVersion: '1.5.1', tab, isLoading, isOnline, isSyncing, syncQueue, dateContainer, scrollContainer, todayDate, todayWeekday, pullDistance, isPullRefreshing, refreshText, tripStatus, tripDates, selDate, itinerary, selectDate, getDayInfo, getEvents, getCategoryBorderClass, getExpenseBorderClass, expenses, rates, members, filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments, resetFilters, hasActiveFilters, filteredExpenses, formatNumber, getAmountTWD, publicSpent, momSpent, yiruSpent, debts, getItemTagClass, chartBusy, changeTabToAnalysis, showRateModal, showItinModal, showExpModal, isEditing, itinForm, newExp, editExpForm, tempRates, openRateModal, openAddItin, openEditItin, openEditExp, deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending, handleImageUpload, removeImage, viewImage, onItinImgError, closeImgViewer, showImgViewer, viewingImg, imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom, formatNote, stableImgUrl
     };
   }
 }).mount('#app');
