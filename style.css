@@ -180,23 +180,28 @@ body { -webkit-touch-callout: default; }
 .img-viewer-img { max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: center center; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
 .img-viewer-close { position: absolute; top: max(20px, env(safe-area-inset-top) + 20px); right: 20px; width: 44px; height: 44px; background: #fff; color: #64748B; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: 800; z-index: 10000; cursor: pointer; border: 1px solid #E2E8F0; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
 
-/* --- Itinerary modal time inputs: prevent overlap on iOS (shrinkable) --- */
-.itin-time-row > div { flex: 1 1 0%; min-width: 0; }
 
+/* --- Modal safe-area (Dynamic Island) & responsive sizing --- */
+.modal-content{
+  /* push down a bit on iPhone with notch/dynamic island, using viewport ratio */
+  margin-top: clamp(8px, 3.5vh, 42px);
+  max-height: min(78dvh, 78vh);
+}
+
+/* --- Itinerary modal time inputs: prevent overlap & keep consistent across iPhone 15/16/17 --- */
+.itin-time-row > div { flex: 1 1 0%; min-width: 0; }
 .time-input{
   width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
   min-width: 0;
-  font-size: 14px;
-  padding: 10px 10px;
+  box-sizing: border-box;
+  /* use relative sizing (no fixed px) */
+  font-size: clamp(0.80rem, 2.8vw, 0.95rem);
+  padding: clamp(0.55rem, 1.8vw, 0.72rem) clamp(0.65rem, 2.0vw, 0.85rem);
 }
-
 .time-input::-webkit-date-and-time-value { text-align: left; }
 
-@media (max-width: 360px) {
-  .itin-time-row { flex-direction: column; }
-  .itin-time-row > div { width: 100%; }
+/* very narrow widths: stack */
+@media (max-width: 360px){
+  .itin-time-row{ flex-direction: column; }
+  .itin-time-row > div{ width: 100%; }
 }
-
-

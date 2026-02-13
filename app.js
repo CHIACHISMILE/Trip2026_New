@@ -285,19 +285,46 @@ createApp({
       return false;
     };
     const getBackendActionName = (type, action) => { if (action === 'delete') return 'deleteRow'; return action + (type === 'itin' ? 'Itinerary' : 'Expense'); };
-    const updateLocalData = (res) => { if (res && res.expenses) { expenses.value = res.expenses; itinerary.value = res.itinerary; members.value = res.members; rates.value = res.rates; saveLocal({}); if (tab.value === 'analysis') scheduleRenderChart(); } };
+    const updateLocalData = (res) => {
+      if (res && res.expenses) {
+        expenses.value = res.expenses;
+        itinerary.value = res.itinerary;
+        members.value = res.members;
+        rates.value = res.rates;
+        saveLocal({});
+        // hydrate offline images (non-blocking)
+        hydrateItineraryLocalImages();
+        if (tab.value === 'analysis') scheduleRenderChart();
+      }
+    };
     const processSyncQueue = async () => {
       if (syncQueue.value.length === 0 || !navigator.onLine || isSyncing.value) return; isSyncing.value = true;
       const queue = [...syncQueue.value]; const remaining = [];
-      for (const job of queue) { try { const apiAction = getBackendActionName(job.type, job.action); const res = await callApi(apiAction, job.data, 'POST'); if (res) updateLocalData(res); else remaining.push(job); } catch (e) { remaining.push(job); } }
+      for (const job of queue) { try { const apiAction = getBackendActionName(job.type, job.action); const res = await callApi(apiAction, job.data, 'POST'); if (res) { updateLocalData(res); if (job.type === 'itin' && (job.action === 'add' || job.action === 'edit')) await reconcileItinImageAfterSync(job.data, res); } else remaining.push(job); } catch (e) { remaining.push(job); } }
       syncQueue.value = remaining; saveLocal({}); isSyncing.value = false; if (syncQueue.value.length === 0) loadData();
     };
     const handleCRUD = async (type, action, data) => {
-       if (navigator.onLine) { isSyncing.value = true; try { const apiAction = getBackendActionName(type, action); const res = await callApi(apiAction, data, 'POST'); if (!res) throw new Error("API Fail"); updateLocalData(res); } catch (e) { syncQueue.value.push({ type, action, data }); } finally { isSyncing.value = false; } } else { syncQueue.value.push({ type, action, data }); } saveLocal({});
+       if (navigator.onLine) {
+         isSyncing.value = true;
+         try {
+           const apiAction = getBackendActionName(type, action);
+           const res = await callApi(apiAction, data, 'POST');
+           if (!res) throw new Error("API Fail");
+           updateLocalData(res);
+           if (type === 'itin' && (action === 'add' || action === 'edit')) await reconcileItinImageAfterSync(data, res);
+         } catch (e) {
+           syncQueue.value.push({ type, action, data });
+         } finally {
+           isSyncing.value = false;
+         }
+       } else {
+         syncQueue.value.push({ type, action, data });
+       }
+       saveLocal({});
     };
     const loadData = async () => {
       if (!isPullRefreshing.value) isLoading.value = true;
-      if (loadLocal()) { if (isFirstLoad.value) { nextTick(() => checkAndScrollToToday()); isFirstLoad.value = false; } if (tab.value === 'analysis') scheduleRenderChart(); setTimeout(() => { if (!isPullRefreshing.value) isLoading.value = false; }, 150); }
+      if (loadLocal()) { hydrateItineraryLocalImages(); if (isFirstLoad.value) { nextTick(() => checkAndScrollToToday()); isFirstLoad.value = false; } if (tab.value === 'analysis') scheduleRenderChart(); setTimeout(() => { if (!isPullRefreshing.value) isLoading.value = false; }, 150); }
       if (!navigator.onLine) { isLoading.value = false; isPullRefreshing.value = false; pullDistance.value = 0; return; }
       try { 
           const res = await callApi('getData'); 
@@ -329,7 +356,6 @@ createApp({
     const getAmountTWD = (exp) => { if (exp.amountTWD && exp.amountTWD > 0) return exp.amountTWD; return Math.round(exp.amount * (rates.value[exp.currency] || 1)); };
     const publicSpent = computed(() => { return expenses.value.reduce((sum, e) => { const amt = getAmountTWD(e); if (!e.involved || e.involved.length === 0) return sum; const perShare = amt / e.involved.length; let bill = 0; if (e.involved.includes('家齊')) bill += perShare; if (e.involved.includes('亭穎')) bill += perShare; return sum + bill; }, 0); });
     const momSpent = computed(() => { return expenses.value.reduce((sum, e) => { const amt = getAmountTWD(e); if (e.involved && e.involved.includes('媽媽')) return sum + (amt / e.involved.length); return sum; }, 0); });
-    const yiruSpent = computed(() => { return expenses.value.reduce((sum, e) => { const amt = getAmountTWD(e); if (e.involved && e.involved.includes('翊茹')) return sum + (amt / e.involved.length); return sum; }, 0); });
     const debts = computed(() => { if (members.value.length === 0) return []; const bal = {}; members.value.forEach(m => bal[m] = 0); expenses.value.forEach(e => { const amt = getAmountTWD(e); const split = e.involved || []; if (split.length > 0) { bal[e.payer] += amt; const share = amt / split.length; split.forEach(p => { if (bal[p] !== undefined) bal[p] -= share; }); } }); let debtors=[], creditors=[]; for (const m in bal) { if (bal[m] < -1) debtors.push({p:m, a:bal[m]}); if (bal[m] > 1) creditors.push({p:m, a:bal[m]}); } debtors.sort((a,b)=>a.a-b.a); creditors.sort((a,b)=>b.a-a.a); const res=[]; let i=0, j=0; while(i<debtors.length && j<creditors.length){ const d=debtors[i], c=creditors[j]; const amt=Math.min(Math.abs(d.a), c.a); res.push({from:d.p, to:c.p, amount:Math.round(amt)}); d.a += amt; c.a -= amt; if (Math.abs(d.a)<1) i++; if (c.a<1) j++; } return res; });
 
     /* Chart Logic */
@@ -354,16 +380,88 @@ createApp({
     const openEditItin = (evt) => { itinForm.value = { ...evt, newImageBase64: null, deleteImage: false }; isEditing.value = true; showItinModal.value = true; };
     const openEditExp = (exp) => { editExpForm.value = JSON.parse(JSON.stringify(exp)); showExpModal.value = true; };
     const handleImageUpload = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (evt) => { itinForm.value.imgUrl = evt.target.result; itinForm.value.newImageBase64 = evt.target.result; itinForm.value.deleteImage = false; }; reader.readAsDataURL(file); };
-    const removeImage = () => { itinForm.value.imgUrl = ''; itinForm.value.newImageBase64 = null; itinForm.value.deleteImage = true; };
+    const removeImage = async () => { 
+      revokeObjectUrl(itinForm.value.imgUrl);
+      if (itinForm.value._localImgKey) { await idbDel(itinForm.value._localImgKey); itinForm.value._localImgKey = null; }
+      if (itinForm.value.imgId) { await idbDel('drive:' + itinForm.value.imgId); }
+      itinForm.value.imgUrl = ''; itinForm.value.newImageBase64 = null; itinForm.value.deleteImage = true; 
+    };
     const viewImage = (itemOrIdOrUrl) => { 
       viewingImg.value = stableImgUrl(itemOrIdOrUrl);
       showImgViewer.value = true; 
       imgGesture.value = { startX: 0, startY: 0, currentX: 0, currentY: 0, scale: 1, isPulling: false, isZooming: false, startDistance: 0 };
     };
     const closeImgViewer = () => { if (imgViewerEl.value) imgViewerEl.value.style.transform = ''; document.querySelector('.img-viewer-overlay').style.backgroundColor = ''; showImgViewer.value = false; };
-    const deleteItin = async (evt) => { if(!confirm('確定刪除?')) return; itinerary.value = itinerary.value.filter(x => x.row !== evt.row); const pendingIdx = syncQueue.value.findIndex(job => job.type === 'itin' && job.action === 'add' && job.data.row === evt.row); if (pendingIdx !== -1) { syncQueue.value.splice(pendingIdx, 1); saveLocal({}); } else { handleCRUD('itin', 'delete', { row: evt.row, sheetName: 'Itinerary' }); } };
+
+    // --- Offline image hydration ---
+    const hydrateItineraryLocalImages = async () => {
+      // revoke old objectURLs
+      itinerary.value.forEach(it => { if (it.localImgUrl) revokeObjectUrl(it.localImgUrl); it.localImgUrl = ''; });
+
+      for (const it of itinerary.value) {
+        const key = it.imgId ? ('drive:' + it.imgId) : (it._localImgKey ? it._localImgKey : null);
+        if (!key) continue;
+
+        // 1) Prefer cached blob
+        let blob = await idbGet(key);
+        if (blob) {
+          it.localImgUrl = URL.createObjectURL(blob);
+          continue;
+        }
+
+        // 2) If online and this is a Drive-backed image, download once and cache locally for offline use
+        if (navigator.onLine && it.imgId && it.imgUrl) {
+          try {
+            const res = await fetch(it.imgUrl, { cache: 'no-store' });
+            if (res && res.ok) {
+              blob = await res.blob();
+              // Store as-is; Drive thumbnail is already bounded (w2048)
+              await idbSet('drive:' + it.imgId, blob);
+              it.localImgUrl = URL.createObjectURL(blob);
+            }
+          } catch (e) {}
+        }
+      }
+    };
+
+    // If remote image fails (offline / blocked), fall back to local cached blob
+    const reconcileItinImageAfterSync = async (payload, res) => {
+      if (!payload || !payload._localImgKey) return;
+      const pendingKey = payload._localImgKey;
+      const blob = await idbGet(pendingKey);
+      if (!blob) return;
+
+      const list = (res && res.itinerary) ? res.itinerary : itinerary.value;
+      const date = payload.date || payload.dateStr || payload.selDate || selDate.value;
+
+      const match = list.find(it =>
+        (it.date === date) &&
+        (String(it.startTime || '') === String(payload.startTime || '')) &&
+        (String(it.title || '') === String(payload.title || '')) &&
+        (String(it.location || '') === String(payload.location || ''))
+      ) || list.find(it =>
+        (it.date === date) &&
+        (String(it.title || '') === String(payload.title || '')) &&
+        (String(it.startTime || '') === String(payload.startTime || ''))
+      );
+
+      if (match && match.imgId) {
+        await idbSet('drive:' + match.imgId, blob);
+        await idbDel(pendingKey);
+      }
+    };
+
+    const onItinImgError = async (evt) => {
+      if (evt.localImgUrl) return;
+      const key = evt.imgId ? ('drive:' + evt.imgId) : (evt._localImgKey ? evt._localImgKey : null);
+      if (!key) return;
+      const blob = await idbGet(key);
+      if (blob) evt.localImgUrl = URL.createObjectURL(blob);
+    };
+
+    const deleteItin = async (evt) => { if(!confirm('確定刪除?')) return; revokeObjectUrl(evt.localImgUrl); if (evt.imgId) await idbDel('drive:' + evt.imgId); if (evt._localImgKey) await idbDel(evt._localImgKey); itinerary.value = itinerary.value.filter(x => x.row !== evt.row); const pendingIdx = syncQueue.value.findIndex(job => job.type === 'itin' && job.action === 'add' && job.data.row === evt.row); if (pendingIdx !== -1) { syncQueue.value.splice(pendingIdx, 1); saveLocal({}); } else { handleCRUD('itin', 'delete', { row: evt.row, sheetName: 'Itinerary' }); } };
     const deleteExp = async (exp) => { if(!confirm('確定刪除?')) return; expenses.value = expenses.value.filter(x => x.row !== exp.row); const pendingIdx = syncQueue.value.findIndex(job => job.type === 'exp' && job.action === 'add' && job.data.row === exp.row); if (pendingIdx !== -1) { syncQueue.value.splice(pendingIdx, 1); saveLocal({}); } else { handleCRUD('exp', 'delete', { row: exp.row, sheetName: 'Expenses' }); } };
-    const submitItin = async () => { if(!itinForm.value.title) return alert('請輸入標題'); const newRow = isEditing.value ? itinForm.value.row : Date.now(); const payload = { ...itinForm.value, row: newRow, date: selDate.value }; if(isEditing.value) { const idx = itinerary.value.findIndex(x => x.row === newRow); if(idx !== -1) itinerary.value[idx] = payload; handleCRUD('itin', 'edit', payload); } else { itinerary.value.push(payload); handleCRUD('itin', 'add', payload); } showItinModal.value = false; };
+    const submitItin = async () => { if(!itinForm.value.title) return alert('請輸入標題'); const newRow = isEditing.value ? itinForm.value.row : Date.now(); const payload = { ...itinForm.value, row: newRow, date: selDate.value, _localImgKey: itinForm.value._localImgKey || itinForm.value._localImgKey }; if(isEditing.value) { const idx = itinerary.value.findIndex(x => x.row === newRow); if(idx !== -1) itinerary.value[idx] = payload; handleCRUD('itin', 'edit', payload); } else { itinerary.value.push(payload); handleCRUD('itin', 'add', payload); } showItinModal.value = false; };
     const submitExp = async () => { if(!newExp.value.amount || !newExp.value.item) return alert('請輸入金額與項目'); const payload = { ...newExp.value, row: Date.now(), date: new Date().toISOString().split('T')[0], time: new Date().toTimeString().slice(0,5), amountTWD: Math.round(newExp.value.amount * (rates.value[newExp.value.currency] || 1)) }; expenses.value.unshift(payload); handleCRUD('exp', 'add', payload); newExp.value.amount = null; newExp.value.item = ''; newExp.value.note = ''; newExp.value.involved = []; alert('記帳成功'); };
     const submitEditExp = async () => { const idx = expenses.value.findIndex(e => e.row === editExpForm.value.row); if(idx === -1) return; const updated = { ...editExpForm.value }; updated.amountTWD = Math.round(updated.amount * (rates.value[updated.currency] || 1)); expenses.value[idx] = updated; showExpModal.value = false; handleCRUD('exp', 'edit', updated); };
     const saveRates = () => { rates.value = { ...tempRates.value }; saveLocal({}); showRateModal.value = false; callApi('updateRates', rates.value, 'POST'); };
@@ -376,7 +474,7 @@ createApp({
     onBeforeUnmount(() => { detachGestureListeners(); window.removeEventListener('online', updateOnlineStatus); window.removeEventListener('offline', updateOnlineStatus); if (chartInstance) { chartInstance.destroy(); chartInstance = null; } });
     
     return {
-      tab, isLoading, isOnline, isSyncing, syncQueue, dateContainer, scrollContainer, todayDate, todayWeekday, pullDistance, isPullRefreshing, refreshText, tripStatus, tripDates, selDate, itinerary, selectDate, getDayInfo, getEvents, getCategoryBorderClass, getExpenseBorderClass, expenses, rates, members, filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments, resetFilters, hasActiveFilters, filteredExpenses, formatNumber, getAmountTWD, publicSpent, momSpent, yiruSpent, debts, getItemTagClass, chartBusy, changeTabToAnalysis, showRateModal, showItinModal, showExpModal, isEditing, itinForm, newExp, editExpForm, tempRates, openRateModal, openAddItin, openEditItin, openEditExp, deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending, handleImageUpload, removeImage, viewImage, closeImgViewer, showImgViewer, viewingImg, imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom, formatNote, stableImgUrl
+      tab, isLoading, isOnline, isSyncing, syncQueue, dateContainer, scrollContainer, todayDate, todayWeekday, pullDistance, isPullRefreshing, refreshText, tripStatus, tripDates, selDate, itinerary, selectDate, getDayInfo, getEvents, getCategoryBorderClass, getExpenseBorderClass, expenses, rates, members, filters, showFilterMenu, uniqueExpDates, uniqueItems, uniqueLocations, uniquePayments, resetFilters, hasActiveFilters, filteredExpenses, formatNumber, getAmountTWD, publicSpent, momSpent, debts, getItemTagClass, chartBusy, changeTabToAnalysis, showRateModal, showItinModal, showExpModal, isEditing, itinForm, newExp, editExpForm, tempRates, openRateModal, openAddItin, openEditItin, openEditExp, deleteItin, deleteExp, submitItin, submitExp, submitEditExp, saveRates, confirmClearSync, toggleSelectAll, toggleSelectAllEdit, isItemPending, handleImageUpload, removeImage, viewImage, onItinImgError, closeImgViewer, showImgViewer, viewingImg, imgViewerEl, handleImgTouchStart, handleImgTouchMove, handleImgTouchEnd, imgGesture, toggleZoom, formatNote, stableImgUrl
     };
   }
 }).mount('#app');
